@@ -1,0 +1,10 @@
+[build]
+  command = "npm run build"
+  publish = "dist/app/browser"
+
+# SPA: Angular maneja las rutas del cliente (/admin, /home, etc.).
+# Sin esto, recargar una ruta interna en Netlify da 404.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
