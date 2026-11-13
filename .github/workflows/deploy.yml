@@ -2,7 +2,7 @@ name: CI + Deploy a Netlify
 
 on:
   push:
-    branches: [main]
+    branches: [production]
   pull_request:
 
 jobs:
@@ -30,9 +30,9 @@ jobs:
           name: dist-app
           path: dist/app/browser
 
-  # 2) Despliega a Netlify solo cuando se pushea a main
+  # 2) Despliega a Netlify solo cuando se pushea a production
   deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/production'
     needs: build
     runs-on: ubuntu-latest
     steps:
