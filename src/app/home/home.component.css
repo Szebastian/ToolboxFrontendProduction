@@ -1,0 +1,62 @@
+/* Layout: el host es columna flex a pantalla completa; el <main> queda centrado verticalmente */
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100svh;
+}
+
+/* Clases del Paso 3: Carrito & Muestras */
+.glass-capsule {
+  background: rgba(23, 20, 18, 0.88);
+  backdrop-filter: blur(36px);
+  -webkit-backdrop-filter: blur(36px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 35px 80px -20px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+.part-card {
+  background: rgba(18, 15, 13, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.part-card:hover {
+  border-color: rgba(245, 158, 11, 0.45);
+  transform: translateY(-2px);
+}
+
+.btn-apple-cta {
+  background: #F59E0B;
+  color: #120F0D;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 14px 34px -8px rgba(245, 158, 11, 0.5);
+}
+
+.btn-apple-cta:hover {
+  background: #FBBF24;
+  transform: translateY(-1px);
+  box-shadow: 0 20px 42px -6px rgba(245, 158, 11, 0.65);
+}
+
+.btn-apple-cta:active {
+  transform: scale(0.98);
+}
+
+/* ── Landing sin sesión (adaptada del ejemplo Stitch) ── */
+.glass-surface {
+  background: rgba(18, 15, 13, 0.92);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), 0 0 1px rgba(255, 255, 255, 0.2);
+}
+.btn-steve {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-steve:hover {
+  transform: translateY(-1px);
+}
+.btn-steve:active {
+  transform: scale(0.98);
+}

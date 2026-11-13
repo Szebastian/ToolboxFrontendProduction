@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <g>
+    <!-- polea dentada -->
+    <circle cx="100" cy="58" r="30" fill="#3A3A3E" stroke="#8A8A8F" stroke-width="4"/>
+    <circle cx="100" cy="58" r="12" fill="#17171A" stroke="#9CA3AF" stroke-width="3"/>
+    <g stroke="#9CA3AF" stroke-width="3" stroke-linecap="round">
+      <line x1="100" y1="30" x2="100" y2="38"/>
+      <line x1="121" y1="37" x2="117" y2="44"/>
+      <line x1="128" y1="58" x2="120" y2="58"/>
+      <line x1="121" y1="79" x2="117" y2="72"/>
+      <line x1="100" y1="86" x2="100" y2="78"/>
+      <line x1="79" y1="79" x2="83" y2="72"/>
+      <line x1="72" y1="58" x2="80" y2="58"/>
+      <line x1="79" y1="37" x2="83" y2="44"/>
+    </g>
+    <!-- cuerpo de la bomba -->
+    <path d="M60 88 L140 88 L150 118 Q152 140 132 148 L68 148 Q48 140 50 118 Z" fill="#C7CCD4" stroke="#5B6470" stroke-width="4" stroke-linejoin="round"/>
+    <!-- voluta espiral -->
+    <path d="M100 112 Q128 112 128 130 Q128 142 112 144" fill="none" stroke="#5B6470" stroke-width="3" stroke-dasharray="5 4"/>
+    <!-- brida de montaje -->
+    <rect x="72" y="84" width="56" height="8" rx="2" fill="#5B6470"/>
+    <!-- boca de salida -->
+    <rect x="136" y="104" width="30" height="18" rx="4" fill="#8E979F" stroke="#5B6470" stroke-width="3.5"/>
+    <!-- tornillos -->
+    <g fill="#5B6470">
+      <circle cx="66" cy="102" r="3.5"/>
+      <circle cx="134" cy="98" r="3.5"/>
+      <circle cx="70" cy="138" r="3.5"/>
+      <circle cx="126" cy="140" r="3.5"/>
+    </g>
+    <!-- gota / refrigerante -->
+    <path d="M100 96 q-7 10 0 16 q7 -6 0 -16" fill="#34D399" opacity=".85"/>
+  </g>
+</svg>

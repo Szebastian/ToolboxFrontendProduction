@@ -1,0 +1,845 @@
+<button (click)="volver()" style="position:fixed;bottom:14px;left:14px;z-index:40;margin:0;background:rgba(14,15,18,.65);color:#D6D3D1;border:1px solid rgba(255,255,255,.14);padding:7px 14px;border-radius:999px;font-weight:600;font-size:12px;font-family:'JetBrains Mono',monospace;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);cursor:pointer;transition:all .2s ease">← Volver</button>
+
+<div class="w-full max-w-[1400px] 2xl:max-w-[1800px] mx-auto admin-glass rounded-[32px] overflow-hidden flex flex-col z-20 flex-1 min-h-0">
+
+  <!-- ══════════ TOP BAR: CONTROL DOCK ══════════ -->
+  <header class="px-6 py-3.5 border-b border-white/10 flex items-center justify-between gap-4 bg-black/50 backdrop-blur-xl">
+
+    <!-- Marca & Privilegios -->
+    <div class="flex items-center gap-3 shrink-0">
+      <div class="w-9 h-9 rounded-2xl bg-[#171412] p-1.5 border border-white/15 shadow-lg flex items-center justify-center">
+        <img src="/toolboxLogo.webp" alt="Toolbox" class="w-full h-full object-contain" />
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="font-black text-sm tracking-tight text-white font-sans">Toolbox</span>
+          <span class="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 font-mono text-[9px] font-black uppercase tracking-wider border border-rose-500/40">SUPER ADMIN</span>
+        </div>
+        <span class="text-[10px] font-mono text-stone-400 block">Alta Exclusiva · Registro Cerrado</span>
+      </div>
+    </div>
+
+    <!-- Acciones globales -->
+    <div class="flex items-center gap-3 shrink-0 font-mono text-xs">
+      <button (click)="abrirModalAlta()" class="btn-steve px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-stone-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-amber-500/20 cursor-pointer select-none">
+        <svg class="w-4 h-4 text-stone-950" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h8M12 8v8"></path></svg>
+        <span>Alta de Local Comercial</span>
+      </button>
+
+      <div class="flex items-center gap-2 pl-2 border-l border-white/10">
+        <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-rose-500 text-stone-950 font-black flex items-center justify-center shadow text-xs">SA</div>
+        <div class="hidden sm:block text-left text-xs">
+          <span class="font-bold text-white block leading-tight">Admin Central</span>
+          <span class="text-[9px] text-emerald-400">En línea (Patagonia)</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══════════ CUERPO: SIDEBAR + VISTAS ══════════ -->
+  <div class="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden">
+
+    <!-- SIDEBAR -->
+    <aside class="lg:w-1/4 xl:w-1/6 shrink-0 overflow-y-auto border-r border-white/10 p-5 2xl:p-6 space-y-6 bg-black/30 flex flex-col justify-between no-scrollbar">
+      <div class="space-y-4">
+        <span class="text-[10px] font-mono text-stone-400 uppercase tracking-wider font-bold block">Módulos Operativos</span>
+
+        <nav class="space-y-1.5 font-mono text-xs 2xl:text-sm">
+          @for (m of vistasSidebar; track m.id) {
+            <button [class]="navClase(m.id)" (click)="mostrarVista(m.id)">
+              <svg class="w-4 h-4 shrink-0 {{ m.iconoClase }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                @switch (m.id) {
+                  @case ('dashboard') { <rect width="3" height="7" x="3" y="3" rx="1"></rect><rect width="3" height="7" x="10" y="3" rx="1"></rect><rect width="3" height="7" x="17" y="3" rx="1"></rect><rect width="3" height="11" x="3" y="14" rx="1"></rect><rect width="3" height="11" x="10" y="14" rx="1"></rect><rect width="3" height="11" x="17" y="14" rx="1"></rect> }
+                  @case ('demanda') { <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M22 7l-8.5 8.5-5-5L2 17M16 7h6v6"></path> }
+                  @case ('comercios') { <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 21v-5a1 1 0 00-1-1h-4a1 1 0 00-1 1v5M17.774 10.31a1.12 1.12 0 00-1.549 0 2.5 2.5 0 01-3.451 0 1.12 1.12 0 00-1.548 0 2.5 2.5 0 01-3.452 0 1.12 1.12 0 00-1.549 0 2.5 2.5 0 01-3.77-3.248l2.889-4.184A2 2 0 017 2h10a2 2 0 011.653.873l2.895 4.192a2.5 2.5 0 01-3.774 3.244M4 10.95V19a2 2 0 002 2h12a2 2 0 002-2v-8.05"></path> }
+                  @case ('cobertura') { <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15"></path> }
+                  @case ('incompatibilidades') { <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21.73 18l-8-14a2 2 0 00-3.48 0l-8 14A2 2 0 004 20h16a2 2 0 001.73-2zM12 9v4M12 17h.01"></path> }
+                  @case ('solicitudes') { <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 2v4a2 2 0 002 2h4M6 22a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6v3M9 15l2 2"></path><circle cx="11" cy="13" r="3"></circle> }
+                  @case ('facturacion') { <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7V4a1 1 0 00-1-1H5a2 2 0 000 4h15a1 1 0 011 1v4h-3a2 2 0 000 4h3a1 1 0 001-1v-2M3 5v14a2 2 0 002 2h15a1 1 0 001-1v-4"></path> }
+                  @case ('usuarios') { <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"></path> }
+                  @case ('logistica') { <circle cx="18.5" cy="17.5" r="3.5"></circle><circle cx="5.5" cy="17.5" r="3.5"></circle><circle cx="15" cy="5" r="1"></circle><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 17.5V14l-3-3 4-3 2 3h2"></path> }
+                }
+              </svg>
+              <div class="min-w-0 flex-1">
+                <div class="font-bold leading-tight {{ m.id === 'demanda' || m.id === 'cobertura' || m.id === 'incompatibilidades' ? 'text-white' : '' }}">{{ m.titulo }}</div>
+                <div class="text-[10px] font-normal truncate {{ m.subClase }}" [title]="m.sub">{{ m.sub }}</div>
+              </div>
+              @if (m.id === 'comercios' && !comerciosVisto()) {
+                <span class="shrink-0 px-1.5 py-0.5 rounded-full bg-emerald-400 text-stone-950 font-bold text-[9px]" title="Comercios habilitados sin revisar">{{ totalComercios() }}</span>
+              }
+              @if (m.id === 'incompatibilidades' && !incompatVisto()) {
+                <span class="shrink-0 px-1.5 py-0.5 rounded-full bg-rose-500 text-stone-950 font-bold text-[9px] animate-pulse" title="Reclamos abiertos sin revisar">{{ totalReclamos('abiertos') }}</span>
+              }
+            </button>
+          }
+        </nav>
+      </div>
+
+      <!-- Política de Alta Cerrada -->
+      <div class="p-3.5 rounded-2xl bg-black/60 border border-amber-400/30 text-stone-300 font-mono text-[11px] space-y-1.5">
+        <div class="flex items-center gap-1.5 text-amber-300 font-bold">
+          <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 01-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 011-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 011.52 0C14.51 3.81 17 5 19 5a1 1 0 011 1zM12 8v4M12 16h.01"></path></svg>
+          <span>Política de Alta Cerrada</span>
+        </div>
+        <p class="text-[10px] text-stone-400 font-sans leading-tight">No existe autoregistro público. Como Super Admin sos la <strong class="text-white">única persona habilitada</strong> para dar de alta un local comercial.</p>
+      </div>
+    </aside>
+
+    <!-- VISTAS -->
+    <section class="flex-1 min-w-0 p-6 sm:p-8 xl:p-10 2xl:p-12 space-y-6 overflow-y-auto">
+
+      @switch (vista()) {
+
+        @case ('dashboard') {
+          <!-- VISTA A: DASHBOARD GENERAL -->
+          <div class="space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] font-mono text-amber-400 font-bold uppercase tracking-wider">Centro de Mando Regional</span>
+                  <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-[9px] font-bold border border-emerald-500/30">5 Ciudades en Red</span>
+                </div>
+                <h1 class="text-2xl 2xl:text-4xl font-black text-white tracking-tight">Rendimiento de la Red Multiciudad</h1>
+              </div>
+              <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/60 border border-white/10 text-stone-300 font-mono text-xs">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>Auditoría en tiempo real</span>
+                <span class="text-stone-500">·</span>
+                <span class="text-amber-400 font-bold">{{ totalComercios() }} comercios</span>
+              </div>
+            </div>
+
+            <!-- Selector rápido de ciudad -->
+            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 font-mono text-xs">
+              <span class="text-stone-400 text-[11px] uppercase tracking-wider shrink-0 flex items-center gap-1 font-bold">
+                <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21s-7-5.5-7-11a7 7 0 1114 0c0 5.5-7 11-7 11z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>
+                Ciudad:
+              </span>
+              @for (c of ciudadPillDashboard(); track c.key) {
+                <button [class]="ciudadBtnClase(c.key)" (click)="mostrarVista('comercios'); ciudadFiltro.set(c.key)">{{ c.texto }}</button>
+              }
+            </div>
+
+            <!-- 4 KPIs -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono">
+              <div class="admin-card p-4 rounded-2xl">
+                <div class="flex items-center justify-between gap-2 text-stone-400 text-[11px] 2xl:text-xs mb-1">
+                  <span class="leading-tight">GMV Transaccionado</span>
+                  <svg class="w-4 h-4 shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M22 7l-8.5 8.5-5-5L2 17M16 7h6v6"></path></svg>
+                </div>
+                <div class="text-[clamp(1.05rem,1.35vw,1.875rem)] font-black text-white whitespace-nowrap tabular-nums leading-tight">$ 24.680.000</div>
+                <span class="block text-[10px] leading-snug text-emerald-400">+28% interanual&nbsp;(5&nbsp;ciudades)</span>
+              </div>
+              <div class="admin-card p-4 rounded-2xl border border-amber-400/30">
+                <div class="flex items-center justify-between gap-2 text-stone-400 text-[11px] 2xl:text-xs mb-1">
+                  <span class="leading-tight">Comisión Neta (3%)</span>
+                  <svg class="w-4 h-4 shrink-0 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"></path></svg>
+                </div>
+                <div class="text-[clamp(1.05rem,1.35vw,1.875rem)] font-black text-amber-300 whitespace-nowrap tabular-nums leading-tight">$ 740.400</div>
+                <span class="block text-[10px] leading-snug text-stone-400">Liquidación automática&nbsp;CBU</span>
+              </div>
+              <div class="admin-card p-4 rounded-2xl">
+                <div class="flex items-center justify-between gap-2 text-stone-400 text-[11px] 2xl:text-xs mb-1">
+                  <span class="leading-tight">Solicitudes Radar</span>
+                  <svg class="w-4 h-4 shrink-0 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+                </div>
+                <div class="text-[clamp(1.05rem,1.35vw,1.875rem)] font-black text-white whitespace-nowrap tabular-nums leading-tight">682</div>
+                <span class="block text-[10px] leading-snug text-cyan-400">92% con cotización en&nbsp;&lt;&nbsp;3&nbsp;min</span>
+              </div>
+              <div class="admin-card p-4 rounded-2xl">
+                <div class="flex items-center justify-between gap-2 text-stone-400 text-[11px] 2xl:text-xs mb-1">
+                  <span class="leading-tight">Comercios Habilitados</span>
+                  <svg class="w-4 h-4 shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 21v-5a1 1 0 00-1-1h-4a1 1 0 00-1 1v5M4 10.95V19a2 2 0 002 2h12a2 2 0 002-2v-8.05M17.774 10.31a1.12 1.12 0 00-1.549 0 2.5 2.5 0 01-3.451 0 1.12 1.12 0 00-1.548 0 2.5 2.5 0 01-3.452 0 1.12 1.12 0 00-1.549 0 2.5 2.5 0 01-3.77-3.248l2.889-4.184A2 2 0 017 2h10a2 2 0 011.653.873l2.895 4.192a2.5 2.5 0 01-3.774 3.244"></path></svg>
+                </div>
+                <div class="text-[clamp(1.05rem,1.35vw,1.875rem)] font-black text-emerald-300 whitespace-nowrap tabular-nums leading-tight">{{ totalComercios() }}&nbsp;Locales</div>
+                <span class="block text-[10px] leading-snug text-stone-400">Alta 100% manual por&nbsp;admin</span>
+              </div>
+            </div>
+
+            <!-- Banner de Alta Exclusiva -->
+            <div class="admin-card p-5 rounded-3xl border border-amber-400/20 bg-gradient-to-r from-amber-400/10 via-black/40 to-transparent flex flex-col md:flex-row items-center justify-between gap-4">
+              <div class="flex items-center gap-4">
+                <div class="w-11 h-11 rounded-2xl bg-amber-400/20 border border-amber-400/40 flex items-center justify-center text-amber-300 shrink-0">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 01-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 011-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 011.52 0C14.51 3.81 17 5 19 5a1 1 0 011 1zM9 12l2 2 4-4"></path></svg>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h3 class="text-sm font-bold text-white tracking-tight">Padrón Exclusivo de Casas de Repuestos Multiciudad</h3>
+                    <span class="px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 font-mono text-[9px] font-bold border border-emerald-400/30">Cero registro público</span>
+                  </div>
+                  <p class="text-xs text-stone-300 font-mono mt-0.5">Cada local opera con CUIT validado en AFIP y radio de despacho de cadetería local auditado por vos en Trelew, Madryn, Rawson, Comodoro y Neuquén.</p>
+                </div>
+              </div>
+              <button (click)="mostrarVista('comercios')" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-stone-300 hover:text-white border border-white/10 font-mono text-xs shrink-0 flex items-center gap-2 transition">
+                <span>Ver Padrón Completo ({{ totalComercios() }})</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7"></path></svg>
+              </button>
+            </div>
+
+            <!-- Tabla de locales (resumen) -->
+            <div class="admin-card p-6 rounded-3xl space-y-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 border border-emerald-400/30 font-mono text-[9px] font-black uppercase">RED OFICIAL DE MOSTRADORES AUDITADOS</span>
+                  <h3 class="text-base font-bold text-white mt-1">Locales Comerciales Registrados por Ciudad ({{ totalComercios() }})</h3>
+                </div>
+                <button (click)="mostrarVista('comercios')" class="text-xs font-mono text-amber-400 hover:underline">Gestionar todos por ciudad →</button>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table class="w-full text-left font-mono text-xs 2xl:text-[13px]">
+                  <thead class="text-stone-400 border-b border-white/10 pb-2">
+                    <tr>
+                      <th class="p-3">LOCAL COMERCIAL</th>
+                      <th class="p-3">CIUDAD / ZONA</th>
+                      <th class="p-3">CUIT / RESPONSABLE</th>
+                      <th class="p-3">RADIO CADETERÍA</th>
+                      <th class="p-3 text-right">ACCESO / CREDENCIALES</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-white/5 text-stone-200">
+                    @for (c of comerciosResumen(); track c.id) {
+                      <tr class="hover:bg-white/5">
+                        <td class="p-3">
+                          <div class="font-bold text-white">{{ c.nombre }}</div>
+                          <div class="text-[10px] text-stone-400">{{ c.direccion }}</div>
+                        </td>
+                        <td class="p-3"><span class="px-2 py-0.5 rounded-full font-bold text-[10px] {{ ciudadPill(c.ciudad) }}">{{ ciudadLabel(c.ciudad) }}</span></td>
+                        <td class="p-3">
+                          <div>{{ c.cuit }}</div>
+                          <div class="text-[10px] text-emerald-400">{{ c.titular }} (Alta verificada)</div>
+                        </td>
+                        <td class="p-3 text-stone-300">{{ c.radio }}</td>
+                        <td class="p-3 text-right">
+                          <button (click)="reenviarAcceso(c)" class="px-2.5 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 text-[10px]">Reenviar Acceso</button>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        }
+
+        @case ('comercios') {
+          <!-- VISTA B: GESTIÓN DE COMERCIOS -->
+          <div class="space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <span class="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider">Módulo 1 · Red Multiciudad</span>
+                <h2 class="text-2xl 2xl:text-4xl font-black text-white tracking-tight">Padrón Centralizado de Locales Comerciales</h2>
+                <p class="text-xs font-mono text-stone-400 mt-0.5">Control de casas de repuestos habilitadas en Trelew, Madryn, Rawson, Comodoro y Neuquén.</p>
+              </div>
+              <button (click)="abrirModalAlta()" class="btn-action-primary px-4 py-2 rounded-xl font-mono font-bold text-xs flex items-center gap-1.5 shadow">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                <span>Dar de Alta Comercio</span>
+              </button>
+            </div>
+
+            <!-- Filtros por ciudad -->
+            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar font-mono text-xs pb-1">
+              @for (c of ciudadPillDashboard(); track c.key) {
+                <button [class]="ciudadBtnClase(c.key)" (click)="ciudadFiltro.set(c.key)">{{ c.texto }}</button>
+              }
+            </div>
+
+            <!-- Tabla completa -->
+            <div class="admin-card p-5 rounded-3xl space-y-3">
+              <div class="overflow-x-auto">
+                <table class="w-full text-left font-mono text-[11px] 2xl:text-[13px]">
+                  <thead class="text-stone-400 border-b border-white/10 pb-2">
+                    <tr>
+                      <th class="px-2.5 py-2.5">LOCAL / TITULAR</th>
+                      <th class="px-2.5 py-2.5">CIUDAD</th>
+                      <th class="px-2.5 py-2.5">CUENTA</th>
+                      <th class="px-2.5 py-2.5">ESTADO</th>
+                      <th class="px-2.5 py-2.5">RENDIMIENTO</th>
+                      <th class="px-2.5 py-2.5 text-right">ACCIONES</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-white/5 text-stone-300">
+                    @for (c of comerciosFiltrados(); track c.id) {
+                      <tr class="hover:bg-white/5">
+                        <td class="px-2.5 py-2.5 font-bold text-white">
+                          <div>{{ c.nombre }}</div>
+                          <div class="text-[10px] text-stone-400">{{ c.direccion }} · {{ c.titular }}</div>
+                        </td>
+                        <td class="px-2.5 py-2.5"><span class="whitespace-nowrap px-2 py-0.5 rounded-full text-[10px] font-bold {{ ciudadPill(c.ciudad) }}">{{ ciudadLabel(c.ciudad).split(' (')[0] }}</span></td>
+                        <td class="px-2.5 py-2.5">
+                          <div class="flex items-center gap-2">
+                            <div class="min-w-0">
+                              <div class="font-bold text-cyan-300 whitespace-nowrap">{{ c.aliasCuenta }}</div>
+                              <div class="text-[10px] text-stone-400 truncate max-w-[130px]" [title]="'CBU: ' + c.cbu">{{ c.cbu }}</div>
+                            </div>
+                            <button (click)="copiarCuenta(c)" title="Copiar alias + CBU" class="shrink-0 p-1.5 rounded-lg bg-stone-800 hover:bg-amber-400 hover:text-stone-950 text-stone-300 transition cursor-pointer">
+                              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path></svg>
+                            </button>
+                          </div>
+                        </td>
+                        <td class="px-2.5 py-2.5">
+                          <span class="whitespace-nowrap px-2 py-0.5 rounded-full text-[10px] font-bold {{ c.estado === 'Suspendido' ? 'bg-rose-500/20 text-rose-300' : 'bg-emerald-400/20 text-emerald-300' }}">{{ c.estado === 'Activo · En Línea' ? 'En Línea' : c.estado }}</span>
+                        </td>
+                        <td class="px-2.5 py-2.5 leading-tight">
+                          <div class="font-bold {{ c.estado === 'Suspendido' ? 'text-stone-500' : c.tiempoRespuesta.startsWith('~2') || c.tiempoRespuesta.startsWith('~3') ? 'text-emerald-300' : 'text-amber-300' }}">{{ c.tiempoRespuesta }}</div>
+                          <div class="text-[10px] font-bold {{ c.winRate === 'nuevo' ? 'text-cyan-300' : 'text-amber-300' }}">Win {{ c.winRate }}</div>
+                        </td>
+                        <td class="px-2.5 py-2.5 text-right space-x-1 whitespace-nowrap">
+                          <button (click)="reenviarAcceso(c)" class="px-2 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 text-[10px]">Editar</button>
+                          <button (click)="suspender(c)" class="px-2 py-1 rounded-lg {{ c.estado === 'Suspendido' ? 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30' : 'bg-rose-500/20 text-rose-300 hover:bg-rose-500/30' }} text-[10px]">
+                            {{ c.estado === 'Suspendido' ? 'Reactivar' : 'Suspender' }}
+                          </button>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        }
+
+        @case ('cobertura') {
+          <!-- VISTA: COBERTURA -->
+          <div class="space-y-6">
+            <div>
+              <span class="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider">Geolocalización &amp; Enrutamiento</span>
+              <h2 class="text-2xl 2xl:text-4xl font-black text-white tracking-tight">Mapa de Calor y Radios de Cobertura</h2>
+              <p class="text-xs font-mono text-stone-400 mt-0.5">Control de cobertura para Trelew, Rawson y Puerto Madryn. Asigná comercios para evitar zonas ciegas.</p>
+            </div>
+
+            <div class="admin-card p-6 rounded-3xl relative overflow-hidden space-y-4">
+              <!-- Filtro de demanda por ciudad -->
+              <div class="flex items-center gap-2 overflow-x-auto no-scrollbar font-mono text-xs pb-1">
+                <span class="text-stone-400 text-[11px] uppercase tracking-wider shrink-0 flex items-center gap-1 font-bold">
+                  Demanda:
+                </span>
+                @for (c of heatCiudades(); track c.key) {
+                  <button [class]="heatBtnClase(c.key)" (click)="toggleHeat(c.key)">
+                    {{ c.label.split(' (')[0] }} ({{ c.compras }})
+                  </button>
+                }
+              </div>
+
+              <div class="relative">
+                <div id="mapaCobertura" class="relative w-full rounded-2xl overflow-hidden border border-white/10"></div>
+
+                <!-- Leyenda de densidad (esquina inferior derecha del mapa) -->
+                <div class="absolute bottom-4 right-4 z-[500] px-3.5 py-2.5 rounded-xl bg-stone-950/85 backdrop-blur-md border border-white/15 shadow-xl pointer-events-none">
+                  <div class="font-mono text-[9px] uppercase tracking-wider text-stone-400 font-bold mb-1.5">Demanda de repuestos</div>
+                  <div class="w-40 h-2.5 rounded-full" style="background:linear-gradient(90deg, #0E7490 0%, #22D3EE 26%, #FACC15 44%, #F59E0B 62%, #EF4444 81%, #F43F5E 100%)"></div>
+                  <div class="flex justify-between font-mono text-[9px] text-stone-300 mt-1">
+                    <span>Baja</span>
+                    <span>Media</span>
+                    <span>Alta</span>
+                  </div>
+                </div>
+              </div>
+
+              <p class="text-[10px] font-mono text-stone-500 text-center">La intensidad del color muestra dónde se concentran los pedidos · pasá el mouse para ver la zona y su volumen exacto</p>
+            </div>
+          </div>
+        }
+
+        @case ('incompatibilidades') {
+          <!-- VISTA: INCOMPATIBILIDADES -->
+          <div class="space-y-6">
+            <div>
+              <span class="text-[10px] font-mono text-rose-400 font-bold uppercase tracking-wider">Calidad &amp; Garantía de Calce</span>
+              <h2 class="text-2xl 2xl:text-4xl font-black text-white tracking-tight">Monitor de Incompatibilidades y Reclamos</h2>
+              <p class="text-xs font-mono text-stone-400 mt-0.5">Auditoría cuando la pieza despachada por el repuestero no coincide con la foto de muestra del cliente.</p>
+            </div>
+
+            <!-- Reclamos por ciudad -->
+            <div class="admin-card p-5 rounded-3xl space-y-3">
+              <div class="flex items-center justify-between font-mono text-xs">
+                <span class="text-stone-400 text-[11px] uppercase tracking-wider font-bold">Reclamos por ciudad</span>
+                <span class="text-stone-400 text-[11px]">
+                  Total: <strong class="text-rose-300">{{ totalReclamos('abiertos') }} abiertos</strong> · <strong class="text-emerald-300">{{ totalReclamos('resueltos') }} resueltos</strong>
+                </span>
+              </div>
+              <div class="flex flex-wrap gap-2 font-mono text-xs">
+                @for (r of RECLAMOS_POR_CIUDAD; track r.key) {
+                  <div [class]="reclamoPillClase(r)" (click)="seleccionarReclamoCiudad(r.key)" role="button" [title]="'Ver reclamos de ' + ciudadLabel(r.key)">
+                    <span class="font-bold">{{ ciudadLabel(r.key).split(' (')[0] }}</span>
+                    <span class="text-[10px]">{{ r.abiertos }} abierto{{ r.abiertos === 1 ? '' : 's' }} · {{ r.resueltos }} resuelto{{ r.resueltos === 1 ? '' : 's' }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Casos de la ciudad seleccionada -->
+            @for (caso of casosDeCiudad(); track caso.id) {
+              @if (caso.detallado) {
+              <div class="admin-card p-6 rounded-3xl border border-rose-500/40 space-y-5">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/10 font-mono text-xs">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 rounded bg-rose-500 text-stone-950 font-black text-[10px] uppercase">CASO #{{ caso.id }}</span>
+                    <span class="px-2 py-0.5 rounded-full {{ estadoClase(caso.estado) }} text-[10px] font-bold">{{ caso.estado }}</span>
+                  </div>
+                  <h3 class="text-base font-extrabold text-white mt-1">{{ caso.titulo }}</h3>
+                  <p class="text-stone-400">{{ caso.partes }}</p>
+                </div>
+                <div class="text-left sm:text-right">
+                  <span class="text-stone-400">Monto retenido en escrow:</span>
+                  <div class="text-lg font-bold text-amber-300 font-mono">{{ caso.monto }}</div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
+                <div class="p-4 rounded-2xl bg-black/60 border border-emerald-500/30 space-y-2">
+                  <div class="flex items-center justify-between text-emerald-400 font-bold">
+                    <span>1. Muestra Subida por el Comprador</span>
+                    <span class="text-[10px]">Al armar carrito</span>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <img src="/img/muestra-pastillas.jpg" alt="Muestra del comprador" class="w-16 h-16 rounded-xl object-cover border border-emerald-400 shrink-0" />
+                    <div class="text-[11px] text-stone-300">
+                      <p class="font-bold text-white">Pastilla TRW con sensor y ranura lateral</p>
+                      <p class="text-stone-400 text-[10px] mt-0.5">Foto nítida de la pieza vieja desmontada.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-black/60 border border-rose-500/30 space-y-2">
+                  <div class="flex items-center justify-between text-rose-400 font-bold">
+                    <span>2. Pieza Despachada por el Comercio</span>
+                    <span class="text-[10px]">Entregada por moto</span>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <img src="/img/rep-pastillas.svg" alt="Pieza despachada" class="w-16 h-16 rounded-xl object-contain bg-neutral-950 border border-rose-400 shrink-0 p-1" />
+                    <div class="text-[11px] text-stone-300">
+                      <p class="font-bold text-white">Pastilla Bosch sin sensor integrado</p>
+                      <p class="text-stone-400 text-[10px] mt-0.5">Discrepancia técnica: no coincide con la muestra.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="pt-3 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 font-mono text-xs">
+                <div class="text-stone-300">
+                  @if (disputaResuelta() === 'pendiente') {
+                    <span>Dictamen: </span><strong class="text-white">Fallo a favor del comprador por discrepancia de muestra fotográfica.</strong>
+                  } @else {
+                    <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold uppercase text-[10px]">Caso resuelto</span>
+                  }
+                </div>
+
+                @if (disputaResuelta() === 'pendiente') {
+                  <div class="flex items-center gap-2">
+                    <button (click)="resolverDisputa('reembolso')" class="px-4 py-2 rounded-xl bg-rose-500 text-stone-950 font-bold hover:bg-rose-400 transition">Reembolsar $26.800 al Cliente</button>
+                    <button (click)="resolverDisputa('cambio')" class="px-4 py-2 rounded-xl bg-amber-400 text-stone-950 font-bold hover:bg-amber-300 transition">Exigir Cambio Bonificado</button>
+                  </div>
+                }
+              </div>
+              </div>
+              } @else {
+              <!-- Tarjeta compacta de caso -->
+              <div class="admin-card p-4 rounded-2xl border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 font-mono text-xs">
+                <div class="flex items-center gap-3 min-w-0">
+                  <span class="px-2 py-0.5 rounded bg-stone-800 text-stone-300 font-black text-[10px] uppercase shrink-0">CASO #{{ caso.id }}</span>
+                  <div class="min-w-0">
+                    <div class="font-extrabold text-white truncate">{{ caso.titulo }}</div>
+                    <div class="text-[10px] text-stone-400 truncate">{{ caso.partes }}</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3 shrink-0">
+                  <span class="font-bold text-amber-300">{{ caso.monto }}</span>
+                  <span class="px-2 py-0.5 rounded-full {{ estadoClase(caso.estado) }} text-[10px] font-bold">{{ caso.estado }}</span>
+                </div>
+              </div>
+              }
+            } @empty {
+              <div class="admin-card p-8 rounded-3xl border border-emerald-500/30 text-center font-mono text-xs">
+                <p class="text-emerald-300 font-bold">Sin reclamos activos en {{ ciudadLabel(reclamoCiudad()) }}.</p>
+                <p class="text-stone-400 text-[10px] mt-1">Elegí otra ciudad en los filtros de arriba para ver sus casos.</p>
+              </div>
+            }
+          </div>
+        }
+
+        @case ('demanda') {
+          <!-- VISTA: DEMANDA DE REPUESTOS -->
+          <div class="space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <span class="text-[10px] font-mono text-amber-400 font-bold uppercase tracking-wider">Inteligencia de Mercado Patagonia</span>
+                <h2 class="text-2xl 2xl:text-4xl font-black text-white tracking-tight">Repuestos Más Pedidos: Autos y Camionetas</h2>
+                <p class="text-xs font-mono text-stone-400 mt-0.5">Volumen real de consultas del radar en Trelew, Rawson y Puerto Madryn para abastecimiento mayorista.</p>
+              </div>
+
+              <div class="flex items-center gap-1.5 p-1 rounded-xl bg-black/60 border border-white/10 font-mono text-xs">
+                <button [class]="demandaBtnClase('all')" (click)="filtroDemanda.set('all')">Todos (418)</button>
+                <button [class]="demandaBtnClase('trucks')" (click)="filtroDemanda.set('trucks')">Camionetas (48%)</button>
+                <button [class]="demandaBtnClase('cars')" (click)="filtroDemanda.set('cars')">Autos (52%)</button>
+              </div>
+            </div>
+
+            <!-- 3 vehículos líderes -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
+              <div class="admin-card p-4 rounded-2xl border border-cyan-400/30 bg-gradient-to-br from-cyan-400/10 to-transparent space-y-1.5">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class="w-7 h-7 rounded-xl bg-cyan-400/20 border border-cyan-400/40 flex items-center justify-center shrink-0">
+                      <svg class="w-4 h-4 text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 8h11v8H2zM13 11h4l3 3v2h-2M2 16h1m10 0h2"></path><circle cx="5.5" cy="17.5" r="1.5"></circle><circle cx="16.5" cy="17.5" r="1.5"></circle></svg>
+                    </span>
+                    <span class="text-cyan-300 text-[10px] uppercase tracking-wider font-bold leading-tight">Camioneta<br/>Más Consultada</span>
+                  </div>
+                  <span class="px-1.5 py-0.5 rounded bg-cyan-400/20 text-cyan-300 font-bold text-[10px] shrink-0">#1 PICK-UP</span>
+                </div>
+                <div class="text-base font-extrabold text-white leading-snug">Toyota Hilux (2.4 / 2.8 / 3.0)</div>
+                <div class="text-xl font-black text-cyan-300 whitespace-nowrap">114 consultas <span class="text-xs font-normal text-stone-400">este mes</span></div>
+                <p class="text-[10px] text-stone-400 leading-snug">Pieza líder: Kit de embrague y filtros de combustible.</p>
+              </div>
+
+              <div class="admin-card p-4 rounded-2xl border border-amber-400/30 bg-gradient-to-br from-amber-400/10 to-transparent space-y-1.5">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class="w-7 h-7 rounded-xl bg-amber-400/20 border border-amber-400/40 flex items-center justify-center shrink-0">
+                      <svg class="w-4 h-4 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 16v-4l2-5h14l2 5v4h-2M5 16h14M3 16h2m16 0h-2"></path><circle cx="7" cy="17.5" r="1.5"></circle><circle cx="17" cy="17.5" r="1.5"></circle></svg>
+                    </span>
+                    <span class="text-amber-300 text-[10px] uppercase tracking-wider font-bold leading-tight">Auto<br/>Más Consultado</span>
+                  </div>
+                  <span class="px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 font-bold text-[10px] shrink-0">#1 SEDÁN/HATCH</span>
+                </div>
+                <div class="text-base font-extrabold text-white leading-snug">VW Gol Trend / Power 1.6</div>
+                <div class="text-xl font-black text-amber-300 whitespace-nowrap">96 consultas <span class="text-xs font-normal text-stone-400">este mes</span></div>
+                <p class="text-[10px] text-stone-400 leading-snug">Pieza líder: Pastillas de freno delanteras y amortiguadores.</p>
+              </div>
+
+              <div class="admin-card p-4 rounded-2xl border border-emerald-400/30 bg-gradient-to-br from-emerald-400/10 to-transparent space-y-1.5">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class="w-7 h-7 rounded-xl bg-emerald-400/20 border border-emerald-400/40 flex items-center justify-center shrink-0">
+                      <svg class="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 22V4a2 2 0 00-2-2H6a2 2 0 00-2 2v18M2 22h12M14 9h3l3 3v7a2 2 0 01-2 2h-4"></path></svg>
+                    </span>
+                    <span class="text-emerald-300 text-[10px] uppercase tracking-wider font-bold leading-tight">Diésel Mediano<br/>Líder</span>
+                  </div>
+                  <span class="px-1.5 py-0.5 rounded bg-emerald-400/20 text-emerald-300 font-bold text-[10px] shrink-0">#1 ALTA GAMA</span>
+                </div>
+                <div class="text-base font-extrabold text-white leading-snug">VW Passat / Vento 2.0 TDI</div>
+                <div class="text-xl font-black text-emerald-300 whitespace-nowrap">58 consultas <span class="text-xs font-normal text-stone-400">este mes</span></div>
+                <p class="text-[10px] text-stone-400 leading-snug">Pieza líder: Bomba de agua 16V y kit de distribución.</p>
+              </div>
+            </div>
+
+            <!-- Tabla ranking -->
+            <div class="admin-card p-6 rounded-3xl space-y-4">
+              <div class="flex items-center justify-between pb-2 border-b border-white/10 font-mono text-xs">
+                <span class="font-bold text-white uppercase tracking-wider">Ranking Detallado de Repuestos en Demanda</span>
+                <span class="text-stone-400">Datos consolidados del radar Trelew</span>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table class="w-full text-left font-mono text-xs 2xl:text-[13px]">
+                  <thead class="text-stone-400 border-b border-white/10 pb-2 text-[11px]">
+                    <tr>
+                      <th class="p-2.5">REPUESTO EXACTO</th>
+                      <th class="p-2.5">CATEGORÍA</th>
+                      <th class="p-2.5">VEHÍCULO ASOCIADO</th>
+                      <th class="p-2.5">TIPO</th>
+                      <th class="p-2.5 text-center">SOLICITUDES</th>
+                      <th class="p-2.5 text-right">PRECIO MEDIO</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-white/5 text-stone-200">
+                    @for (d of demandaFiltrada(); track d.repuesto) {
+                      <tr class="hover:bg-white/5">
+                        <td class="p-2.5 font-bold text-white">
+                          <div>{{ d.repuesto }}</div>
+                          <div class="text-[10px] text-stone-400">{{ d.marcas }}</div>
+                        </td>
+                        <td class="p-2.5"><span class="px-2 py-0.5 rounded-full text-[10px] {{ d.categoriaClase }}">{{ d.categoria }}</span></td>
+                        <td class="p-2.5 font-bold text-stone-200">{{ d.vehiculo }}</td>
+                        <td class="p-2.5">
+                          @if (d.tipo === 'Camioneta') {
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-cyan-400/15 text-cyan-300 text-[10px] font-bold whitespace-nowrap"><svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 8h11v8H2zM13 11h4l3 3v2h-2M2 16h1m10 0h2"></path><circle cx="5.5" cy="17.5" r="1.5"></circle><circle cx="16.5" cy="17.5" r="1.5"></circle></svg>Camioneta</span>
+                          } @else {
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-400/15 text-amber-300 text-[10px] font-bold whitespace-nowrap"><svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 16v-4l2-5h14l2 5v4h-2M5 16h14M3 16h2m16 0h-2"></path><circle cx="7" cy="17.5" r="1.5"></circle><circle cx="17" cy="17.5" r="1.5"></circle></svg>Auto</span>
+                          }
+                        </td>
+                        <td class="p-2.5 text-center text-amber-300 font-bold">{{ d.pedidos }} pedidos</td>
+                        <td class="p-2.5 text-right font-bold text-white">{{ d.precio }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        }
+
+        @case ('solicitudes') {
+          <div class="space-y-6">
+            <div>
+              <span class="text-[10px] font-mono text-emerald-400 font-bold uppercase tracking-wider">Módulo 2</span>
+              <h2 class="text-2xl 2xl:text-4xl font-black text-white tracking-tight">Buscador Maestro de Solicitudes &amp; Tokens</h2>
+              <p class="text-xs font-mono text-stone-400 mt-0.5">Control de enlaces temporales de mecánicos.</p>
+            </div>
+            <div class="admin-card p-5 rounded-3xl space-y-3 font-mono text-xs">
+              <div class="p-3 rounded-xl bg-black/50 border border-white/10 flex items-center justify-between">
+                <div>
+                  <div class="font-bold text-white">Taller Don Bosco · Lucas R. (Passat 2.0 TDI)</div>
+                  <div class="text-[10px] text-stone-400">Token: <code class="text-amber-300">trw-fxn892-passat</code></div>
+                </div>
+                @if (!tokenRevocado()) {
+                  <button (click)="revocarToken()" class="px-3 py-1 rounded-lg bg-rose-500/20 text-rose-300 text-[10px] font-bold">Revocar</button>
+                } @else {
+                  <span class="px-3 py-1 rounded-lg bg-stone-800 text-stone-500 text-[10px] font-bold">Revocado</span>
+                }
+              </div>
+            </div>
+          </div>
+        }
+
+        @case ('facturacion') {
+          <div class="space-y-6">
+            <div>
+              <span class="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider">Módulo 3</span>
+              <h2 class="text-2xl 2xl:text-4xl font-black text-white tracking-tight">Suscripciones, Liquidación &amp; Comisión 3%</h2>
+              <p class="text-xs font-mono text-stone-400 mt-0.5">CBU y liquidaciones de comercios adheridos.</p>
+            </div>
+            <div class="admin-card p-6 rounded-3xl font-mono text-xs text-stone-400">
+              Módulo en preparación: conexiones AFIP, liquidación automática por CBU y detalle de comisiones por comercio.
+            </div>
+          </div>
+        }
+
+        @case ('usuarios') {
+          <div class="space-y-6">
+            <div>
+              <span class="text-[10px] font-mono text-purple-400 font-bold uppercase tracking-wider">Módulo 4</span>
+              <h2 class="text-2xl 2xl:text-4xl font-black text-white tracking-tight">Usuarios &amp; Cédula Verde Verificada</h2>
+            </div>
+            <div class="admin-card p-6 rounded-3xl font-mono text-xs text-stone-400">
+              Módulo en preparación: verificación de cédulas verdes, extracción de chasis y reclamos de usuarios.
+            </div>
+          </div>
+        }
+
+        @case ('logistica') {
+          <div class="space-y-6">
+
+            <div>
+              <span class="text-[10px] font-mono text-amber-400 font-bold uppercase tracking-wider">Módulo 5 · Cadetería en Ruta</span>
+              <h2 class="text-2xl 2xl:text-4xl font-black text-white tracking-tight">Flota de Motos y Moto-Mensajería</h2>
+              <p class="text-xs font-mono text-stone-400 mt-1">Validación de cadetes y motos: requisitos de alta, documentación del vehículo y pagos semanales.</p>
+            </div>
+
+            <!-- KPIs de flota -->
+            <div class="grid grid-cols-2 2xl:grid-cols-4 gap-4 font-mono">
+              <div class="admin-card p-4 rounded-2xl border border-white/10">
+                <div class="text-stone-400 text-[10px] uppercase tracking-wider font-bold">Cadetes en Flota</div>
+                <div class="text-2xl font-black text-white mt-1">{{ CADETES.length }}</div>
+                <div class="text-[10px] text-stone-400 mt-0.5">Registrados en la red</div>
+              </div>
+              <div class="admin-card p-4 rounded-2xl border border-emerald-500/30">
+                <div class="text-stone-400 text-[10px] uppercase tracking-wider font-bold">Habilitados</div>
+                <div class="text-2xl font-black text-emerald-300 mt-1">{{ cadetesHabilitados() }}</div>
+                <div class="text-[10px] text-stone-400 mt-0.5">Docs completos · pueden operar</div>
+              </div>
+              <div class="admin-card p-4 rounded-2xl border border-rose-500/30">
+                <div class="text-stone-400 text-[10px] uppercase tracking-wider font-bold">Con Docs Pendientes</div>
+                <div class="text-2xl font-black text-rose-300 mt-1">{{ CADETES.length - cadetesHabilitados() }}</div>
+                <div class="text-[10px] text-stone-400 mt-0.5">Bloqueados hasta regularizar</div>
+              </div>
+              <div class="admin-card p-4 rounded-2xl border border-amber-400/30">
+                <div class="text-stone-400 text-[10px] uppercase tracking-wider font-bold">Pago Semanal Estimado</div>
+                <div class="text-2xl font-black text-amber-300 mt-1">{{ CADETES.length }} cargas</div>
+                <div class="text-[10px] text-stone-400 mt-0.5">Por CBU/CVU del cadete</div>
+              </div>
+            </div>
+
+            <!-- Requisitos + documentación -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div class="admin-card p-5 rounded-3xl space-y-3">
+                <div class="flex items-center gap-2 font-mono text-xs">
+                  <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                  <span class="text-stone-300 text-[11px] uppercase tracking-wider font-bold">Requisitos del Cadete (personas)</span>
+                </div>
+                <ul class="space-y-2 font-mono text-xs">
+                  @for (r of REQUISITOS_CADETE; track r.titulo) {
+                    <li class="flex items-start gap-2.5 p-2.5 rounded-xl bg-black/40 border border-white/5">
+                      <span class="w-4 h-4 mt-0.5 shrink-0 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-[9px] font-black">✓</span>
+                      <div>
+                        <span class="font-bold text-white">{{ r.titulo }}</span>
+                        <p class="text-[10px] text-stone-400 mt-0.5">{{ r.detalle }}</p>
+                      </div>
+                    </li>
+                  }
+                </ul>
+              </div>
+
+              <div class="admin-card p-5 rounded-3xl space-y-3">
+                <div class="flex items-center gap-2 font-mono text-xs">
+                  <svg class="w-4 h-4 text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"></path></svg>
+                  <span class="text-stone-300 text-[11px] uppercase tracking-wider font-bold">Documentación de la Moto</span>
+                </div>
+                <p class="text-[10px] font-mono text-stone-400">El cadete carga estos tres documentos en la app y el admin los valida antes de habilitar los viajes.</p>
+                <ul class="space-y-2 font-mono text-xs">
+                  @for (d of DOCS_MOTO; track d.titulo) {
+                    <li class="flex items-start gap-2.5 p-2.5 rounded-xl bg-black/40 border border-white/5">
+                      <span class="w-4 h-4 mt-0.5 shrink-0 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-[9px] font-black">📄</span>
+                      <div>
+                        <span class="font-bold text-white">{{ d.titulo }}</span>
+                        <p class="text-[10px] text-stone-400 mt-0.5">{{ d.detalle }}</p>
+                      </div>
+                    </li>
+                  }
+                </ul>
+              </div>
+            </div>
+
+            <!-- Consideraciones por zona -->
+            <div class="admin-card p-5 rounded-3xl space-y-3">
+              <div class="flex items-center justify-between font-mono text-xs">
+                <span class="text-stone-300 text-[11px] uppercase tracking-wider font-bold">Consideraciones por Zona (jurisdicción local)</span>
+                <span class="text-[10px] text-stone-400">Según la ciudad pueden exigirse requisitos adicionales de tránsito para mensajería</span>
+              </div>
+              <div class="flex flex-wrap gap-2 font-mono text-xs">
+                @for (z of ZONAS_LOGISTICA; track z.key) {
+                  <div [class]="zonaLogisticaPillClase(z.key)" (click)="seleccionarZonaLogistica(z.key)" role="button" [title]="'Requisitos logísticos de ' + ciudadLabel(z.key)">
+                    <span class="font-bold">{{ ciudadLabel(z.key).split(' (')[0] }}</span>
+                    <span class="text-[10px] {{ z.extra ? 'text-amber-300' : '' }}">{{ cadetesDeZona(z.key).length }} cadete{{ cadetesDeZona(z.key).length === 1 ? '' : 's' }}</span>
+                  </div>
+                }
+              </div>
+              @if (zonaLogisticaActual(); as zona) {
+                <div class="p-3.5 rounded-2xl border font-mono text-xs {{ zona.extra ? 'bg-amber-500/10 border-amber-400/40' : 'bg-black/40 border-white/5' }}">
+                  <div class="flex items-center justify-between gap-3">
+                    <span class="font-bold {{ zona.extra ? 'text-amber-300' : 'text-white' }}">{{ ciudadLabel(zona.key).split(' (')[0] }}</span>
+                    @if (zona.extra) {
+                      <span class="px-2 py-0.5 rounded-full bg-amber-400 text-stone-950 text-[9px] font-black uppercase">Regulación local</span>
+                    } @else {
+                      <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[9px] font-bold uppercase">Base</span>
+                    }
+                  </div>
+                  <p class="text-stone-300 mt-1.5">{{ zona.requisito }}</p>
+                </div>
+              }
+              <p class="text-[10px] font-mono text-stone-400">Referencia nacional: en CABA también se exige constancia de inscripción fiscal (Monotributo) y registros/cursos de seguridad vial para mensajería. Aplica a cada ciudad lo que disponga su jurisdicción.</p>
+            </div>
+
+            <!-- Flota: estado de documentación -->
+            <div class="admin-card p-5 rounded-3xl space-y-3">
+              <div class="flex items-center justify-between font-mono text-xs">
+                <span class="text-stone-300 text-[11px] uppercase tracking-wider font-bold">Flota · Estado de Documentación</span>
+                <span class="text-[10px] text-stone-400">{{ CADETES.length }} cadetes · pago semanal por CBU/CVU</span>
+              </div>
+              <div class="space-y-2 font-mono text-xs">
+                @for (c of CADETES; track c.id) {
+                  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-2xl bg-black/40 border border-white/5">
+                    <div class="flex items-center gap-3 min-w-0">
+                      <span class="w-8 h-8 shrink-0 rounded-full bg-amber-400/15 text-amber-300 flex items-center justify-center font-black text-xs">{{ c.nombre.charAt(0) }}</span>
+                      <div class="min-w-0">
+                        <div class="font-bold text-white truncate">{{ c.nombre }}</div>
+                        <div class="text-[10px] text-stone-400 truncate">{{ ciudadLabel(c.ciudad).split(' (')[0] }} · {{ c.moto }}</div>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-3 shrink-0">
+                      <div class="flex items-center gap-1.5 text-[10px]">
+                        <span class="px-1.5 py-0.5 rounded {{ c.docs.personales ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/20 text-rose-300' }}">Personales</span>
+                        <span class="px-1.5 py-0.5 rounded {{ c.docs.licencia ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/20 text-rose-300' }}">Licencia</span>
+                        <span class="px-1.5 py-0.5 rounded {{ c.docs.cedula ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/20 text-rose-300' }}">Cédula</span>
+                        <span class="px-1.5 py-0.5 rounded {{ c.docs.seguro ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/20 text-rose-300' }}">Seguro</span>
+                      </div>
+                      <span class="font-bold text-amber-300">{{ c.pagoSemanal }}</span>
+                      <span class="px-2 py-0.5 rounded-full {{ docsCadeteEstado(c).clase }} text-[10px] font-bold">{{ docsCadeteEstado(c).label }}</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+
+          </div>
+        }
+      }
+
+    </section>
+  </div>
+</div>
+
+<!-- ══════════ MODAL: ALTA MANUAL DE LOCAL COMERCIAL ══════════ -->
+@if (modalAltaAbierto()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md" (click)="cerrarModalAlta()">
+    <div class="admin-glass p-7 sm:p-8 rounded-[36px] max-w-xl w-full text-white space-y-5 border border-amber-400/50 shadow-2xl" (click)="$event.stopPropagation()">
+
+      <div class="flex items-start justify-between border-b border-white/10 pb-4">
+        <div>
+          <span class="px-2 py-0.5 rounded-full bg-amber-400 text-stone-950 font-mono text-[9px] font-black uppercase">ALTA MANUAL EXCLUSIVA</span>
+          <h2 class="text-xl font-bold tracking-tight text-white mt-1">Dar de Alta Local Comercial (Red Multiciudad)</h2>
+          <p class="text-xs font-mono text-stone-400">Ingresá los datos del comercio. Se generará su enlace oficial con CUIT verificado.</p>
+        </div>
+        <button (click)="cerrarModalAlta()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-stone-400 hover:text-white">✕</button>
+      </div>
+
+      <form (ngSubmit)="confirmarAlta()" #formAlta="ngForm" class="space-y-4 font-mono text-xs">
+        <div class="space-y-1">
+          <label class="block text-stone-300 font-bold uppercase text-[10px]" for="regName">Nombre Comercial del Local:</label>
+          <input type="text" id="regName" name="regName" required [(ngModel)]="altaNombre" placeholder="Ej: Repuestos Fontana, Autopartes Chubut, Madryn Frenos..." class="w-full bg-black/80 border border-white/20 focus:border-amber-400 rounded-xl p-2.5 text-white text-xs focus:outline-none" />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="space-y-1">
+            <label class="block text-stone-300 font-bold uppercase text-[10px]" for="regCuit">CUIT Comercial (AFIP):</label>
+            <input type="text" id="regCuit" name="regCuit" required [(ngModel)]="altaCuit" placeholder="30-XXXXXXXX-X" class="w-full bg-black/80 border border-white/20 focus:border-amber-400 rounded-xl p-2.5 text-white text-xs focus:outline-none" />
+          </div>
+          <div class="space-y-1">
+            <label class="block text-stone-300 font-bold uppercase text-[10px]" for="regOwner">Operador / Dueño Responsable:</label>
+            <input type="text" id="regOwner" name="regOwner" required [(ngModel)]="altaTitular" placeholder="Ej: Marcelo Gómez" class="w-full bg-black/80 border border-white/20 focus:border-amber-400 rounded-xl p-2.5 text-white text-xs focus:outline-none" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="space-y-1">
+            <label class="block text-stone-300 font-bold uppercase text-[10px]" for="regAddress">Dirección Local:</label>
+            <input type="text" id="regAddress" name="regAddress" required [(ngModel)]="altaDireccion" placeholder="Ej: Av. Yrigoyen 720 / Gales 820" class="w-full bg-black/80 border border-white/20 focus:border-amber-400 rounded-xl p-2.5 text-white text-xs focus:outline-none" />
+          </div>
+          <div class="space-y-1">
+            <label class="block text-stone-300 font-bold uppercase text-[10px]" for="regCity">Ciudad / Hub Operativo:</label>
+            <select id="regCity" name="regCity" [(ngModel)]="altaCiudad" class="w-full bg-black/80 border border-white/20 focus:border-amber-400 rounded-xl p-2.5 text-amber-300 text-xs focus:outline-none font-bold">
+              <option value="trelew">Trelew (Chubut) · Radio 12 km</option>
+              <option value="madryn">Puerto Madryn (Chubut) · Radio 15 km</option>
+              <option value="comodoro">Comodoro Rivadavia (Chubut) · Radio 20 km</option>
+              <option value="rawson">Rawson &amp; Playa Unión (Chubut) · Radio 10 km</option>
+              <option value="neuquen">Neuquén Capital · Radio 25 km</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <label class="block text-stone-300 font-bold uppercase text-[10px]" for="regPhone">WhatsApp del Mostrador (Para alertas y moto):</label>
+          <input type="text" id="regPhone" name="regPhone" required [(ngModel)]="altaWhatsapp" placeholder="Ej: +54 9 280 442-8812" class="w-full bg-black/80 border border-white/20 focus:border-emerald-400 rounded-xl p-2.5 text-emerald-300 text-xs focus:outline-none" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="space-y-1">
+            <label class="block text-stone-300 font-bold uppercase text-[10px]" for="regAlias">Alias de Cuenta (para transferencias):</label>
+            <input type="text" id="regAlias" name="regAlias" [(ngModel)]="altaAlias" placeholder="Ej: madryn.frenos" class="w-full bg-black/80 border border-white/20 focus:border-cyan-400 rounded-xl p-2.5 text-cyan-300 text-xs focus:outline-none" />
+          </div>
+          <div class="space-y-1">
+            <label class="block text-stone-300 font-bold uppercase text-[10px]" for="regCbu">CBU / Cuenta Corriente:</label>
+            <input type="text" id="regCbu" name="regCbu" [(ngModel)]="altaCbu" placeholder="22 dígitos" class="w-full bg-black/80 border border-white/20 focus:border-cyan-400 rounded-xl p-2.5 text-cyan-300 text-xs focus:outline-none" />
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-white/10 flex items-center justify-end gap-3">
+          <button type="button" (click)="cerrarModalAlta()" class="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-stone-300 font-bold transition">Cancelar</button>
+          <button type="submit" class="btn-action-primary px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 cursor-pointer shadow-lg">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+            <span>Confirmar Alta y Generar Acceso</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- TOAST DE ACCIONES ADMIN -->
+@if (toastVisible()) {
+  <div class="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl bg-black/90 border border-amber-400/50 text-white font-mono text-xs flex items-center gap-3 shadow-2xl max-w-sm">
+    <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 01-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 011-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 011.52 0C14.51 3.81 17 5 19 5a1 1 0 011 1zM9 12l2 2 4-4"></path></svg>
+    <span>{{ toastMensaje() }}</span>
+  </div>
+}

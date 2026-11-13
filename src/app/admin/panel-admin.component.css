@@ -1,0 +1,165 @@
+/* ═══════════════════════════════════════════════════════════
+   Panel Super Administrador — Master Console
+   Estética dark console sobre el fondo cálido Patagonia.
+   ═══════════════════════════════════════════════════════════ */
+
+:host {
+  display: block;
+  min-height: 100vh;
+  background: radial-gradient(120% 90% at 50% -10%, #D49B7A 0%, #D9A07E 22%, #CF8E6C 48%, #A85A3A 78%, #7C361E 100%);
+  padding: 1rem;
+}
+
+/* ── Desktop: consola atada al viewport (top bar + sidebar fijos,
+      el contenido scrollea por dentro) ── */
+@media (min-width: 1024px) {
+  :host {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    min-height: 0;
+  }
+}
+
+@media (min-width: 640px) {
+  :host { padding: 1.5rem; }
+}
+@media (min-width: 1024px) {
+  :host { padding: 1.75rem; }
+}
+@media (min-width: 1536px) {
+  :host { padding: 2.5rem; }
+}
+
+/* ── Pantallas bajas: aprovechar el alto disponible ── */
+@media (max-height: 800px) {
+  :host { padding: 0.75rem; }
+}
+
+/* ── Escala en pantallas grandes (2xl ≥1536px): los ajustes finos van
+       vía clases Tailwind 2xl:* en el template ── */
+
+
+/* ── Contenedor principal glass ── */
+.admin-glass {
+  background: rgba(20, 18, 16, 0.94);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 35px 80px -20px rgba(0, 0, 0, 0.75);
+}
+
+/* ── Tarjetas internas ── */
+.admin-card {
+  background: rgba(14, 12, 10, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.admin-card:hover {
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+/* ── Links del sidebar ── */
+.nav-admin-link {
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  color: #9CA3AF;
+  border: 1px solid transparent;
+}
+.nav-admin-link:not(.active):hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #FFF;
+}
+.nav-admin-link.active {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.6);
+  color: #FBBF24;
+  font-weight: 700;
+}
+.nav-admin-link.active:hover {
+  color: #FBBF24;
+}
+
+/* ── Botón de acción primario ── */
+.btn-action-primary {
+  background: #F59E0B;
+  color: #120F0D;
+  transition: all 0.18s ease;
+  box-shadow: 0 8px 20px -4px rgba(245, 158, 11, 0.4);
+  cursor: pointer;
+  select-none: true;
+}
+.btn-action-primary:hover {
+  background: #FBBF24;
+  transform: translateY(-1px);
+}
+
+/* ── Botón gradiente (alta en top bar) ── */
+.btn-steve {
+  cursor: pointer;
+  user-select: none;
+  transition: filter 0.18s ease, transform 0.18s ease;
+}
+.btn-steve:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+/* ── Scrollbars ocultos (pills / filtros horizontales) ── */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ── Superficie glass genérica (inputs del modal, etc.) ── */
+.glass-surface {
+  background: rgba(14, 12, 10, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* ── Mapa real de cobertura (Leaflet + OSM oscuro) ── */
+/* Ocupa todo el alto disponible hacia abajo: viewport − top bar − títulos − filtros */
+#mapaCobertura {
+  height: calc(100vh - 400px);
+  min-height: 360px;
+}
+::ng-deep .leaflet-container {
+  background: #1A1F26;
+  font-family: inherit;
+}
+::ng-deep .leaflet-tile {
+  filter: grayscale(0.85) brightness(0.42) contrast(1.15);
+}
+::ng-deep .tt-admin-tip {
+  background: rgba(12, 10, 9, 0.94) !important;
+  border: 1px solid rgba(245, 158, 11, 0.5) !important;
+  color: #FDE68A !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  border-radius: 10px !important;
+  padding: 4px 10px !important;
+  box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.7) !important;
+}
+::ng-deep .tt-admin-tip::before { display: none !important; }
+::ng-deep .leaflet-bar a {
+  background: rgba(14, 12, 10, 0.9) !important;
+  color: #FBBF24 !important;
+  border-bottom-color: rgba(255, 255, 255, 0.15) !important;
+}
+::ng-deep .leaflet-control-attribution {
+  background: rgba(0, 0, 0, 0.6) !important;
+  color: #78716C !important;
+  font-size: 9px !important;
+}
+::ng-deep .leaflet-control-attribution a { color: #A8A29E !important; }
+
+/* ── Modal ── */
+input:focus, select:focus {
+  outline: none;
+}
