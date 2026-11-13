@@ -1,0 +1,53 @@
+name: CI + Deploy a Netlify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  # 1) Compila la app en cada push y en cada PR
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # --legacy-peer-deps: requerido por las dependencias de este proyecto
+      - name: Instalar dependencias
+        run: npm ci --legacy-peer-deps
+
+      - name: Build de producción
+        run: npx ng build --configuration production
+
+      - name: Publicar artifact del build
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-app
+          path: dist/app/browser
+
+  # 2) Despliega a Netlify solo cuando se pushea a main
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Descargar artifact del build
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-app
+          path: dist/app/browser
+
+      - name: Deploy a Netlify (producción)
+        run: npx netlify-cli@latest deploy --dir=dist/app/browser --prod --message "Deploy desde GitHub Actions (${GITHUB_SHA})"
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
