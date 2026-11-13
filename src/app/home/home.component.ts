@@ -124,6 +124,23 @@ export class HomeComponent {
     this.activoSvc.set({ nombre: a.corto, nombreLargo: a.nombreLargo, resumen: a.resumen, vin: a.vin, img: a.img });
   }
 
+  // Auto del garage actualmente seleccionado (con imagen garantizada)
+  autoGarageActivo() {
+    return this.garageAutos()[this.tabAuto()] || this.garageAutos()[0];
+  }
+
+  // Menú desplegable del garage: lista de todos los autos del comprador
+  listaAutosAbierta = signal(false);
+
+  alternarListaAutos(): void {
+    this.listaAutosAbierta.update(v => !v);
+  }
+
+  elegirAutoDeLista(i: number): void {
+    this.elegirAuto(i);
+    this.listaAutosAbierta.set(false);
+  }
+
   cargarAuto(): void {
     // Cargar autos es acción del comprador: sin su sesión, abrimos el menú de inicio de sesión
     if (rolSesionGlobal() !== 'comprador') {
