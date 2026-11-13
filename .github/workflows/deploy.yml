@@ -36,6 +36,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -45,6 +47,11 @@ jobs:
         with:
           name: dist-app
           path: dist/app/browser
+
+      # El netlify.toml viaja con el deploy para que las rutas SPA
+      # (redirect /* -> /index.html) funcionen sin el plugin de Angular.
+      - name: Copiar netlify.toml al publish directory
+        run: cp netlify.toml dist/app/browser/netlify.toml
 
       - name: Deploy a Netlify (producción)
         run: npx netlify-cli@latest deploy --dir=dist/app/browser --prod --message "Deploy desde GitHub Actions (${GITHUB_SHA})"
