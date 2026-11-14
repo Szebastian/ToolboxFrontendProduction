@@ -54,7 +54,10 @@ jobs:
         run: cp netlify.toml dist/app/browser/netlify.toml
 
       - name: Deploy a Netlify (producción)
-        run: npx netlify-cli@latest deploy --dir=dist/app/browser --prod --message "Deploy desde GitHub Actions (${GITHUB_SHA})"
+        # --no-build: los archivos ya vienen compilados del job `build`.
+        # Sin esto, netlify-cli lee el `command` del netlify.toml y reintenta
+        # compilar Angular en este job (falla: "ng: not found").
+        run: npx netlify-cli@latest deploy --dir=dist/app/browser --prod --no-build --message "Deploy desde GitHub Actions (${GITHUB_SHA})"
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
