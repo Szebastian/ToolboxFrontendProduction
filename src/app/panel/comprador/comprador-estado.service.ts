@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, effect, inject, signal } from '@angular/core';
+import { Injectable, OnDestroy, computed, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import * as L from 'leaflet';
 import { VehiculoActivoService } from '../../../application/services/vehiculo-activo.service';
@@ -31,6 +31,8 @@ export class CompradorEstadoService implements OnDestroy {
   private timerId?: number;
 
   constructor() {
+    // Badge "nuevas": si el usuario ya vio las respuestas en una visita anterior, arranca sin badge
+    this.nuevasVistas.set(localStorage.getItem('tb_solicitudes_vistas') === '1');
     // Garaje real: los vehículos vienen del backend (tabla vehicles de Supabase)
     this.cargarGarajeReal();
     // Reloj en vivo para vencimientos de ofertas (tick por segundo)
@@ -94,7 +96,20 @@ export class CompradorEstadoService implements OnDestroy {
 
   switchTab(t: string): void {
     this.tab.set(t);
+    // Ver el tab de presupuestos cuenta como "leído": el badge deja de mostrar novedades
+    if (t === 'solicitudes') this.marcarSolicitudesVistas();
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /** Ofertas sin ver (badge del tab). Desaparece cuando el usuario las abre,
+   *  y queda visto entre visitas (localStorage). */
+  nuevasVistas = signal(false);
+  comerciosNuevas = computed(() => this.comerciosTabla.filter(c => c.estado === 'nueva').length);
+
+  marcarSolicitudesVistas(): void {
+    if (this.nuevasVistas()) return;
+    this.nuevasVistas.set(true);
+    try { localStorage.setItem('tb_solicitudes_vistas', '1'); } catch { /* almacenamiento no disponible */ }
   }
 
   elegirOpcion(articulo: string, precio: string): void {
