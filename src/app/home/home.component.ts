@@ -313,7 +313,9 @@ export class HomeComponent {
   }
 
   focoBuscador(): void {
-    this.drawerAbierto.set(true);
+    // El panel de sugerencias solo aparece cuando hay algo buscado (>1 letra),
+    // no con el buscador vacío.
+    this.drawerAbierto.set(this.busquedaRapida.trim().length > 1);
     const el = document.getElementById('spotlightSearch') as HTMLInputElement | null;
     el?.focus();
   }
