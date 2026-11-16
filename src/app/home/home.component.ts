@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { rolSesion as rolSesionGlobal, setRolSesion } from '../sesion';
 import type { VehiculoActivo } from '../../application/services/vehiculo-activo.service';
-import { VehiculoActivoService } from '../../application/services/vehiculo-activo.service';
+import { modeloBase, VehiculoActivoService } from '../../application/services/vehiculo-activo.service';
 import { VehiculoGarajeService } from '../../application/services/vehiculo-garaje.angular.service';
 import { SearchQueryService } from '../../application/services/search-query.service';
 import { CatalogoRepuestosService } from '../../application/services/catalogo-repuestos.angular.service';
@@ -244,10 +244,17 @@ export class HomeComponent {
 
   autoCorto(): string {
     const largo = this.autoActivo().nombreLargo;
+    if (/^tu auto$/i.test(largo)) return 'tu auto'; // sin garaje (o backend caído)
     if (largo.includes('Passat')) return 'Passat';
     if (largo.includes('Hilux')) return 'Hilux';
     if (largo.includes('Ranger')) return 'Ranger';
-    return largo.split(' ').slice(-1)[0] || 'Passat';
+    const palabras = largo.split(' ').filter(Boolean);
+    // El modelo sin la marca (ej. "RENAULT TWINGO ALIZE" → "TWINGO ALIZE")
+    const modelo = palabras.slice(1).join(' ') || palabras[0] || '';
+    if (!modelo || /no detectado/i.test(modelo)) return 'tu auto';
+    // Legibilidad: separa letras y números pegados (COROLLAXLI1.8M/T → COROLLA XLI 1.8 M/T)
+    const legible = modelo.replace(/(?<=[A-Za-z])(?=\d)|(?<=\d)(?=[A-Za-z])/g, ' ').trim();
+    return legible.length > 20 ? legible.split(' ')[0] : legible;
   }
 
   elegirAuto(i: number): void {
@@ -590,8 +597,8 @@ export class HomeComponent {
         next: vehiculos => {
           this.garageAutos.set(vehiculos.map((v, i) => ({
             garageId: v.id,
-            corto: `${v.brand} ${(v.model || '').split(' · ')[0]}`.trim(),
-            nombreLargo: `${v.brand} ${v.model}`.trim(),
+            corto: `${v.brand} ${modeloBase(v.model)}`.trim(),
+            nombreLargo: `${v.brand} ${modeloBase(v.model)}`.trim(),
             resumen: [v.year, v.engine_details?.split(' · ')[0]].filter(Boolean).join(' · '),
             vin: v.vin ?? 'SIN VIN',
             img: this.imgDeVehiculo(i),
