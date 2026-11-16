@@ -595,6 +595,19 @@ export class HomeComponent {
     if (ses) {
       this.carrito.set([]);
       this.notifPendientes.set(0);
+      // Seed desde cache: el hero muestra el auto al instante, sin esperar al backend
+      // (stale-while-revalidate: la respuesta de abajo reemplaza esto con datos frescos)
+      const a = this.autoActivo();
+      if (a.nombreLargo && !/^tu auto$/i.test(a.nombreLargo)) {
+        this.garageAutos.set([{
+          garageId: 'cache',
+          corto: a.nombre,
+          nombreLargo: a.nombreLargo,
+          resumen: a.resumen,
+          vin: a.vin,
+          img: this.imgDeVehiculo(0),
+        }]);
+      }
       this.api.garaje(ses.id).subscribe({
         next: vehiculos => {
           this.garageAutos.set(vehiculos.map((v, i) => ({
@@ -607,7 +620,11 @@ export class HomeComponent {
           })));
           this.tabAuto.set(0);
         },
-        error: () => { this.garageAutos.set([]); /* backend caído: garaje vacío */ },
+        error: () => {
+          // Backend caído: si el seed del cache ya pobló el garaje, se conserva
+          // (mejor un auto cacheado que una pantalla vacía)
+          if (!this.garageAutos().length) this.garageAutos.set([]);
+        },
       });
       return;
     }
