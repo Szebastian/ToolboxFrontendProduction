@@ -1,0 +1,443 @@
+<div class="panel-frame w-full flex flex-col gap-5">
+
+  <!-- ══ HEADER ══ -->
+  <header class="jobs-monolith px-5 sm:px-6 py-4 flex items-center justify-between gap-3 text-white">
+    <div class="flex items-center gap-3 sm:gap-4 min-w-0">
+      <button (click)="volverAlInicio()" class="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-stone-300 hover:text-white transition-all shrink-0" title="Volver al Inicio">
+        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+      </button>
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-xl bg-amber-400/20 border border-amber-400/30 flex items-center justify-center text-amber-400 font-black text-sm shrink-0">T</div>
+        <div class="min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <h1 class="text-sm sm:text-base font-bold tracking-tight text-white whitespace-nowrap">Toolbox Patagonia</h1>
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-400/20 text-emerald-400 text-[10px] font-mono font-medium whitespace-nowrap">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              Trelew DNRPA Online
+            </span>
+          </div>
+          <p class="text-xs text-stone-400 truncate">Experiencia fluida de registro en 3 pasos</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2.5 text-xs font-mono text-stone-400 shrink-0">
+      <span class="hidden sm:inline">¿Ya tenés cuenta?</span>
+      <button (click)="volverAlInicio()" class="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-amber-300 font-bold transition whitespace-nowrap">
+        Iniciar Sesión
+      </button>
+    </div>
+  </header>
+
+  <!-- ══ BARRA DE PROGRESO TYPEFORM ══ -->
+  <div class="jobs-monolith p-4 sm:p-5 text-white space-y-3.5">
+    <div class="flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3.5 min-w-0">
+        <span class="w-8 h-8 rounded-full shrink-0 font-black text-xs flex items-center justify-center shadow-lg"
+          [class]="progreso().pct === 100 ? 'bg-emerald-400 text-stone-950 shadow-emerald-400/20' : 'bg-amber-400 text-stone-950 shadow-amber-400/20'">{{ paso() }}</span>
+        <div class="min-w-0">
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <span class="text-sm sm:text-base font-bold text-white tracking-tight">{{ progreso().titulo }}</span>
+            <span class="px-2.5 py-0.5 rounded-full font-mono text-[11px] font-semibold"
+              [class]="progreso().pct === 100 ? 'bg-emerald-500/15 border border-emerald-400/30 text-emerald-300' : 'bg-amber-400/15 border border-amber-400/30 text-amber-300'">{{ progreso().pct }}% completado</span>
+          </div>
+          <p class="text-xs text-stone-400 mt-0.5 truncate">{{ progreso().hint }}</p>
+        </div>
+      </div>
+
+      <!-- Selector de pasos interactivo -->
+      <div class="hidden lg:flex items-center gap-2 text-xs font-mono shrink-0">
+        <button type="button" (click)="irAPaso(1)" class="px-3 py-1.5 rounded-xl border flex items-center gap-2 cursor-pointer transition whitespace-nowrap"
+          [class]="paso() === 1 ? 'border-amber-400/80 bg-amber-400/20 text-amber-300 font-bold shadow-md' : 'border-white/10 hover:border-amber-400/50 bg-white/5 hover:bg-white/10 text-stone-300 hover:text-white font-medium'">
+          <span class="w-2 h-2 rounded-full" [class]="paso() === 1 ? 'w-2.5 bg-amber-400 shadow-[0_0_8px_#F59E0B]' : 'bg-stone-400'"></span>
+          <span>1. Cuenta &amp; Clave</span>
+        </button>
+        <button type="button" (click)="irAPaso(2)" class="px-3 py-1.5 rounded-xl border flex items-center gap-2 cursor-pointer transition whitespace-nowrap"
+          [class]="paso() === 2 ? 'border-amber-400/80 bg-amber-400/20 text-amber-300 font-bold shadow-md' : 'border-white/10 hover:border-amber-400/50 bg-white/5 hover:bg-white/10 text-stone-300 hover:text-white font-medium'">
+          <span class="w-2 h-2 rounded-full" [class]="paso() === 2 ? 'w-2.5 bg-amber-400 shadow-[0_0_8px_#F59E0B]' : 'bg-stone-400'"></span>
+          <span>2. Cédula Verde</span>
+        </button>
+        <button type="button" (click)="irAPaso(3)" class="px-3 py-1.5 rounded-xl border flex items-center gap-2 cursor-pointer transition whitespace-nowrap"
+          [class]="paso() === 3 ? 'border-amber-400/80 bg-amber-400/20 text-amber-300 font-bold shadow-md' : 'border-white/10 hover:border-amber-400/50 bg-white/5 hover:bg-white/10 text-stone-300 hover:text-white font-medium'">
+          <span class="w-2 h-2 rounded-full" [class]="paso() === 3 ? 'w-2.5 bg-amber-400 shadow-[0_0_8px_#F59E0B]' : 'bg-stone-400'"></span>
+          <span>3. Auto en Garage</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+      <div class="h-full bg-gradient-to-r from-amber-400 via-amber-300 to-emerald-400 rounded-full transition-all duration-500 ease-out shadow-sm" [style.width.%]="progreso().pct"></div>
+    </div>
+  </div>
+
+  <!-- ══ CONTENIDO TYPEFORM: UN PASO POR VEZ ══ -->
+  <main class="jobs-monolith p-6 sm:p-10 text-white min-h-[540px] flex flex-col justify-between">
+
+    @switch (paso()) {
+
+      <!-- ─── PASO 1: USUARIO Y CONTRASEÑA ─── -->
+      @case (1) {
+        <div class="step-slide space-y-6">
+          <div>
+            <span class="text-xs font-mono uppercase tracking-widest text-amber-400 font-bold block mb-1">Paso 1 · Tu Cuenta de Cliente</span>
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Definí tu Usuario y Contraseña</h2>
+            <p class="text-stone-300 text-sm mt-1.5 max-w-xl">Con estos datos accedés a tu panel para ver las cotizaciones en tiempo real y el seguimiento de pedidos en moto.</p>
+          </div>
+
+          <div class="space-y-4 max-w-xl pt-2">
+
+            <!-- Nombre y Apellido por separado -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-mono uppercase text-stone-300 font-bold mb-1.5">Nombre *</label>
+                <div class="relative">
+                  <input type="text" [ngModel]="nombre()" (ngModelChange)="nombre.set($event)" placeholder="Ej: Martín" class="w-full bg-black/60 border border-white/20 focus:border-amber-400 rounded-2xl pl-11 pr-4 py-3.5 text-sm sm:text-base text-white placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-400/20 font-medium" />
+                  <svg class="w-5 h-5 text-amber-400 absolute left-3.5 top-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-mono uppercase text-stone-300 font-bold mb-1.5">Apellido *</label>
+                <div class="relative">
+                  <input type="text" [ngModel]="apellido()" (ngModelChange)="apellido.set($event)" placeholder="Ej: Galván" class="w-full bg-black/60 border border-white/20 focus:border-amber-400 rounded-2xl pl-11 pr-4 py-3.5 text-sm sm:text-base text-white placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-400/20 font-medium" />
+                  <svg class="w-5 h-5 text-amber-400 absolute left-3.5 top-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- Correo -->
+            <div>
+              <label class="block text-xs font-mono uppercase text-stone-300 font-bold mb-1.5">Usuario / Correo Electrónico *</label>
+              <div class="relative">
+                <input type="email" [ngModel]="email()" (ngModelChange)="email.set($event)" placeholder="Ej: martin&#64;gmail.com" class="w-full bg-black/60 border border-white/20 focus:border-amber-400 rounded-2xl pl-11 pr-4 py-3.5 text-sm sm:text-base text-white placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-400/20 font-medium" />
+                <svg class="w-5 h-5 text-amber-400 absolute left-3.5 top-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
+              </div>
+              <p class="text-[11px] text-stone-400 font-mono mt-1">Este email será tu identificador para iniciar sesión.</p>
+            </div>
+
+            <!-- WhatsApp + Contraseña -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-mono uppercase text-stone-300 font-bold mb-1.5">WhatsApp (avisos de precios) *</label>
+                <div class="relative">
+                  <input type="tel" [ngModel]="whatsapp()" (ngModelChange)="whatsapp.set($event)" placeholder="Ej: 280 442-8812" class="w-full bg-black/60 border border-white/20 focus:border-amber-400 rounded-2xl pl-11 pr-4 py-3.5 text-sm sm:text-base text-white placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-400/20 font-medium" />
+                  <svg class="w-5 h-5 text-emerald-400 absolute left-3.5 top-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"></path><circle cx="12" cy="13" r="3"></circle></svg>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-mono uppercase text-stone-300 font-bold mb-1.5">Contraseña de Acceso *</label>
+                <div class="relative">
+                  <input [type]="verPass1() ? 'text' : 'password'" [ngModel]="pass()" (ngModelChange)="pass.set($event)" placeholder="••••••••••••" class="w-full bg-black/60 border border-white/20 focus:border-amber-400 rounded-2xl pl-11 pr-11 py-3.5 text-sm sm:text-base text-white placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-400/20 font-medium font-mono" />
+                  <svg class="w-5 h-5 text-amber-400 absolute left-3.5 top-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                  <button type="button" (click)="verPass1.set(!verPass1())" class="text-stone-400 hover:text-white absolute right-3.5 top-4 cursor-pointer" title="Mostrar/ocultar">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Repetir Contraseña -->
+            <div>
+              <div class="flex items-center justify-between mb-1.5 flex-wrap gap-1">
+                <label class="block text-xs font-mono uppercase text-stone-300 font-bold">Repetir Contraseña para Confirmar *</label>
+                @if (coinciden()) {
+                  <span class="text-[11px] font-mono font-bold text-emerald-400 flex items-center gap-1">✓ Coinciden perfectamente</span>
+                } @else if (distinto()) {
+                  <span class="text-[11px] font-mono font-bold text-rose-400 flex items-center gap-1">✕ No coinciden</span>
+                }
+              </div>
+              <div class="relative">
+                <input [type]="verPass2() ? 'text' : 'password'" [ngModel]="passConfirm()" (ngModelChange)="passConfirm.set($event)" placeholder="Volvé a escribir tu contraseña..." class="w-full bg-black/60 border rounded-2xl pl-11 pr-11 py-3.5 text-sm sm:text-base text-white placeholder-stone-500 focus:outline-none font-medium font-mono"
+                  [class]="coinciden() ? 'border-2 border-emerald-400 focus:border-emerald-300 focus:ring-2 focus:ring-emerald-400/20' : distinto() ? 'border-2 border-rose-400 focus:border-rose-300 focus:ring-2 focus:ring-rose-400/20' : 'border-white/20 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20'" />
+                <svg class="w-5 h-5 absolute left-3.5 top-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" [class]="coinciden() ? 'text-emerald-400' : 'text-amber-400'"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="m9 12 2 2 4-4"></path></svg>
+                <button type="button" (click)="verPass2.set(!verPass2())" class="text-stone-400 hover:text-white absolute right-3.5 top-4 cursor-pointer" title="Mostrar/ocultar">
+                  <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+              </div>
+              <p class="text-[11px] text-stone-400 font-mono mt-1">Escribí exactamente la misma clave para evitar errores al iniciar sesión.</p>
+            </div>
+
+            @if (errores().length) {
+              <div class="p-3 rounded-xl bg-rose-500/10 border border-rose-400/40 space-y-1">
+                @for (e of errores(); track $index) {
+                  <p class="text-xs font-mono text-rose-300 flex items-center gap-2"><span>•</span> {{ e }}</p>
+                }
+              </div>
+            }
+
+            <div class="p-3 rounded-xl bg-white/[0.03] border border-white/10 flex items-center gap-2.5 text-xs text-stone-300">
+              <svg class="w-4 h-4 text-emerald-400 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="m9 12 2 2 4-4"></path></svg>
+              <span>Tus credenciales están protegidas con cifrado TLS y no se comparten con terceros.</span>
+            </div>
+
+          </div>
+        </div>
+      }
+
+      <!-- ─── PASO 2: FOTO CÉDULA VERDE ─── -->
+      @case (2) {
+        <div class="step-slide space-y-6">
+          <div>
+            <span class="text-xs font-mono uppercase tracking-widest text-amber-400 font-bold block mb-1">Paso 2 · Cédula de Identificación</span>
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Sacale una foto a tu Cédula Verde</h2>
+            <p class="text-stone-300 text-sm mt-1.5 max-w-xl">El sistema extrae de forma automática el <strong>Número de Chasis (VIN de 17 dígitos)</strong>, código de motor y modelo exacto para que las repuesteras coticen la pieza exacta.</p>
+          </div>
+
+          <div class="space-y-4 max-w-2xl pt-1">
+
+            @if (!cedulaEscaneada()) {
+              <!-- Dropzone (sin escanear: ámbar) -->
+              <div class="space-y-3">
+                @if (errores().length) {
+                  <div class="p-3 rounded-xl bg-rose-500/10 border border-rose-400/40 space-y-1">
+                    @for (e of errores(); track $index) {
+                      <p class="text-xs font-mono text-rose-300 flex items-start gap-2"><span>•</span> {{ e }}</p>
+                    }
+                  </div>
+                }
+                <input type="file" class="hidden" accept="image/*" (change)="onFotoCedula($event)" #cedulaInput />
+                <button type="button" (click)="cedulaInput.click()" [disabled]="escaneando()" class="border-2 border-dashed rounded-3xl p-6 sm:p-8 flex flex-col items-center justify-center text-center transition-all group shadow-xl w-full"
+                  [class]="escaneando() ? 'border-emerald-400/60 bg-black/60 cursor-wait' : 'border-amber-400/50 hover:border-amber-400 bg-black/40 hover:bg-black/60 cursor-pointer'">
+                  @if (!escaneando()) {
+                    <div class="w-14 h-14 rounded-2xl bg-amber-400/10 border border-amber-400/30 text-amber-400 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                      <svg class="w-7 h-7" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"></path><circle cx="12" cy="13" r="3"></circle></svg>
+                    </div>
+                    <span class="text-sm sm:text-base font-bold text-white block">Tocar para sacar foto a la Cédula Verde</span>
+                    <span class="text-xs text-stone-400 mt-1 max-w-sm block">Apuntá a la cara frontal de la cédula donde se lee la marca, patente y número de chasis.</span>
+                    <span class="mt-4 px-4 py-1.5 rounded-full bg-amber-400 text-stone-950 font-bold text-xs shadow-md group-hover:bg-amber-300 transition">📷 Abrir Cámara o Subir Archivo</span>
+                  } @else {
+                    <div class="w-14 h-14 rounded-2xl bg-emerald-400/10 border border-emerald-400/30 text-emerald-400 flex items-center justify-center mb-3">
+                      <svg class="w-7 h-7 animate-spin" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>
+                    </div>
+                    <span class="text-sm sm:text-base font-bold text-white block">Procesando la foto de tu Cédula Verde…</span>
+                    <span class="text-xs text-emerald-300 mt-1 max-w-sm block font-mono">✓ Extracción de los 6 datos técnicos en curso (visión IA)</span>
+                  }
+                </button>
+
+                @if (!escaneando()) {
+                  <div class="flex items-center justify-between px-3 text-xs font-mono flex-wrap gap-2">
+                    <span class="text-stone-500">¿No tenés la cédula a mano ahora?</span>
+                    <button type="button" (click)="cargarCedulaPrueba()" class="text-amber-400 hover:text-amber-300 underline font-semibold flex items-center gap-1.5 cursor-pointer">
+                      <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path></svg>
+                      Cargar Cédula de Prueba (Passat 2.0 TDI)
+                    </button>
+                  </div>
+                }
+              </div>
+            } @else {
+              <!-- Dropzone de éxito: Cédula Procesada (verde) -->
+              <div class="border-2 border-dashed border-emerald-400/80 rounded-3xl p-6 sm:p-8 bg-black/60 flex flex-col items-center justify-center text-center shadow-xl step-slide">
+                <div class="w-14 h-14 rounded-2xl bg-emerald-400/20 border border-emerald-400/40 text-emerald-400 flex items-center justify-center mb-3">
+                  <svg class="w-7 h-7" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.801 10A10 10 0 1 1 17 3.335"></path><path d="m9 11 3 3L22 4"></path></svg>
+                </div>
+                <span class="text-sm sm:text-base font-bold text-white block">Cédula Verde Procesada con Éxito</span>
+                <span class="text-xs text-stone-400 mt-1 max-w-sm block">Fotografía frontal verificada por el registro seccional de Trelew.</span>
+                <span class="mt-4 px-4 py-1.5 rounded-full bg-emerald-400 text-stone-950 font-bold text-xs shadow-md">✓ Extracción Completa</span>
+              </div>
+
+              <!-- TARJETA DE EXTRACCIÓN OFICIAL DNRPA: 6 DATOS TÉCNICOS CLAVE -->
+              <div class="p-6 rounded-3xl bg-white/[0.04] border-2 border-emerald-400/80 shadow-[0_20px_50px_rgba(16,185,129,0.22)] space-y-5 step-slide">
+
+                <div class="flex items-center justify-between gap-3 pb-3 border-b border-white/10 flex-wrap">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 flex items-center justify-center shrink-0">
+                      <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><line x1="7" x2="17" y1="12" y2="12"></line></svg>
+                    </div>
+                    <div class="min-w-0">
+                      <span class="text-[10px] font-mono uppercase tracking-widest text-emerald-400 font-bold block">✓ DNRPA Cédula Verde Verificada</span>
+                      <h3 class="text-sm sm:text-base font-extrabold text-white">Datos Técnicos para Búsqueda de Repuestos</h3>
+                    </div>
+                  </div>
+
+                  <span class="px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 font-mono text-[10px] font-bold shrink-0">6 Datos Extraídos</span>
+                </div>
+
+                <!-- GRILLA DE LOS 6 CAMPOS (DOMINIO, MARCA, MODELO, TIPO, CHASIS, MOTOR) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 font-mono text-xs">
+
+                  <!-- 1. DOMINIO -->
+                  <div class="p-3.5 rounded-2xl bg-black/70 border border-white/10 hover:border-amber-400/40 transition">
+                    <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block mb-1">1. Dominio (Patente)</span>
+                    <div class="flex items-center justify-between gap-2 flex-wrap">
+                      <span class="text-base font-black text-amber-300 bg-amber-400/10 px-2.5 py-0.5 rounded-lg border border-amber-400/30">{{ cedula().patente }}</span>
+                      <span class="text-[10px] text-stone-400">Argentina Mercosur</span>
+                    </div>
+                  </div>
+
+                  <!-- 2. MARCA -->
+                  <div class="p-3.5 rounded-2xl bg-black/70 border border-white/10 hover:border-amber-400/40 transition">
+                    <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block mb-1">2. Marca</span>
+                    <span class="text-sm font-extrabold text-white block">{{ cedula().marca }}</span>
+                    <span class="text-[10px] text-stone-400">Grupo VAG</span>
+                  </div>
+
+                  <!-- 3. MODELO -->
+                  <div class="p-3.5 rounded-2xl bg-black/70 border border-white/10 hover:border-amber-400/40 transition">
+                    <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block mb-1">3. Modelo</span>
+                    <span class="text-sm font-extrabold text-white block">{{ cedula().modelo }}</span>
+                    <span class="text-[10px] text-stone-400">{{ cedula().modeloDetalle }}</span>
+                  </div>
+
+                  <!-- 4. TIPO DE CARROCERÍA -->
+                  <div class="p-3.5 rounded-2xl bg-black/70 border border-white/10 hover:border-amber-400/40 transition">
+                    <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block mb-1">4. Tipo de Carrocería</span>
+                    <span class="text-sm font-extrabold text-white block">{{ cedula().tipoCarroceria }}</span>
+                    <span class="text-[10px] text-stone-400">{{ cedula().tipoDetalle }}</span>
+                  </div>
+
+                  <!-- 5. CHASIS (VIN 17 DÍGITOS) -->
+                  <div class="p-4 rounded-2xl bg-black/90 border border-amber-400/60 sm:col-span-2 space-y-1">
+                    <div class="flex items-center justify-between text-[10px] flex-wrap gap-1">
+                      <span class="text-amber-400 font-bold uppercase tracking-wider">5. Número de Chasis (VIN 17 Dígitos)</span>
+                      <span class="text-emerald-400 font-bold flex items-center gap-1">✓ Identificador Único</span>
+                    </div>
+                    <div class="text-lg sm:text-xl font-mono font-black text-amber-300 tracking-widest break-all">{{ cedula().chasis }}</div>
+                    <p class="text-[10px] text-stone-400">El chasis garantiza que los filtros, correas y pastillas coticen sin margen de error.</p>
+                  </div>
+
+                  <!-- 6. MOTOR -->
+                  <div class="p-4 rounded-2xl bg-black/90 border border-emerald-400/60 sm:col-span-2 space-y-1">
+                    <div class="flex items-center justify-between text-[10px] flex-wrap gap-1">
+                      <span class="text-emerald-400 font-bold uppercase tracking-wider">6. Código &amp; Número de Motor</span>
+                      <span class="text-stone-300 font-mono text-[10px]">{{ cedula().motorSpecs }}</span>
+                    </div>
+                    <div class="text-base sm:text-lg font-mono font-black text-white tracking-wider">
+                      {{ cedula().motorCodigo }} <span class="text-xs font-normal text-stone-400">{{ cedula().motorDetalle }}</span>
+                    </div>
+                    <p class="text-[10px] text-stone-400">{{ cedula().motorNota }}</p>
+                  </div>
+
+                </div>
+
+                <!-- Advertencias de validación (p.ej. VIN con formato dudoso) -->
+                @if (advertencias().length) {
+                  <div class="p-3 rounded-xl bg-amber-400/10 border border-amber-400/40 space-y-1">
+                    @for (a of advertencias(); track $index) {
+                      <p class="text-[11px] font-mono text-amber-300 flex items-start gap-2"><span>⚠</span> {{ a }}</p>
+                    }
+                  </div>
+                }
+
+                <!-- Compatibilidades desbloqueadas -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 font-mono text-[11px]">
+                  @for (c of cedula().compat; track $index) {
+                    <div class="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 text-stone-300 flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span> {{ c }}
+                    </div>
+                  }
+                </div>
+
+                <div class="flex justify-end pt-1">
+                  <button type="button" (click)="resetearCedula()" class="text-xs font-mono text-stone-400 hover:text-white underline cursor-pointer">Cambiar foto</button>
+                </div>
+              </div>
+            }
+
+          </div>
+        </div>
+      }
+
+      <!-- ─── PASO 3: CUENTA CREADA & AUTO EN GARAGE ─── -->
+      @case (3) {
+        <div class="step-slide space-y-6">
+          @if (errores().length) {
+            <div class="p-3 rounded-xl bg-rose-500/10 border border-rose-400/40 space-y-1">
+              @for (e of errores(); track $index) {
+                <p class="text-xs font-mono text-rose-300 flex items-start gap-2"><span>•</span> {{ e }}</p>
+              }
+            </div>
+          }
+          <div>
+            <span class="text-xs font-mono uppercase tracking-widest text-emerald-400 font-bold block mb-1">✓ Cuenta Creada &amp; Auto Vinculado</span>
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">¡Bienvenido a Toolbox Patagonia!</h2>
+            <p class="text-stone-300 text-sm mt-1.5 max-w-xl">Tu cuenta y los datos de tu auto ya están listos. A partir de ahora podés pedir presupuestos a los mostradores de Trelew sin riesgo de recibir repuestos equivocados.</p>
+          </div>
+
+          <!-- Ficha del Usuario y Auto -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl pt-1">
+
+            <div class="p-5 rounded-3xl bg-white/[0.03] border border-white/15 space-y-2">
+              <div class="flex items-center justify-between text-xs font-mono text-stone-400 flex-wrap gap-1">
+                <span class="flex items-center gap-1.5 uppercase font-bold text-stone-300">
+                  <svg class="w-4 h-4 text-emerald-400 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="m16 17 2 2 4-4"></path></svg>
+                  Titular de Cuenta
+                </span>
+                <button type="button" (click)="irAPaso(1)" class="text-amber-400 hover:text-amber-300 text-xs font-mono font-semibold flex items-center gap-1 underline cursor-pointer">✎ Modificar Paso 1</button>
+              </div>
+              <h3 class="text-base font-extrabold text-white truncate">{{ nombreCompleto() }}</h3>
+              <p class="text-xs text-stone-300 font-mono truncate">{{ email() || 'tu&#64;correo.com' }}</p>
+              <p class="text-xs text-stone-400 font-mono">WhatsApp: {{ whatsapp() || '—' }}</p>
+            </div>
+
+            <div class="p-5 rounded-3xl bg-white/[0.03] border border-amber-400/60 space-y-2">
+              <div class="flex items-center justify-between text-xs font-mono flex-wrap gap-1">
+                <span class="text-stone-300 uppercase font-bold flex items-center gap-1.5">
+                  <svg class="w-4 h-4 text-amber-400 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path><circle cx="7" cy="17" r="2"></circle><path d="M9 17h6"></path><circle cx="17" cy="17" r="2"></circle></svg>
+                  Vehículo Activo
+                </span>
+                <button type="button" (click)="irAPaso(2)" class="text-amber-400 hover:text-amber-300 text-xs font-mono font-semibold flex items-center gap-1 underline cursor-pointer">✎ Ver Cédula (Paso 2)</button>
+              </div>
+              <h3 class="text-base font-extrabold text-white">{{ cedula().marca }} {{ cedula().modelo }}</h3>
+              <p class="text-xs text-stone-300 font-mono">{{ cedula().modeloDetalle }} · {{ cedula().tipoCarroceria }}</p>
+              <p class="text-xs text-amber-300 font-mono">Chasis: {{ cedula().chasis }}</p>
+              <p class="text-xs text-stone-300 font-mono">Motor: {{ cedula().motorCodigo }} ({{ cedula().motorSpecs }})</p>
+              <p class="text-xs text-emerald-400 font-mono flex items-center gap-1">✓ Cédula Verde Verificada</p>
+            </div>
+
+          </div>
+
+          <!-- Acciones inmediatas -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl pt-2">
+            <button type="button" (click)="irABuscar()" [disabled]="creando()"
+              class="p-4 rounded-2xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-extrabold text-xs sm:text-sm font-mono flex items-center justify-center gap-2 transition shadow-xl shadow-amber-400/20 cursor-pointer disabled:opacity-60 disabled:cursor-wait">
+              @if (!creando()) {
+                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"></path><circle cx="11" cy="11" r="8"></circle></svg>
+                <span>Buscar Repuestos de este Auto</span>
+              } @else {
+                <svg class="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>
+                <span>Creando tu cuenta…</span>
+              }
+            </button>
+            <button type="button" (click)="irAPanel()" [disabled]="creando()"
+              class="p-4 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm font-mono flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-60 disabled:cursor-wait">
+              <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M7 7h.01"></path><path d="M17 7h.01"></path><path d="M7 12h.01"></path><path d="M17 12h.01"></path><path d="M7 17h.01"></path><path d="M17 17h.01"></path></svg>
+              <span>Ir a Mi Panel de Comprador</span>
+            </button>
+          </div>
+        </div>
+      }
+
+    }
+
+    <!-- BOTONERA INFERIOR TYPEFORM (responsive: apilada en móvil) -->
+    <div class="pt-8 border-t border-white/10 mt-auto flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3">
+      <button type="button" (click)="retroceder()" [disabled]="paso() === 1"
+        class="w-full sm:w-auto justify-center px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-mono font-bold transition flex items-center gap-2 border border-white/15 shadow-sm cursor-pointer"
+        [class]="paso() === 1 ? 'opacity-40 pointer-events-none' : ''">
+        <svg class="w-4 h-4 text-amber-400 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg>
+        <span class="text-center">{{ progreso().textoVolver }}</span>
+      </button>
+
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <span class="hidden sm:inline text-xs font-mono text-stone-500 whitespace-nowrap">Presioná <kbd class="px-1.5 py-0.5 rounded bg-white/10 text-stone-300 text-[10px]">Enter ↵</kbd></span>
+        @if (paso() !== 3) {
+          <button type="button" (click)="avanzar()" class="w-full sm:w-auto justify-center px-4 py-3 sm:px-6 sm:py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-extrabold text-xs sm:text-sm font-mono flex items-center gap-2 transition shadow-lg shadow-amber-400/20 cursor-pointer">
+            <span class="text-center">{{ progreso().btnSiguiente }}</span>
+            <svg class="w-4 h-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+          </button>
+        } @else {
+          <button type="button" (click)="irABuscar()" class="w-full sm:w-auto justify-center px-4 py-3 sm:px-6 sm:py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-extrabold text-xs sm:text-sm font-mono flex items-center gap-2 transition shadow-lg shadow-amber-400/20 cursor-pointer">
+            <span class="text-center">{{ progreso().btnSiguiente }}</span>
+            <svg class="w-4 h-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"></path><circle cx="11" cy="11" r="8"></circle></svg>
+          </button>
+        }
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="text-center py-2 text-xs font-mono text-[#1F1916]">
+    Toolbox Patagonia · Registro con Cédula Verde · Trelew, Chubut
+  </footer>
+
+</div>

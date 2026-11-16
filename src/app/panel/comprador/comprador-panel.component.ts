@@ -1,13 +1,16 @@
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { CompradorEstadoService } from './comprador-estado.service';
+import { RolBadgeComponent } from '../../rol-badge.component';
 import { COMPRADOR_STYLES } from './comprador-styles';
+import { usuarioSesion } from '../../../application/services/demo-api.service';
 
 // Panel principal del comprador (consola, garage, pedidos)
 @Component({
   selector: 'app-comprador-panel',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RolBadgeComponent],
   styles: COMPRADOR_STYLES,
   template: `
   <div class="min-h-[1024px] flex flex-col justify-between selection:bg-cyan-500 selection:text-black antialiased">
@@ -15,8 +18,8 @@ import { COMPRADOR_STYLES } from './comprador-styles';
     <!-- TOP BAR CON NOTIFICACIONES ASÍNCRÓNICAS Y VIN ACTIVO -->
     <header class="w-full max-w-7xl mx-auto px-6 pt-5 pb-3 flex items-center justify-between z-30">
 
-      <!-- Logo Oficial -->
-      <a href="#" class="flex items-center gap-3.5 group">
+      <!-- Logo Oficial (vuelve al inicio) -->
+      <a (click)="irABuscar()" class="flex items-center gap-3.5 group cursor-pointer">
         <div class="w-10 h-10 rounded-2xl bg-[#0E0F12] p-1 border border-white/10 shadow-lg flex items-center justify-center overflow-hidden transition-transform group-hover:scale-105">
           <img src="/logo.svg" alt="Toolbox Patagonia Logo" class="w-full h-full object-contain rounded-xl mix-blend-screen contrast-125 brightness-110">
         </div>
@@ -30,6 +33,12 @@ import { COMPRADOR_STYLES } from './comprador-styles';
 
       <!-- Alertas Asincrónicas ("Fire & Forget") + Perfil -->
       <div class="flex items-center gap-3">
+
+        <!-- Buscar repuestos: la búsqueda vive en el home -->
+        <button (click)="irABuscar()" class="flex items-center gap-2 px-4 py-2 rounded-2xl bg-gradient-to-r from-cyan-500 to-cyan-400 text-stone-950 text-xs font-black shadow-md hover:scale-105 hover:shadow-cyan-400/30 transition cursor-pointer" title="Ir al inicio para buscar repuestos">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <span class="hidden sm:inline">Buscar repuestos</span>
+        </button>
 
         <!-- Píldora de VIN Activo en Garage (dinámica según el vehículo del garage) -->
         <div class="hidden md:flex items-center gap-2.5 px-3.5 py-1.5 rounded-2xl bg-[#0E0F12]/95 backdrop-blur border border-white/10 text-xs shadow-md max-w-[300px]">
@@ -46,14 +55,17 @@ import { COMPRADOR_STYLES } from './comprador-styles';
           <span class="w-2 h-2 rounded-full bg-cyan-400 absolute top-1.5 right-1.5 animate-ping"></span>
         </button>
 
-        <!-- Avatar Comprador -->
+        <!-- Badge de rol activo (textual) -->
+        <app-rol-badge />
+
+        <!-- Avatar Comprador (identidad real de la sesión) -->
         <div class="flex items-center gap-2.5 pl-2">
           <div class="w-9 h-9 rounded-2xl bg-gradient-to-tr from-amber-600 via-amber-500 to-amber-300 p-0.5 flex items-center justify-center text-[#171412] font-mono font-extrabold text-xs shadow-md">
-            LR
+            {{ iniciales }}
           </div>
           <div class="hidden sm:block text-left">
-            <span class="block text-xs font-bold text-[#171412] leading-none">Lucas Rodríguez</span>
-            <span class="text-[10px] font-mono text-stone-900 font-medium">Taller Don Bosco · Trelew</span>
+            <span class="block text-xs font-bold text-[#171412] leading-none">{{ nombreUsuario }}</span>
+            <span class="text-[10px] font-mono text-stone-900 font-medium">Cliente particular · Trelew</span>
           </div>
         </div>
 
@@ -83,7 +95,7 @@ import { COMPRADOR_STYLES } from './comprador-styles';
               </span>
             </div>
             <h2 class="text-base sm:text-lg font-extrabold text-white tracking-tight mt-1">
-              Llegaron las respuestas de los comercios para tu Volkswagen Passat
+              Llegaron las respuestas de los comercios para tu {{ estado.autoActivo().nombreLargo }}
             </h2>
             <p class="text-xs text-stone-300 font-mono mt-0.5">
               Los comercios revisaron su stock físico: 3 locales confirmaron disponibilidad inmediata y cotización en mano.
@@ -780,7 +792,7 @@ import { COMPRADOR_STYLES } from './comprador-styles';
             <div id="section-cuenta" class="dark-console p-6 rounded-[32px]">
               <div>
                 <span class="text-[10px] font-mono uppercase tracking-wider text-cyan-400 font-bold">Mi Cuenta</span>
-                <h3 class="text-lg font-bold text-white">Datos &amp; Facturación — Lucas Rodríguez</h3>
+                <h3 class="text-lg font-bold text-white">Datos &amp; Facturación — {{ nombreUsuario }}</h3>
                 <p class="text-xs text-stone-400 mt-2 font-mono">lucas@donbosco.com.ar · CUIT 20-12345678-3 · Alternativa 9 esq. Belgrano, Trelew</p>
               </div>
             </div>
@@ -946,4 +958,14 @@ import { COMPRADOR_STYLES } from './comprador-styles';
 })
 export class CompradorPanelComponent {
   protected readonly estado = inject(CompradorEstadoService);
+  private readonly router = inject(Router);
+
+  // Identidad real de la sesión (usuario del registro) con fallback al demo
+  protected readonly sesion = usuarioSesion();
+  protected readonly nombreUsuario = this.sesion?.nombre ?? 'Lucas Rodríguez';
+  protected readonly iniciales = (this.sesion?.nombre ?? 'Lucas Rodríguez')
+    .split(/\s+/).map(p => p[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || 'LR';
+
+  // El comprador busca repuestos desde el home (pantalla de inicio)
+  irABuscar(): void { this.router.navigate(['/']); }
 }

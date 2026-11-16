@@ -1,6 +1,7 @@
 import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { RolBadgeComponent } from '../rol-badge.component';
 import * as L from 'leaflet';
 import { HeatLayer } from 'leaflet.heat';
 
@@ -65,7 +66,7 @@ const DEMANDA_INICIAL: DemandaItem[] = [
 @Component({
   selector: 'app-panel-admin',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RolBadgeComponent],
   templateUrl: './panel-admin.component.html',
   styleUrl: './panel-admin.component.css',
 })

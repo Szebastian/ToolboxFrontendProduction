@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 
 // Estado global de sesión por rol. Se comparte entre home y paneles y
 // se persiste en sessionStorage para sobrevivir la navegación entre rutas.
-export type RolSesion = 'comprador' | 'repuestero' | 'repartidor' | 'admin' | null;
+export type RolSesion = 'comprador' | 'repuestero' | 'repartidor' | 'admin' | 'mecanico' | null;
 
 const CLAVE = 'toolbox-rol';
 

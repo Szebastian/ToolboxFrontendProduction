@@ -13,6 +13,11 @@ export const routes: Routes = [
     title: 'Toolbox Patagonia · Cotización',
   },
   {
+    path: 'buscar',
+    loadComponent: () => import('./buscar/buscar.component').then(m => m.BuscarComponent),
+    title: 'Toolbox Patagonia · Resultados de búsqueda',
+  },
+  {
     path: 'mostrador',
     loadComponent: () => import('./panel/panel-repuestero.component').then(m => m.PanelRepuesteroComponent),
     title: 'Toolbox Patagonia · Panel Repuestero',
@@ -21,6 +26,16 @@ export const routes: Routes = [
     path: 'cliente',
     loadComponent: () => import('./panel/panel-comprador.component').then(m => m.PanelCompradorComponent),
     title: 'Toolbox Patagonia · Panel Cliente',
+  },
+  {
+    path: 'taller',
+    loadComponent: () => import('./taller/panel-taller.component').then(m => m.PanelTallerComponent),
+    title: 'Toolbox Patagonia · Panel de Taller',
+  },
+  {
+    path: 'registro',
+    loadComponent: () => import('./registro/registro.component').then(m => m.RegistroComponent),
+    title: 'Toolbox Patagonia · Crear Cuenta',
   },
   {
     path: 'admin',

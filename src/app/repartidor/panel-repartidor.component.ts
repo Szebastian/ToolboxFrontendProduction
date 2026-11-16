@@ -1,11 +1,13 @@
 import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { RolBadgeComponent } from '../rol-badge.component';
 
 // Panel de Repartidor (placeholder): entregas y logística de la flota Toolbox.
 // Estética consistente con el resto de los paneles (consola oscura + fondo cálido).
 @Component({
   selector: 'app-panel-repartidor',
   standalone: true,
+  imports: [RolBadgeComponent],
   styles: [`
     :host{display:block;min-height:100vh;min-height:100svh;background:radial-gradient(120% 90% at 50% -10%, #8B4527 0%, #6B3418 30%, #3A1B0D 65%, #120B08 100%);color:#F3F4F6;font-family:'Plus Jakarta Sans',sans-serif}
     .dark-console{background:rgba(14,15,18,.92);backdrop-filter:blur(32px);-webkit-backdrop-filter:blur(32px);border:1px solid rgba(255,255,255,.12);box-shadow:0 30px 70px -15px rgba(0,0,0,.8),0 0 0 1px rgba(0,0,0,.4)}
@@ -25,10 +27,7 @@ import { Router } from '@angular/router';
           <div class="text-[10px] text-stone-400 font-mono tracking-wider mt-1">Panel de Repartidor · Flota & Cadetería</div>
         </div>
       </a>
-      <div class="flex items-center gap-2 px-3 py-1.5 rounded-full border border-sky-500/30 bg-sky-500/10">
-        <span class="w-2 h-2 rounded-full bg-sky-400 animate-pulse"></span>
-        <span class="text-[10px] font-mono font-bold text-sky-300 tracking-wider">SESIÓN: REPARTIDOR</span>
-      </div>
+      <app-rol-badge />
     </header>
 
     <!-- CONSOLA -->
