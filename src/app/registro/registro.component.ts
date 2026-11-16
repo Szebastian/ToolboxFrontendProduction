@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { setRolSesion } from '../sesion';
 import { DemoApiService, CedulaExtraidaBackend, setUsuarioSesion } from '../../application/services/demo-api.service';
 import { VehiculoActivoService } from '../../application/services/vehiculo-activo.service';
+import { SupabaseService } from '../../application/services/supabase.service';
 
 // ── Registro Typeform de nuevo usuario ──
 // Paso 1: Cuenta & Clave · Paso 2: Foto Cédula Verde (chasis VIN) · Paso 3: Cuenta creada & Auto en Garage
@@ -37,6 +38,7 @@ export class RegistroComponent {
   private readonly router = inject(Router);
   private readonly api = inject(DemoApiService);
   private readonly activoSvc = inject(VehiculoActivoService);
+  private readonly supabase = inject(SupabaseService);
 
   // ── Flujo Typeform ──
   paso = signal<1 | 2 | 3>(1);
@@ -250,9 +252,18 @@ export class RegistroComponent {
       whatsapp: this.whatsapp().trim() || undefined,
       vehiculo: this.vehiculoDeCedula(),
     }).subscribe({
-      next: (usuario) => {
+      next: async (usuario) => {
         setUsuarioSesion({ id: usuario.id, email: usuario.email, nombre: usuario.nombre });
         setRolSesion('comprador');
+        // Login automático: la cuenta existe, pero sin sesión client-side el
+        // interceptor no tiene JWT y las llamadas al backend devuelven 401.
+        try {
+          await this.supabase.iniciarSesion(this.email().trim(), this.pass());
+        } catch {
+          this.creando.set(false);
+          this.errores.set(['Tu cuenta fue creada, pero no pudimos iniciar sesión automáticamente. Probá entrar de nuevo con tu email y contraseña.']);
+          return;
+        }
         // El auto activo pasa a ser el vehículo real del usuario nuevo
         this.activoSvc.sincronizarConGaraje(usuario.id);
         this.creando.set(false);
