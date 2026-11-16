@@ -469,39 +469,48 @@
       </div>
     </div>
 
-    <!-- DOS OPCIONES: SEGMENTED CONTROLLER (BUSCAR YO / ENVIAR A MI MECÁNICO) -->
+    <!-- DOS OPCIONES: DOS BOTONES-TARJETA, CADA UNO SE EXPLICA SOLO -->
     <div id="choiceModeContainer" class="w-full max-w-lg mb-5 transition-all duration-300">
-      <div class="p-1.5 rounded-2xl bg-[#14110F]/90 border border-white/10 backdrop-blur-2xl shadow-[0_12px_35px_rgba(0,0,0,0.6)] flex items-center gap-1.5">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
 
         <!-- Opción 1: Buscar yo los repuestos -->
         <button type="button" (click)="elegirBuscarYo()"
-          [class]="modoBusqueda() ? 'bg-amber-400 text-stone-950 font-black shadow-[0_2px_12px_rgba(251,191,36,0.35)]' : 'text-stone-300 hover:text-white hover:bg-white/[0.06] font-bold'"
-          class="flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 whitespace-nowrap transition-all cursor-pointer active:scale-[0.98]">
-          <svg class="w-4 h-4 shrink-0" [class]="modoBusqueda() ? 'text-stone-950' : 'text-amber-400'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-          </svg>
-          <span class="tracking-tight">Buscar yo</span>
-          <span class="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded font-extrabold uppercase"
-            [class]="modoBusqueda() ? 'bg-stone-950/15 text-stone-900' : 'bg-amber-400/10 text-amber-300'">Catálogo</span>
+          class="group text-left rounded-2xl p-4 flex items-center gap-3.5 cursor-pointer transition-all duration-200 active:scale-[0.98] border"
+          [class]="modoBusqueda()
+            ? 'bg-gradient-to-br from-amber-300 to-amber-500 border-amber-300 shadow-[0_10px_30px_rgba(251,191,36,0.35)]'
+            : 'bg-[#14110F]/90 backdrop-blur-2xl border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.6)] hover:border-amber-400/40 hover:bg-[#1b1714] hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(0,0,0,0.65)]'">
+          <span class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors"
+            [class]="modoBusqueda() ? 'bg-stone-950/15 text-stone-950' : 'bg-amber-400/10 text-amber-400 group-hover:bg-amber-400/20'">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+          </span>
+          <span class="min-w-0">
+            <span class="block text-sm font-black tracking-tight" [class]="modoBusqueda() ? 'text-stone-950' : 'text-white'">Buscar yo</span>
+            <span class="block text-[10.5px] font-mono uppercase tracking-wide mt-0.5" [class]="modoBusqueda() ? 'text-stone-900/70' : 'text-stone-400'">Catálogo · compará precios</span>
+          </span>
         </button>
 
         <!-- Opción 2: Enviar a mi mecánico para armar la lista -->
         <button type="button" (click)="abrirMecanicos()"
-          [class]="modoBusqueda() ? 'text-stone-500 hover:text-stone-300 hover:bg-white/[0.04]' : 'text-stone-300 hover:text-white hover:bg-white/[0.06] font-bold'"
-          class="flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 whitespace-nowrap transition-all cursor-pointer active:scale-[0.98]">
-          <svg class="w-4 h-4 shrink-0 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-          </svg>
-          <span class="tracking-tight">Enviar a mi mecánico</span>
-          <span class="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-400/15 text-emerald-300 font-bold uppercase">Ficha</span>
+          class="group text-left rounded-2xl p-4 flex items-center gap-3.5 cursor-pointer transition-all duration-200 active:scale-[0.98] border bg-[#14110F]/90 backdrop-blur-2xl border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.6)] hover:border-emerald-400/40 hover:bg-[#1b1714] hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(0,0,0,0.65)]">
+          <span class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-emerald-400/10 text-emerald-400 transition-colors group-hover:bg-emerald-400/20">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+          </span>
+          <span class="min-w-0">
+            <span class="block text-sm font-black tracking-tight text-white">Enviar a mi mecánico</span>
+            <span class="block text-[10.5px] font-mono uppercase tracking-wide mt-0.5 text-stone-400">Ficha · él arma la lista</span>
+          </span>
         </button>
 
       </div>
 
       <!-- Breve subtítulo dinámico -->
       <p class="text-center text-[11px] sm:text-xs font-mono font-bold mt-2.5 tracking-tight text-stone-800/90">
-        {{ modoBusqueda() ? 'Buscador activado: escribí tu repuesto o elegí de las sugerencias' : 'Elegí cómo querés armar la lista de repuestos' }}
+        {{ modoBusqueda() ? 'Buscador activado: escribí tu repuesto o elegí de las sugerencias' : 'Tocá una opción para empezar' }}
       </p>
     </div>
 
