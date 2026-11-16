@@ -1,0 +1,107 @@
+/* ═══ Panel de Taller Mecánico — estilos (formato Typeform) ═══ */
+
+:host {
+  display: block;
+  min-height: 100vh;
+  background-color: #C88E62;
+  background-image: radial-gradient(ellipse 95% 85% at 50% 25%, #DDA072 0%, #CE8E5E 50%, #BD7C4D 100%);
+  background-attachment: fixed;
+  color: #171412;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  padding: 12px;
+}
+
+@media (min-width: 640px) {
+  :host { padding: 20px; }
+}
+
+/* Marco central como el ejemplo (max 1240px) */
+.panel-frame {
+  max-width: 1240px;
+  margin: 0 auto;
+  min-height: calc(100vh - 24px);
+}
+
+@media (min-width: 640px) {
+  .panel-frame { min-height: calc(100vh - 40px); }
+}
+
+/* Botón volver fijo, mismo estilo que el panel comprador */
+.btn-volver {
+  position: fixed;
+  bottom: 14px;
+  left: 14px;
+  z-index: 40;
+  margin: 0;
+  background: rgba(14, 15, 18, .65);
+  color: #D6D3D1;
+  border: 1px solid rgba(255, 255, 255, .14);
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  cursor: pointer;
+  transition: all .2s ease;
+}
+.btn-volver:hover {
+  background: rgba(14, 15, 18, .85);
+  color: #FBBF24;
+  border-color: rgba(245, 158, 11, .4);
+}
+
+/* ══ Cristal obsidiana pulido con luz interna (Steve Jobs) ══ */
+.jobs-surface {
+  background: #151210;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 25px 60px -15px rgba(0, 0, 0, 0.45),
+    0 10px 25px rgba(0, 0, 0, 0.25),
+    inset 0 1px 1px rgba(255, 255, 255, 0.22);
+  border-radius: 1.25rem;
+}
+
+.glass-dark {
+  background: #151210;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 25px 60px -15px rgba(0, 0, 0, 0.45),
+    0 10px 25px rgba(0, 0, 0, 0.25),
+    inset 0 1px 1px rgba(255, 255, 255, 0.22);
+}
+
+/* Fila de auto activo: resplandor ámbar */
+.car-row-active {
+  background: rgba(245, 158, 11, 0.12) !important;
+  border-color: #F59E0B !important;
+  box-shadow: 0 0 25px rgba(245, 158, 11, 0.22), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+}
+
+/* Targets táctiles para dedos de taller */
+.tap-target {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.tap-target:active { transform: scale(0.98); }
+
+/* Transición suave entre pantallas del flujo Typeform */
+.paso-anim {
+  animation: pasoFadeUp .4s ease both;
+}
+@keyframes pasoFadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Scroll fino para las listas internas */
+.lista-scroll { scrollbar-width: thin; scrollbar-color: rgba(245, 158, 11, 0.4) transparent; }
+.lista-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+.lista-scroll::-webkit-scrollbar-track { background: transparent; }
+.lista-scroll::-webkit-scrollbar-thumb {
+  background: rgba(245, 158, 11, 0.35);
+  border-radius: 999px;
+}
+.lista-scroll::-webkit-scrollbar-thumb:hover { background: rgba(245, 158, 11, 0.6); }

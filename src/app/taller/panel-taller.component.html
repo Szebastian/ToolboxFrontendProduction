@@ -1,0 +1,628 @@
+<button (click)="volver()" class="btn-volver">← Volver</button>
+
+<div class="panel-frame w-full flex flex-col gap-4">
+
+  <!-- ══ HEADER DEL MECÁNICO ══ -->
+  <header class="jobs-surface p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-white">
+    <div class="flex items-center gap-3.5">
+      <div class="w-11 h-11 rounded-2xl bg-amber-400/15 border border-amber-400/40 flex items-center justify-center shadow-inner shrink-0">
+        <svg class="w-5 h-5 text-amber-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"></path></svg>
+      </div>
+      <div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">Panel de Taller</h1>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-[10px] font-mono font-semibold">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34D399]"></span>
+            Trelew Online
+          </span>
+        </div>
+        <p class="text-xs text-stone-300 mt-0.5">Armá la lista de repuestos del auto en 3 toques simples.</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3 self-stretch sm:self-auto justify-between sm:justify-end border-t sm:border-t-0 pt-3 sm:pt-0 border-white/10">
+      <div class="hidden lg:flex items-center gap-2 shrink-0">
+        <div class="px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/10 text-center shrink-0 whitespace-nowrap">
+          <span class="text-[9px] font-mono uppercase text-stone-400 block leading-none whitespace-nowrap">Vehículos</span>
+          <span class="text-xs font-bold text-white leading-tight mt-1 block whitespace-nowrap">{{ autos().length }} en taller</span>
+        </div>
+        <div class="px-3 py-1.5 rounded-xl bg-amber-400/10 border border-amber-400/30 text-center shrink-0 whitespace-nowrap">
+          <span class="text-[9px] font-mono uppercase text-amber-300 block leading-none whitespace-nowrap">Por cotizar</span>
+          <span class="text-xs font-bold text-amber-300 leading-tight mt-1 block whitespace-nowrap">{{ listasPorCotizar() }} lista{{ listasPorCotizar() === 1 ? '' : 's' }}</span>
+        </div>
+      </div>
+
+      <!-- Sesión del mecánico (demo) -->
+      <div class="flex items-center gap-2.5 pl-2 pr-3.5 py-1.5 rounded-full bg-white/[0.04] border border-white/15 hover:border-amber-400/50 shadow-md transition shrink-0" title="Sesión del Mecánico">
+        <div class="relative w-8 h-8 rounded-full bg-gradient-to-tr from-lime-600 via-emerald-500 to-lime-300 p-0.5 shrink-0">
+          <div class="w-full h-full rounded-full bg-[#181412] flex items-center justify-center text-lime-300 font-bold text-[10px] font-mono">TDB</div>
+          <span class="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-[#151210] shadow-[0_0_6px_#34D399]"></span>
+        </div>
+        <div class="flex flex-col text-left">
+          <div class="flex items-center gap-1.5">
+            <span class="text-white text-xs font-bold leading-none">Gustavo</span>
+            <span class="px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 text-[8px] font-mono font-bold">MECÁNICO</span>
+          </div>
+          <span class="text-[9px] text-stone-300 tracking-wide leading-none mt-1">Taller Don Bosco · Trelew</span>
+        </div>
+      </div>
+
+      <a (click)="volver()" class="px-3 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-stone-200 text-xs font-medium transition flex items-center gap-1.5 cursor-pointer shrink-0" title="Ir al Inicio">
+        <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+        <span class="hidden sm:inline">Inicio</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- ══ PROGRESO GUIADO TIPO TYPEFORM (una pantalla por vez) ══ -->
+  <div class="jobs-surface p-4 text-white space-y-2.5">
+    <div class="flex items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5">
+        <span class="w-6 h-6 rounded-full bg-amber-400 text-stone-950 font-black text-xs flex items-center justify-center shrink-0 shadow-sm">{{ progreso().paso }}</span>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs font-bold text-white">{{ progreso().etiqueta }}</span>
+            <span class="px-1.5 py-0.5 rounded font-mono text-[9px] font-bold" [class]="progreso().badgeClase">{{ progreso().badge }}</span>
+          </div>
+          <p class="text-[11px] text-stone-300 mt-0.5">{{ progreso().hint }}</p>
+        </div>
+      </div>
+
+      <div class="hidden sm:flex items-center gap-4 text-xs font-mono shrink-0">
+        <span class="flex items-center gap-1.5" [class]="progreso().paso === 1 ? 'text-white font-bold' : 'text-emerald-300 font-medium'">
+          <span class="w-1.5 h-1.5 rounded-full" [class]="progreso().paso === 1 ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'"></span> 1. Auto
+        </span>
+        <span class="flex items-center gap-1.5" [class]="progreso().paso === 2 ? 'text-white font-bold' : progreso().paso > 2 ? 'text-emerald-300 font-medium' : 'text-stone-500'">
+          <span class="w-1.5 h-1.5 rounded-full" [class]="progreso().paso === 2 ? 'bg-amber-400 animate-pulse' : progreso().paso > 2 ? 'bg-emerald-400' : 'bg-stone-600'"></span> 2. Repuestos
+        </span>
+        <span class="flex items-center gap-1.5" [class]="progreso().paso === 3 ? 'text-white font-bold' : 'text-stone-500'">
+          <span class="w-1.5 h-1.5 rounded-full" [class]="progreso().paso === 3 ? 'bg-amber-400 animate-pulse' : 'bg-stone-600'"></span> 3. Cotizar
+        </span>
+      </div>
+    </div>
+
+    <div class="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+      <div class="h-full bg-gradient-to-r from-amber-400 via-amber-300 to-emerald-400 rounded-full transition-all duration-500 ease-out" [style.width.%]="progreso().pct"></div>
+    </div>
+  </div>
+
+  <!-- ══ PANTALLAS DEL FLUJO TYPEFORM: SOLO UNA VISIBLE POR VEZ ══ -->
+  <main class="w-full">
+
+    @switch (paso()) {
+
+      <!-- ─── PANTALLA 1: VEHÍCULOS EN BOX ─── -->
+      @case (1) {
+        <div class="jobs-surface p-4 sm:p-6 text-white space-y-4 paso-anim">
+
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-xs font-mono uppercase tracking-wider text-amber-300 font-bold flex items-center gap-2">
+              <span class="w-5 h-5 rounded-md bg-amber-400 text-stone-950 font-black text-xs flex items-center justify-center shrink-0">1</span>
+              <span>Vehículos en Box</span>
+            </span>
+            <button (click)="nuevoAuto()" class="px-2.5 py-1 rounded-lg bg-amber-400 hover:bg-amber-300 text-stone-950 font-bold text-xs font-mono flex items-center gap-1 cursor-pointer transition">
+              <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+              <span>Nuevo</span>
+            </button>
+          </div>
+
+          <div class="relative">
+            <input type="text" [ngModel]="busquedaAuto()" (ngModelChange)="busquedaAuto.set($event)" placeholder="Buscar por patente o modelo (ej: Passat, Hilux, Ranger)..." class="w-full bg-black/40 border border-white/15 focus:border-amber-400 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-stone-400 focus:outline-none" />
+            <svg class="w-4 h-4 text-stone-400 absolute left-3 top-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"></path><circle cx="11" cy="11" r="8"></circle></svg>
+          </div>
+
+          <div class="space-y-2 max-h-[440px] overflow-y-auto pr-1 lista-scroll">
+            @for (a of autosFiltrados(); track a.id) {
+              <div (click)="elegirAuto(a.id)" class="p-3 rounded-xl cursor-pointer flex items-center justify-between gap-3 tap-target group transition"
+                [class]="claseFila(a)">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div class="w-11 h-11 rounded-lg bg-stone-900 border shrink-0 overflow-hidden flex items-center justify-center text-stone-400 font-mono text-xs font-bold"
+                    [class]="a.id === autoId() ? 'border-amber-400/50' : 'border-white/15'">
+                    @if (a.img) { <img [src]="a.img" [alt]="a.titulo" class="w-full h-full object-cover" /> }
+                    @else { {{ a.titulo.slice(0, 3).toUpperCase() }} }
+                  </div>
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="px-1.5 py-0.5 rounded font-mono font-black text-[11px]" [class]="a.id === autoId() ? 'bg-amber-400 text-stone-950' : 'bg-white/15 text-stone-200'">{{ a.patente }}</span>
+                      <span class="text-[9px] font-mono px-1 rounded" [class]="a.estadoClase">{{ a.estado }}</span>
+                    </div>
+                    <h4 class="text-xs font-bold text-white group-hover:text-amber-300 truncate mt-0.5">{{ a.titulo }}</h4>
+                    <p class="text-[10px] text-stone-300 font-mono">{{ a.duenio }} · {{ a.ubicacion }}</p>
+                  </div>
+                </div>
+                <div class="text-right shrink-0">
+                  @if (a.estado === 'Pendiente de permiso') {
+                    <span class="text-[10px] font-mono font-bold text-cyan-300 block">⏳ Permiso</span>
+                    <span class="text-[10px] font-mono text-cyan-400/70 block">Notificado</span>
+                  } @else if (a.estado === 'Lista enviada') {
+                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[9px] font-bold border border-emerald-500/30">✓ Enviada</span>
+                    @if (a.piezas.length) {
+                      <span class="text-[10px] font-mono font-bold text-emerald-400 block mt-1">{{ a.piezas.length }} pieza{{ a.piezas.length === 1 ? '' : 's' }}</span>
+                    }
+                  } @else if (a.piezas.length) {
+                    <span class="text-[10px] font-mono font-bold text-amber-400 block">{{ a.piezas.length }} pieza{{ a.piezas.length === 1 ? '' : 's' }}</span>
+                    <span class="text-[10px] font-mono text-amber-400/70 block">En armado</span>
+                  } @else {
+                    <span class="text-[10px] font-mono text-stone-400 block">Sin piezas</span>
+                    <span class="text-[10px] font-mono text-amber-400 block">Tocar p/ armar</span>
+                  }
+                </div>
+              </div>
+            } @empty {
+              <p class="p-4 text-center text-xs font-mono text-stone-400">Ningún auto coincide con la búsqueda.</p>
+            }
+          </div>
+
+          <div class="pt-2 border-t border-white/10 flex items-center justify-between gap-3 flex-col sm:flex-row">
+            @if (autoActivo(); as act) {
+              <p class="text-[11px] text-stone-400 font-mono text-center sm:text-left">Auto elegido: {{ act.patente }}. Abrís su consola al tocarlo, o continuá acá.</p>
+              <button type="button" (click)="irAPaso(2)" class="tap-target px-5 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-black text-xs sm:text-sm shadow-[0_8px_25px_rgba(245,158,11,0.28)] transition-all flex items-center gap-2 cursor-pointer w-full sm:w-auto justify-center">
+                <span>Continuar con {{ act.patente }}</span><span>→</span>
+              </button>
+            } @else {
+              <p class="text-[11px] text-stone-500 font-mono text-center sm:text-left">Ningún auto seleccionado todavía. Tocá uno de la lista para empezar.</p>
+            }
+          </div>
+
+        </div>
+      }
+
+      <!-- ─── PANTALLA 2: REPUESTOS COMPATIBLES ─── -->
+      @case (2) {
+        @if (autoActivo(); as act) {
+        <div class="jobs-surface p-5 sm:p-7 text-white space-y-6 paso-anim">
+
+          <!-- Esperando permiso del cliente: la lista está bloqueada hasta el acepto -->
+          @if (act.estado === 'Pendiente de permiso') {
+            <div class="p-5 rounded-2xl bg-cyan-500/10 border-2 border-cyan-400/40 space-y-4 text-center">
+              <div class="w-14 h-14 mx-auto rounded-2xl bg-cyan-400/20 border border-cyan-400/40 text-cyan-300 flex items-center justify-center text-2xl">⏳</div>
+              <div>
+                <h3 class="text-base font-extrabold text-white">Permiso pendiente de aceptación</h3>
+                <p class="text-xs text-cyan-200 font-mono mt-1">
+                  Le enviamos la notificación a {{ act.duenio }} ({{ act.patente }}).
+                  Cuando acepte desde su teléfono, se desbloquea el armado de la lista.
+                </p>
+              </div>
+              <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/20 border border-cyan-400/30 text-cyan-300 text-[10px] font-mono font-bold">
+                <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                NOTIFICACIÓN ENVIADA · ESPERANDO ACEPTO
+              </div>
+              <div>
+                <button type="button" (click)="registrarAcepto()"
+                  class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-mono text-xs font-bold transition cursor-pointer">
+                  Registrar acepto del cliente (demo)
+                </button>
+              </div>
+            </div>
+          } @else {
+
+          <!-- Encabezado del vehículo activo -->
+          <div class="flex items-start justify-between gap-4 pb-5 border-b border-white/10">
+            <div class="min-w-0">
+              <div class="flex items-center gap-2.5 flex-wrap">
+                <span class="px-2.5 py-1 rounded-lg bg-amber-400 text-stone-950 font-mono font-black text-xs tracking-wider shadow-sm">{{ act.patente }}</span>
+                <h2 class="text-lg sm:text-xl font-bold tracking-tight text-white">{{ act.titulo }}</h2>
+              </div>
+              <p class="text-xs text-stone-300 mt-1">Dueño: {{ act.duenio }}@if (act.motor) {<span> · {{ act.motor }}</span>} · Chasis verificado</p>
+            </div>
+            <div class="text-right shrink-0">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-[10px] font-mono font-semibold">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34D399]"></span>
+                Chasis OK
+              </span>
+            </div>
+          </div>
+
+          <!-- Buscador de catálogo -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono uppercase tracking-wider text-amber-300 font-bold flex items-center gap-2">
+                <span class="w-5 h-5 rounded-md bg-amber-400 text-stone-950 font-black text-xs flex items-center justify-center shrink-0">2</span>
+                <span>Buscar Piezas Compatibles</span>
+              </span>
+              <span class="text-[10px] font-mono text-stone-300">Catálogo oficial</span>
+            </div>
+
+            <button type="button" (click)="abrirModal()" class="tap-target w-full p-4 rounded-2xl bg-white/[0.04] hover:bg-white/[0.07] border border-amber-400/70 hover:border-amber-300 shadow-[0_8px_30px_rgba(0,0,0,0.4)] text-left flex items-center justify-between gap-4 group transition cursor-pointer">
+              <div class="flex items-center gap-3.5">
+                <div class="w-11 h-11 rounded-xl bg-amber-400 text-stone-950 font-black flex items-center justify-center shadow group-hover:scale-105 transition-transform shrink-0">
+                  <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"></path><circle cx="11" cy="11" r="8"></circle></svg>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h3 class="text-sm font-bold text-white group-hover:text-amber-300 transition-colors">Abrir Buscador para {{ act.titulo.split(' ')[1] }}</h3>
+                    <span class="px-2 py-0.5 rounded bg-amber-400 text-stone-950 text-[9px] font-mono font-bold">ABRIR</span>
+                  </div>
+                  <p class="text-xs text-stone-300 mt-0.5">Elegís la pieza, confirmás el calce de fábrica y asociás foto de muestra.</p>
+                </div>
+              </div>
+              <span class="text-amber-400 font-mono font-bold text-xs group-hover:translate-x-1 transition-transform flex items-center gap-1 shrink-0">
+                <span>Buscar</span><span>→</span>
+              </span>
+            </button>
+          </div>
+
+          <!-- Lista de repuestos confirmados -->
+          <div class="space-y-3 pt-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono uppercase tracking-wider text-stone-300 font-semibold flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-emerald-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="m16 9-5.5 5.5L8 12"></path></svg>
+                Repuestos listos para cotizar
+              </span>
+              <span class="text-xs font-mono font-bold text-amber-300 bg-amber-400/10 px-2.5 py-0.5 rounded-full border border-amber-400/30">{{ act.piezas.length }} repuesto{{ act.piezas.length === 1 ? '' : 's' }} listo{{ act.piezas.length === 1 ? '' : 's' }}</span>
+            </div>
+
+            <div class="space-y-2.5">
+              @for (p of act.piezas; track p.id) {
+                <div class="p-3 rounded-xl bg-white/[0.04] border border-amber-400/60 flex items-center justify-between gap-3">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-11 h-11 rounded-lg bg-stone-900 border border-white/15 shrink-0 overflow-hidden flex items-center justify-center text-stone-400 font-mono text-xs font-bold p-1">
+                      @if (p.fotoMuestra) { <img [src]="p.fotoMuestra" [alt]="p.nombre" class="w-full h-full object-cover rounded" /> }
+                      @else if (p.img) { <img [src]="p.img" [alt]="p.nombre" class="w-full h-full object-contain" /> }
+                      @else { {{ p.nombre.slice(0, 2).toUpperCase() }} }
+                    </div>
+                    <div class="min-w-0">
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <h4 class="text-xs sm:text-sm font-bold text-white truncate">{{ p.nombre }}</h4>
+                        <span class="px-1.5 py-0.5 rounded font-mono text-[9px] border" [class]="p.fotoMuestra ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/20' : 'bg-stone-500/15 text-stone-300 border-stone-500/20'">
+                          @if (p.fotoMuestra) { Muestra OK 📷 } @else { Sin muestra }
+                        </span>
+                      </div>
+                      <p class="text-[11px] text-stone-400 font-mono mt-0.5">{{ p.sub }}</p>
+                    </div>
+                  </div>
+                  <button type="button" (click)="quitarPieza(p.id)" class="text-stone-400 hover:text-rose-400 p-2 text-xs transition rounded-lg hover:bg-white/5 shrink-0" title="Quitar">
+                    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                  </button>
+                </div>
+              } @empty {
+                <div class="p-4 rounded-xl bg-white/[0.02] border border-dashed border-white/15 text-center text-stone-400 text-xs font-mono">
+                  No hay repuestos en la lista de este auto todavía. Tocá "Abrir Buscador" para agregar.
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Navegación del paso -->
+          <div class="border-t border-white/10 pt-5 flex items-center justify-between gap-3 flex-col sm:flex-row">
+            <button type="button" (click)="irAPaso(1)" class="px-4 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.09] text-stone-300 text-xs font-mono flex items-center gap-2 border border-white/15 transition cursor-pointer w-full sm:w-auto justify-center">
+              <span>←</span><span>Cambiar vehículo</span>
+            </button>
+            <button type="button" (click)="irAPaso(3)" [disabled]="!act.piezas.length"
+              class="tap-target px-5 py-3 rounded-xl font-black text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer w-full sm:w-auto justify-center"
+              [class]="act.piezas.length ? 'bg-amber-400 hover:bg-amber-300 text-stone-950 shadow-[0_8px_25px_rgba(245,158,11,0.28)]' : 'bg-white/5 text-stone-500 cursor-not-allowed'">
+              <span>Continuar a Cotización</span><span>→</span>
+            </button>
+          </div>
+
+          }
+        </div>
+        }
+      }
+
+      <!-- ─── PANTALLA 3: FOTO & PEDIR COTIZACIÓN ─── -->
+      @case (3) {
+        @if (autoActivo(); as act) {
+
+        <!-- CARTEL DE ÉXITO: PEDIDO ENVIADO A MOSTRADORES -->
+        @if (pedidoEnviado()) {
+          <div class="jobs-surface p-6 sm:p-10 text-white space-y-7 text-center paso-anim">
+
+            <div class="w-16 h-16 mx-auto rounded-2xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center shadow-[0_0_30px_rgba(52,211,153,0.25)]">
+              <svg class="w-8 h-8 text-emerald-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+            </div>
+
+            <div class="space-y-2.5">
+              <h2 class="text-xl sm:text-2xl font-black tracking-tight text-white">¡Pedido enviado a mostradores!</h2>
+              <p class="text-sm text-stone-300 max-w-md mx-auto leading-relaxed">La lista de repuestos del auto seleccionado ya fue recibida por las repuesteras.</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-xl mx-auto text-left">
+              <div class="p-3.5 rounded-xl bg-white/[0.04] border border-white/10 text-center">
+                <span class="text-[9px] font-mono uppercase text-stone-400 block leading-none">Auto</span>
+                <span class="text-xs font-bold text-amber-300 font-mono leading-tight mt-1.5 block">{{ act.patente }}</span>
+              </div>
+              <div class="p-3.5 rounded-xl bg-white/[0.04] border border-white/10 text-center">
+                <span class="text-[9px] font-mono uppercase text-stone-400 block leading-none">Repuestos</span>
+                <span class="text-xs font-bold text-white leading-tight mt-1.5 block">{{ act.piezas.length }} en la lista</span>
+              </div>
+              <div class="p-3.5 rounded-xl bg-white/[0.04] border border-white/10 text-center">
+                <span class="text-[9px] font-mono uppercase text-stone-400 block leading-none">Mostradores</span>
+                <span class="text-xs font-bold text-emerald-300 leading-tight mt-1.5 block">4 en Trelew</span>
+              </div>
+            </div>
+
+            <p class="text-[11px] font-mono text-stone-400">Recibís las cotizaciones de inmediato · Podés seguir armándo la lista si falta una pieza.</p>
+
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1">
+              <button type="button" (click)="irAPaso(2)" class="tap-target px-5 py-3 rounded-xl bg-white/[0.05] hover:bg-white/[0.09] text-stone-200 text-xs font-mono flex items-center gap-2 border border-white/15 transition cursor-pointer w-full sm:w-auto justify-center">
+                <span>←</span><span>Seguir editando la lista</span>
+              </button>
+              <button type="button" (click)="nuevaLista()" class="tap-target px-5 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-black text-xs sm:text-sm shadow-[0_8px_25px_rgba(245,158,11,0.28)] transition-all flex items-center gap-2 cursor-pointer w-full sm:w-auto justify-center">
+                <span>Nueva lista para otro auto</span><span>→</span>
+              </button>
+            </div>
+
+          </div>
+        }
+        @else {
+          <div class="jobs-surface p-5 sm:p-7 text-white space-y-6 paso-anim">
+
+          <!-- Encabezado compacto del vehículo -->
+          <div class="flex items-start justify-between gap-4 pb-5 border-b border-white/10">
+            <div class="min-w-0">
+              <div class="flex items-center gap-2.5 flex-wrap">
+                <span class="px-2.5 py-1 rounded-lg bg-amber-400 text-stone-950 font-mono font-black text-xs tracking-wider shadow-sm">{{ act.patente }}</span>
+                <h2 class="text-lg sm:text-xl font-bold tracking-tight text-white">{{ act.titulo }}</h2>
+              </div>
+              <p class="text-xs text-stone-300 mt-1">Dueño: {{ act.duenio }}@if (act.motor) {<span> · {{ act.motor }}</span>}</p>
+            </div>
+            <span class="text-xs font-mono font-bold text-amber-300 bg-amber-400/10 px-2.5 py-0.5 rounded-full border border-amber-400/30 shrink-0">{{ act.piezas.length }} repuesto{{ act.piezas.length === 1 ? '' : 's' }}</span>
+          </div>
+
+          <!-- Resumen de la lista a cotizar -->
+          <div class="space-y-2.5">
+            <span class="text-xs font-mono uppercase tracking-wider text-stone-300 font-semibold flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-emerald-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="m16 9-5.5 5.5L8 12"></path></svg>
+              Resumen de la lista
+            </span>
+            <div class="space-y-2">
+              @for (p of act.piezas; track p.id) {
+                <div class="p-2.5 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-between gap-3 text-xs">
+                  <span class="font-bold text-white truncate mr-2">{{ p.nombre }}</span>
+                  <span class="text-[10px] font-mono text-stone-400 font-bold shrink-0">1 unid. @if (p.fotoMuestra) { · 📷 }</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Foto de muestra & pedido -->
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono uppercase tracking-wider text-amber-300 font-bold flex items-center gap-2">
+                <span class="w-5 h-5 rounded-md bg-amber-400 text-stone-950 font-black text-xs flex items-center justify-center shrink-0">3</span>
+                <span>Foto de Muestra &amp; Pedido</span>
+              </span>
+              <span class="text-[10px] font-mono text-stone-400">4 mostradores Trelew</span>
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-center gap-3">
+              <input type="file" class="hidden" accept="image/*" (change)="onFotoGeneral($event)" #fotoGenInput />
+              <button type="button" (click)="fotoGenInput.click()" class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.09] text-stone-200 text-xs font-medium flex items-center justify-center gap-2 border border-white/15 transition cursor-pointer">
+                <svg class="w-4 h-4 text-stone-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"></path><circle cx="12" cy="13" r="3"></circle></svg>
+                <span>Foto general del auto o motor (opcional)</span>
+              </button>
+
+              @if (fotoGeneral(); as fg) {
+                <div class="flex items-center gap-2 p-2 px-3 rounded-xl bg-emerald-500/15 border border-emerald-400/30 text-xs font-mono text-emerald-300 flex-1 w-full justify-between">
+                  <span class="truncate">✓ Foto de muestra asociada</span>
+                  <button (click)="quitarFotoGeneral($event)" class="text-stone-400 hover:text-white ml-2 shrink-0">✕</button>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Botón definitivo -->
+          <div class="pt-2">
+            <button type="button" (click)="enviarLista()" class="tap-target w-full py-4 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-black text-sm sm:text-base text-center shadow-[0_12px_35px_rgba(245,158,11,0.28)] transition-all flex items-center justify-center gap-2.5 cursor-pointer">
+              <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"></path><path d="m21.854 2.147-10.94 10.939"></path></svg>
+              <span>Pedir Cotización de estos Repuestos a los Mostradores</span>
+            </button>
+            <p class="text-[11px] text-center text-stone-300 mt-2.5">
+              Se envían números de pieza y muestras a 4 repuesteras de Trelew para recibir precios de inmediato.
+            </p>
+          </div>
+
+          <!-- Navegación del paso -->
+          <div class="border-t border-white/10 pt-5">
+            <button type="button" (click)="irAPaso(2)" class="px-4 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.09] text-stone-300 text-xs font-mono flex items-center gap-2 border border-white/15 transition cursor-pointer w-full sm:w-auto justify-center">
+              <span>←</span><span>Volver a Repuestos</span>
+            </button>
+          </div>
+
+        </div>
+        }
+        }
+      }
+
+    }
+
+  </main>
+
+  <footer class="text-center py-2 text-xs font-mono text-[#1F1916]">
+    Toolbox Patagonia · Panel de Mecánico Profesional · Trelew, Chubut
+  </footer>
+
+</div>
+
+<!-- ══ MODAL: BUSCADOR DE REPUESTOS (flujo typeform: buscá → elegí → foto) ══ -->
+@if (modalAbierto() && autoActivo(); as mAct) {
+  <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6" (click)="cerrarModal()">
+    <div class="glass-dark border border-amber-400/50 rounded-3xl w-full max-w-2xl overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.95)] flex flex-col max-h-[90vh]" (click)="$event.stopPropagation()">
+
+      <div class="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between gap-3 text-white bg-black/40">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-10 h-10 rounded-xl bg-amber-400 text-stone-950 font-black flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"></path><circle cx="11" cy="11" r="8"></circle></svg>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="text-sm sm:text-base font-extrabold text-white truncate">Buscador de Repuestos</h3>
+              <span class="px-2 py-0.5 rounded bg-amber-400 text-stone-950 font-mono font-bold text-[10px]">{{ mAct.patente }} · {{ mAct.titulo }}</span>
+            </div>
+            <p class="text-xs text-stone-300 font-mono">Paso 1: Buscá · Paso 2: Elegí pieza compatible · Paso 3: Foto de muestra</p>
+          </div>
+        </div>
+        <button type="button" (click)="cerrarModal()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-stone-300 hover:text-white flex items-center justify-center transition shrink-0" title="Cerrar">✕</button>
+      </div>
+
+      <div class="p-4 sm:p-5 border-b border-white/10 bg-black/20">
+        <div class="relative">
+          <input type="text" [ngModel]="queryPieza()" (ngModelChange)="queryPieza.set($event)" placeholder="Escribí el repuesto (ej: pastillas, amortiguador, termostato, filtro, embrague)..." class="w-full bg-[#100D0B] border border-amber-400/60 focus:border-amber-400 rounded-2xl pl-11 pr-4 py-3.5 text-sm sm:text-base text-white placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-400/20 font-medium" />
+          <svg class="w-5 h-5 text-amber-400 absolute left-3.5 top-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"></path><circle cx="11" cy="11" r="8"></circle></svg>
+        </div>
+      </div>
+
+      <div class="p-4 sm:p-5 overflow-y-auto space-y-3 flex-1 lista-scroll">
+
+        @if (!confirmacion()) {
+          <div class="flex items-center justify-between text-xs font-mono text-stone-400 mb-1">
+            <span>Repuestos compatibles verificados con chasis:</span>
+            <span class="text-amber-400">{{ resultados().length }} opciones listas</span>
+          </div>
+
+          @for (p of resultados(); track p.id) {
+            <div class="p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 hover:border-amber-400/50 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-white">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-12 h-12 rounded-xl bg-black/60 border border-white/15 p-1 shrink-0 overflow-hidden flex items-center justify-center text-stone-400 font-mono text-xs font-bold">
+                  @if (p.img) { <img [src]="p.img" [alt]="p.nombre" class="w-full h-full object-contain" /> }
+                  @else { {{ p.nombre.slice(0, 2).toUpperCase() }} }
+                </div>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h4 class="text-xs sm:text-sm font-bold text-white">{{ p.nombre }}</h4>
+                    <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[9px]">Calce 100%</span>
+                  </div>
+                  <p class="text-[11px] text-stone-300 font-mono mt-0.5">{{ p.sub }}</p>
+                </div>
+              </div>
+              <button type="button" (click)="elegirPieza(p)" class="px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-bold text-xs font-mono flex items-center justify-center gap-1.5 transition shrink-0 cursor-pointer">
+                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+                <span>Elegir y sacar foto</span>
+              </button>
+            </div>
+          } @empty {
+            <p class="p-6 text-center text-xs font-mono text-stone-400">Sin resultados para " {{ queryPieza() }} ". Probá con otra palabra.</p>
+          }
+        }
+
+        <!-- PASO 3 INTERNO: CONFIRMAR CON FOTO DE MUESTRA -->
+        @if (confirmacion(); as c) {
+          <div class="p-4 rounded-2xl bg-amber-500/10 border-2 border-amber-400 text-white space-y-3">
+            <div class="flex items-center justify-between border-b border-amber-400/20 pb-2">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                <span class="text-xs font-mono font-black uppercase text-amber-300 tracking-wider">Confirmar pieza y sacar foto muestra</span>
+              </div>
+              <button (click)="cancelarConfirmacion()" class="text-xs font-mono text-stone-400 hover:text-white shrink-0">✕ Volver a buscar</button>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-xl bg-black/40 border border-amber-400/40 flex items-center justify-center text-stone-400 font-mono text-xs font-bold p-1 shrink-0 overflow-hidden">
+                @if (c.pieza.img) { <img [src]="c.pieza.img" [alt]="c.pieza.nombre" class="w-full h-full object-contain" /> }
+                @else { {{ c.pieza.nombre.slice(0, 2).toUpperCase() }} }
+              </div>
+              <div class="min-w-0">
+                <h4 class="text-xs sm:text-sm font-bold text-white truncate">{{ c.pieza.nombre }}</h4>
+                <p class="text-[10px] text-stone-300 font-mono">Compatible con este vehículo</p>
+              </div>
+            </div>
+
+            <div class="p-3 rounded-xl bg-black/40 border border-dashed border-white/20 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-lg bg-amber-400/20 text-amber-300 flex items-center justify-center shrink-0">
+                  <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"></path><circle cx="12" cy="13" r="3"></circle></svg>
+                </div>
+                <div>
+                  <span class="text-xs font-bold text-white block">Foto de la pieza desmontada (Muestra)</span>
+                  <span class="text-[10px] text-stone-400">Para que la repuestera mande el calce exacto</span>
+                </div>
+              </div>
+              <input type="file" class="hidden" accept="image/*" (change)="onFotoMuestra($event)" #fotoMuestraInput />
+              <button type="button" (click)="fotoMuestraInput.click()" class="px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white font-mono text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer">
+                <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"></path><circle cx="12" cy="13" r="3"></circle></svg>
+                <span>@if (c.foto) { ✓ Foto cargada } @else { Tomar foto }</span>
+              </button>
+            </div>
+
+            @if (c.foto) {
+              <p class="text-[11px] font-mono text-emerald-400 flex items-center gap-1.5">✓ Foto de muestra asociada a esta pieza, lista para el mostrador.</p>
+            }
+
+            <button type="button" (click)="confirmarPieza()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 text-stone-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer transition">
+              <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+              <span>Confirmar y Sumar a la Lista del Auto</span>
+            </button>
+          </div>
+        }
+
+      </div>
+    </div>
+  </div>
+}
+
+<!-- MODAL: NUEVO INGRESO → PEDIDO DE PERMISO AL CLIENTE -->
+@if (agendaAbierto()) {
+  <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6" (click)="cerrarAgenda()">
+    <div class="glass-dark border border-amber-400/50 rounded-3xl w-full max-w-md overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.95)] text-white" (click)="$event.stopPropagation()">
+
+      <!-- Encabezado -->
+      <div class="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between gap-3 bg-black/40">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-10 h-10 rounded-xl bg-amber-400 text-stone-950 font-black flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path></svg>
+          </div>
+          <div class="min-w-0">
+            <h3 class="text-sm sm:text-base font-extrabold text-white truncate">Nuevo Ingreso al Taller</h3>
+            <p class="text-[10px] text-stone-400 font-mono">Cargá el auto y el dueño recibe la notificación</p>
+          </div>
+        </div>
+        <button type="button" (click)="cerrarAgenda()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-stone-300 hover:text-white flex items-center justify-center transition shrink-0" title="Cerrar">✕</button>
+      </div>
+
+      <!-- Ficha mínima: patente + dueño -->
+      <div class="p-4 sm:p-5 space-y-3.5">
+        <div class="p-3 rounded-2xl bg-cyan-500/10 border border-cyan-400/30">
+          <p class="text-[11px] font-mono text-cyan-300 font-bold leading-relaxed">
+            Al enviar el ingreso, a {{ agDuenio().trim() ? agDuenio().trim() : 'el dueño' }} le llega una notificación para aceptar el permiso. Hasta que acepte, el auto queda en la agenda como pendiente.
+          </p>
+        </div>
+        <div>
+          <label class="text-[10px] font-mono text-stone-400 uppercase tracking-wider">Patente *</label>
+          <input type="text" [ngModel]="agPatente()" (ngModelChange)="agPatente.set($event)" placeholder="ej: PM 552 ZK"
+            class="mt-1 w-full bg-[#100D0B] border border-white/20 focus:border-amber-400 rounded-xl px-3.5 py-3 text-sm text-white placeholder-stone-500 focus:outline-none uppercase" />
+        </div>
+        <div>
+          <label class="text-[10px] font-mono text-stone-400 uppercase tracking-wider">Dueño del vehículo *</label>
+          <input type="text" [ngModel]="agDuenio()" (ngModelChange)="agDuenio.set($event)" placeholder="ej: Santiago M."
+            class="mt-1 w-full bg-[#100D0B] border border-white/20 focus:border-amber-400 rounded-xl px-3.5 py-3 text-sm text-white placeholder-stone-500 focus:outline-none" />
+        </div>
+        <div>
+          <label class="text-[10px] font-mono text-stone-400 uppercase tracking-wider">Marca y modelo (opcional)</label>
+          <input type="text" [ngModel]="agModelo()" (ngModelChange)="agModelo.set($event)" placeholder="ej: Ford Ranger 3.2 TDCi"
+            class="mt-1 w-full bg-[#100D0B] border border-white/20 focus:border-amber-400 rounded-xl px-3.5 py-3 text-sm text-white placeholder-stone-500 focus:outline-none" />
+        </div>
+        <div>
+          <label class="text-[10px] font-mono text-stone-400 uppercase tracking-wider">Ubicación en el taller</label>
+          <select [ngModel]="agUbicacion()" (ngModelChange)="agUbicacion.set($event)"
+            class="mt-1 w-full bg-[#100D0B] border border-white/20 focus:border-amber-400 rounded-xl px-3.5 py-3 text-sm text-white focus:outline-none">
+            @for (b of boxes; track b) {
+              <option [value]="b">{{ b }}</option>
+            }
+          </select>
+        </div>
+        @if (agError()) {
+          <p class="text-[11px] font-mono text-rose-300 px-1">{{ agError() }}</p>
+        }
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+          <button type="button" (click)="cerrarAgenda()" class="py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-mono text-xs font-bold transition cursor-pointer">Cancelar</button>
+          <button type="button" (click)="pedirPermiso()"
+            class="py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-mono text-xs font-black transition cursor-pointer flex items-center justify-center gap-1.5">
+            <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+            <span>Pedir permiso al dueño</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- TOAST DE CONFIRMACIÓN -->
+@if (toast(); as t) {
+  <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] w-full max-w-md px-4">
+    <div class="jobs-surface p-3.5 rounded-2xl border border-emerald-400/40 flex items-center gap-3 text-white">
+      <div class="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 flex items-center justify-center shrink-0">✓</div>
+      <p class="text-xs font-mono text-stone-200 leading-relaxed min-w-0">{{ t }}</p>
+    </div>
+  </div>
+}

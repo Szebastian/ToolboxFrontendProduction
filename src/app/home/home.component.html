@@ -53,7 +53,7 @@
         <div class="relative w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-amber-600 via-orange-500 to-amber-300 p-0.5 flex items-center justify-center shadow-inner">
           @if (rolSesion(); as activo) {
             <div class="w-full h-full rounded-full bg-[#181412] flex items-center justify-center text-amber-300 font-bold text-xs font-mono group-hover:scale-105 transition-transform">
-              {{ activo === 'repuestero' ? 'RC' : activo === 'admin' ? 'AD' : activo === 'repartidor' ? 'RP' : 'LR' }}
+              {{ activo === 'repuestero' ? 'RC' : activo === 'admin' ? 'AD' : activo === 'repartidor' ? 'RP' : inicialesPildora }}
             </div>
           } @else {
             <div class="w-full h-full rounded-full bg-[#181412] flex items-center justify-center text-stone-400 group-hover:scale-105 transition-transform">
@@ -74,7 +74,7 @@
 
         <div class="hidden sm:flex flex-col text-left">
           <span class="text-white text-xs font-bold leading-none group-hover:text-amber-300 transition-colors">
-            {{ rolSesion() === 'repuestero' ? 'Rep. Centro' : rolSesion() === 'admin' ? 'Admin' : rolSesion() === 'repartidor' ? 'Flota TB' : rolSesion() ? 'Lucas R.' : 'Iniciar sesión' }}
+            {{ rolSesion() === 'repuestero' ? 'Rep. Centro' : rolSesion() === 'admin' ? 'Admin' : rolSesion() === 'repartidor' ? 'Flota TB' : nombrePildora }}
           </span>
           <span class="text-[9px] text-stone-400 font-mono tracking-wider uppercase leading-none mt-1">
             {{ rolSesion() === 'repuestero' ? 'Vendedor' : rolSesion() === 'admin' ? 'Administrador' : rolSesion() === 'repartidor' ? 'Repartidor' : rolSesion() ? 'Panel Cliente' : 'Elegir rol' }}
@@ -153,7 +153,33 @@
             <div class="fixed inset-0 z-[60]" (click)="cerrarMenuSesion()"></div>
             <div class="glass-surface absolute right-0 top-full mt-2 w-80 rounded-3xl p-3 border border-amber-400/40 z-[70] text-left font-mono origin-top-right">
               <div class="px-3 pt-2 pb-2.5 border-b border-white/10 flex items-center justify-between">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400">Seleccioná tu Cuenta</span>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400">Iniciá Sesión</span>
+                <span class="text-[9px] text-stone-400">cuenta real</span>
+              </div>
+
+              <!-- LOGIN REAL: email + contraseña contra Supabase Auth -->
+              <div class="px-1 py-2.5 space-y-2">
+                <input type="email" [(ngModel)]="loginEmail" (keyup.enter)="iniciarSesionReal()" placeholder="tu@email.com" autocomplete="email"
+                       class="w-full bg-black/80 border border-white/20 focus:border-amber-400 rounded-xl p-2.5 text-white text-xs focus:outline-none" />
+                <input type="password" [(ngModel)]="loginPass" (keyup.enter)="iniciarSesionReal()" placeholder="Contraseña" autocomplete="current-password"
+                       class="w-full bg-black/80 border border-white/20 focus:border-amber-400 rounded-xl p-2.5 text-white text-xs focus:outline-none" />
+                @if (loginError()) {
+                  <p class="text-[10px] text-red-400 font-bold px-1">{{ loginError() }}</p>
+                }
+                <button type="button" (click)="iniciarSesionReal()" [disabled]="loginCargando()"
+                        class="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 disabled:opacity-50 text-stone-950 font-black text-[11px] uppercase tracking-wider cursor-pointer disabled:cursor-wait flex items-center justify-center gap-2">
+                  @if (loginCargando()) {
+                    <span class="w-3.5 h-3.5 border-2 border-stone-900/30 border-t-stone-900 rounded-full animate-spin"></span>
+                    <span>Entrando…</span>
+                  } @else {
+                    <span>Entrar</span>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                  }
+                </button>
+              </div>
+
+              <div class="px-3 pt-2 pb-2.5 border-b border-white/10 flex items-center justify-between">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-stone-500">Acceso rápido (demo)</span>
                 <span class="text-[9px] text-stone-400">4 accesos</span>
               </div>
 
@@ -391,17 +417,26 @@
     <div id="garageSelectorWrap" class="mb-5 flex items-center justify-center w-full transition-opacity duration-300" [style.opacity]="drawerAbierto() ? '0.4' : '1'">
       <div id="directVehicleTabs" class="relative w-full max-w-md sm:max-w-sm">
 
-        <!-- Trigger: auto activo + chevron -->
-        <button type="button" (click)="alternarListaAutos()" class="direct-car-tab auto-tab-activo w-full justify-between gap-2" title="Ver todos los autos de tu garage">
-          <span class="flex items-center gap-2 min-w-0">
-            <span class="tab-img">
-              <img [src]="autoGarageActivo().img" [alt]="autoGarageActivo().corto" class="w-full h-full object-cover">
+        <!-- Trigger: auto activo + chevron (solo con garaje cargado) -->
+        @if (autoGarageActivo(); as ag) {
+          <button type="button" (click)="alternarListaAutos()" class="direct-car-tab auto-tab-activo w-full justify-between gap-2" title="Ver todos los autos de tu garage">
+            <span class="flex items-center gap-2 min-w-0">
+              <span class="tab-img">
+                <img [src]="ag.img" [alt]="ag.corto" class="w-full h-full object-cover">
+              </span>
+              <span class="truncate">{{ ag.corto }}</span>
+              <span class="activo-badge shrink-0">ACTIVO</span>
             </span>
-            <span class="truncate">{{ autoGarageActivo().corto }}</span>
-            <span class="activo-badge shrink-0">ACTIVO</span>
-          </span>
-          <svg class="w-3.5 h-3.5 shrink-0 transition-transform duration-200" [class.rotate-180]="listaAutosAbierta()" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
-        </button>
+            <svg class="w-3.5 h-3.5 shrink-0 transition-transform duration-200" [class.rotate-180]="listaAutosAbierta()" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+          </button>
+        } @else {
+          <div class="direct-car-tab auto-tab-activo w-full justify-between gap-2 text-left">
+            <span class="flex items-center gap-2 min-w-0">
+              <span class="truncate text-stone-400">Tu garaje está vacío</span>
+            </span>
+            <a [routerLink]="['/registro']" class="text-[10px] font-mono font-bold text-amber-400 hover:text-amber-300 shrink-0">AGREGAR AUTO +</a>
+          </div>
+        }
 
         <!-- Menú desplegable -->
         @if (listaAutosAbierta()) {
@@ -434,7 +469,44 @@
       </div>
     </div>
 
-    <!-- BARRA SPOTLIGHT MONARCA (DISEÑO PURO: CENTRADO, NÍTIDO Y SIN RUIDO) -->
+    <!-- DOS OPCIONES: SEGMENTED CONTROLLER (BUSCAR YO / ENVIAR A MI MECÁNICO) -->
+    <div id="choiceModeContainer" class="w-full max-w-lg mb-5 transition-all duration-300">
+      <div class="p-1.5 rounded-2xl bg-[#14110F]/90 border border-white/10 backdrop-blur-2xl shadow-[0_12px_35px_rgba(0,0,0,0.6)] flex items-center gap-1.5">
+
+        <!-- Opción 1: Buscar yo los repuestos -->
+        <button type="button" (click)="elegirBuscarYo()"
+          [class]="modoBusqueda() ? 'bg-amber-400 text-stone-950 font-black shadow-[0_2px_12px_rgba(251,191,36,0.35)]' : 'text-stone-300 hover:text-white hover:bg-white/[0.06] font-bold'"
+          class="flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 whitespace-nowrap transition-all cursor-pointer active:scale-[0.98]">
+          <svg class="w-4 h-4 shrink-0" [class]="modoBusqueda() ? 'text-stone-950' : 'text-amber-400'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+          <span class="tracking-tight">Buscar yo</span>
+          <span class="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded font-extrabold uppercase"
+            [class]="modoBusqueda() ? 'bg-stone-950/15 text-stone-900' : 'bg-amber-400/10 text-amber-300'">Catálogo</span>
+        </button>
+
+        <!-- Opción 2: Enviar a mi mecánico para armar la lista -->
+        <button type="button" (click)="abrirMecanicos()"
+          [class]="modoBusqueda() ? 'text-stone-500 hover:text-stone-300 hover:bg-white/[0.04]' : 'text-stone-300 hover:text-white hover:bg-white/[0.06] font-bold'"
+          class="flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 whitespace-nowrap transition-all cursor-pointer active:scale-[0.98]">
+          <svg class="w-4 h-4 shrink-0 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          </svg>
+          <span class="tracking-tight">Enviar a mi mecánico</span>
+          <span class="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-400/15 text-emerald-300 font-bold uppercase">Ficha</span>
+        </button>
+
+      </div>
+
+      <!-- Breve subtítulo dinámico -->
+      <p class="text-center text-[11px] sm:text-xs font-mono font-bold mt-2.5 tracking-tight text-stone-800/90">
+        {{ modoBusqueda() ? 'Buscador activado: escribí tu repuesto o elegí de las sugerencias' : 'Elegí cómo querés armar la lista de repuestos' }}
+      </p>
+    </div>
+
+    <!-- BARRA SPOTLIGHT MONARCA: OCULTA HASTA ELEGIR "BUSCAR YO" -->
+    @if (modoBusqueda()) {
     <div id="spotlightConsoleWrap" [class.spotlight-active]="drawerAbierto()" class="w-full max-w-2xl relative z-20 jobs-console rounded-3xl p-3.5 sm:p-5 flex items-center gap-2.5 sm:gap-4 cursor-text transition-all duration-300" (click)="focoBuscador()">
       <div class="pl-1 sm:pl-2 text-amber-400 shrink-0">
         <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -443,7 +515,7 @@
       </div>
 
       <!-- Input para ingresar el repuesto específico -->
-      <input type="text" id="spotlightSearch" placeholder="Escribí el repuesto (pastillas, correas, filtros)..." class="w-full bg-transparent text-white text-base sm:text-xl font-medium tracking-tight placeholder-neutral-400 focus:outline-none min-w-0" autocomplete="off" [ngModel]="busquedaRapida" (ngModelChange)="alEscribir($event)" (keyup.enter)="irBuscar()" (blur)="onBlur()" (click)="$event.stopPropagation()" />
+      <input type="text" id="spotlightSearch" placeholder="Repuesto + código o medida (pastillas TRW, discos 312, kit BKC, bimasa LuK)..." class="w-full bg-transparent text-white text-base sm:text-xl font-medium tracking-tight placeholder-neutral-400 focus:outline-none min-w-0" autocomplete="off" [ngModel]="busquedaRapida" (ngModelChange)="alEscribir($event)" (keyup.enter)="irBuscar()" (blur)="onBlur()" (click)="$event.stopPropagation()" />
 
       <div class="pr-2 flex items-center shrink-0">
         <button id="btnClear" (click)="limpiarBusqueda($event)" [style.display]="busquedaRapida ? 'block' : 'none'" class="text-neutral-500 hover:text-white transition p-1" title="Borrar">
@@ -455,19 +527,30 @@
     <!-- PANEL FLOTANTE SPOTLIGHT DESPLEGABLE -->
     <div id="suggestionsDrawer" [class.open]="drawerAbierto()" class="suggestions-drawer w-full flex flex-col items-center">
 
-      <!-- RESULTADOS VIVOS DEL CATÁLOGO -->
+      <!-- RESULTADOS VIVOS: CARDS COMPATIBLES CON EL AUTO REGISTRADO -->
       @if (resultados().length) {
-        <div class="w-full max-w-2xl" style="display:grid;gap:10px;margin-top:4px">
-          @for (p of resultados(); track p.id) {
-            <button (click)="elegirResultado(p)" [style.border]="seleccionadoId()===p.id ? '1px solid #fff' : '1px solid rgba(255,255,255,.1)'" [style.background]="seleccionadoId()===p.id ? 'rgba(255,255,255,.1)' : 'rgba(255,255,255,.03)'" style="display:flex;gap:12px;align-items:center;text-align:left;border-radius:14px;padding:10px;color:#fff;width:100%">
-              @if (p.imagen) { <img [src]="p.imagen" [alt]="p.nombre" style="width:56px;height:56px;object-fit:contain;border-radius:10px;background:#fff;padding:4px;flex-shrink:0" /> }
-              <span style="min-width:0"><strong style="display:block;font-size:13px">{{ p.nombre }}</strong><span style="display:block;font-size:11px;color:#9CA3AF;margin-top:2px">{{ p.marca }} • OEM {{ p.numeroOem }}</span></span>
-              @if (seleccionadoId()===p.id) { <span style="margin-left:auto;font-size:11px;font-weight:700">Elegido →</span> }
-            </button>
-          }
+        <div class="w-full max-w-2xl" style="margin-top:4px">
+          <p style="font-size:11px;font-family:'JetBrains Mono',monospace;color:#FBBF24;letter-spacing:.08em;text-transform:uppercase;margin:0 0 2px 2px">
+            ✓ Compatibles con tu {{ autoActivo().nombreLargo }} {{ autoActivo().resumen }} · {{ resultados().length }} resultado{{ resultados().length === 1 ? '' : 's' }}
+          </p>
+          <p style="font-size:10px;font-family:'JetBrains Mono',monospace;color:#9CA3AF;margin:0 0 8px 2px">Refiná por texto: código PR (1ZA/1ZE), motor (BKC/BXE/BWA), medida (312) o cáliper (TRW/ATE/Bosch)</p>
+          <div class="w-full" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px">
+            @for (p of resultados(); track p.id) {
+              <button (click)="elegirResultado(p)" [style.border]="seleccionadoId()===p.id ? '1px solid #fff' : '1px solid rgba(255,255,255,.1)'" [style.background]="seleccionadoId()===p.id ? 'rgba(255,255,255,.1)' : 'rgba(255,255,255,.03)'" style="display:flex;flex-direction:column;gap:6px;text-align:left;border-radius:14px;padding:10px;color:#fff;width:100%">
+                <img [src]="p.imagen" [alt]="p.nombre" style="width:100%;height:92px;object-fit:cover;border-radius:10px;background:#1c1917;flex-shrink:0"
+                     onerror="this.style.display='none'" />
+                <strong style="display:block;font-size:13px;line-height:1.25">{{ p.nombre }}</strong>
+                <span style="display:block;font-size:11px;color:#9CA3AF">{{ p.marca }}{{ p.numeroOem ? ' • ' + p.numeroOem : '' }}</span>
+                <span style="display:block;font-size:10px;color:#6B7280;line-height:1.3">{{ p.descripcionTecnica }}</span>
+                @if (p.compatibilidad.length) { <span style="display:block;font-size:10px;color:#FBBF24;line-height:1.3">Para: {{ p.compatibilidad.join(' · ') }}</span> }
+                <span style="display:block;font-size:12px;font-weight:700;color:#6EE7B7">{{ p.precioRango }}</span>
+                @if (seleccionadoId()===p.id) { <span style="font-size:11px;font-weight:700;color:#FBBF24">Elegido →</span> }
+              </button>
+            }
+          </div>
         </div>
       } @else if (drawerAbierto() && busquedaRapida.trim().length > 2) {
-        <p style="color:#9CA3AF;font-size:12px;margin-bottom:12px">Sin resultados para “{{ busquedaRapida }}”. Probá “pastilla, faro, filtro, óptica”.</p>
+        <p style="color:#9CA3AF;font-size:12px;margin-bottom:12px;text-align:center">Sin repuestos compatibles con tu {{ autoActivo().nombreLargo }} para “{{ busquedaRapida }}”. Podés pedir cotización igual: los repuesteros cotizan por descripción y foto.</p>
       }
       @if (resultados().length) { <div style="height:18px"></div> }
 
@@ -486,6 +569,7 @@
       </div>
 
     </div>
+    }
 
   </div>
 
@@ -996,9 +1080,13 @@
               <span>4 comercios de Trelew listos para recibir tu lista</span>
             </div>
 
-            <div class="flex items-center gap-3 w-full md:w-auto justify-end">
+            <div class="flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
               <button (click)="carritoPasoAbierto.set(false)" class="px-5 py-3.5 rounded-2xl bg-white/10 hover:bg-white/15 text-stone-200 font-mono text-xs font-bold transition text-center shrink-0 cursor-pointer">
                 ← Volver al Buscador
+              </button>
+
+              <button type="button" (click)="abrirMecanicos()" [disabled]="!carrito().length" title="Un mecánico de la red especifica los repuestos por vos" class="px-5 py-3.5 rounded-2xl bg-cyan-400/10 hover:bg-cyan-400/20 border border-cyan-400/40 text-cyan-300 font-mono text-xs font-bold transition text-center shrink-0 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
+                🧑‍🔧 Delegar a un Mecánico
               </button>
 
               <button type="button" (click)="dispararLista()" [disabled]="!carrito().length" class="btn-apple-cta px-7 py-3.5 rounded-2xl font-black text-xs sm:text-sm tracking-tight transition text-center flex items-center justify-center gap-2 shadow-2xl active:scale-95 cursor-pointer shrink-0 disabled:opacity-40 disabled:cursor-not-allowed" [class.opacity-40]="!carrito().length">
@@ -1044,8 +1132,90 @@
         </div>
       </div>
     }
+
   </div>
 }
+
+    <!-- MODAL: DELEGAR LISTA A UN MECÁNICO HABILITADO (desde el modo "Enviar a mi mecánico" o el carrito) -->
+    @if (verMecanicos()) {
+      <div class="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md" (click)="cerrarMecanicos()">
+        <div class="relative w-full max-w-md glass-capsule p-6 sm:p-7 rounded-[32px] text-left space-y-4 border border-cyan-400/40" (click)="$event.stopPropagation()">
+
+          <button (click)="cerrarMecanicos()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-stone-400 hover:text-white flex items-center justify-center transition cursor-pointer" aria-label="Cerrar">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12"></path></svg>
+          </button>
+
+          @if (delegacionHecha(); as d) {
+            <!-- Delegación creada: link para el mecánico -->
+            <div class="w-14 h-14 rounded-full bg-cyan-400/20 text-cyan-300 border border-cyan-400/40 flex items-center justify-center mx-auto text-2xl font-black shadow-lg">
+              🧑‍🔧
+            </div>
+            <h3 class="text-xl font-bold text-white tracking-tight text-center">Lista delegada con éxito</h3>
+            <p class="text-xs text-stone-300 font-mono leading-relaxed text-center">
+              <strong class="text-white">{{ d.nombre }}</strong> recibió tu lista por WhatsApp y va a especificar los repuestos de tu vehículo.
+            </p>
+            <div class="p-3 rounded-xl bg-white/[0.04] space-y-2">
+              <p class="text-[10px] font-mono text-stone-400 uppercase tracking-widest">Link de acceso (sin login, 48h)</p>
+              <p class="text-[11px] font-mono text-cyan-300 break-all">{{ d.link }}</p>
+              <p class="text-[10px] font-mono text-stone-500">Vence: {{ d.vence | date: 'dd/MM/yyyy HH:mm' }}</p>
+            </div>
+            <button (click)="cerrarMecanicos()" class="w-full py-3.5 rounded-2xl bg-white/10 hover:bg-white/15 text-stone-200 font-mono text-xs font-bold transition cursor-pointer">
+              Entendido
+            </button>
+          } @else {
+            <!-- Elección de mecánico -->
+            <div class="space-y-1 pr-8">
+              <h3 class="text-lg font-bold text-white tracking-tight">Delegar a un mecánico</h3>
+              <p class="text-[11px] text-stone-400 font-mono leading-relaxed">
+                Un mecánico habilitado de la red especifica los repuestos de tu lista y gestiona las cotizaciones por vos.
+              </p>
+            </div>
+
+            @if (mecanicosCargando()) {
+              <div class="py-8 text-center text-xs font-mono text-stone-400">
+                <span class="inline-block animate-pulse">Cargando mecánicos habilitados…</span>
+              </div>
+            } @else {
+              <div class="space-y-2 max-h-64 overflow-y-auto pr-1">
+                @for (m of mecanicos(); track m.id) {
+                  <div class="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.04] border border-white/10 hover:border-cyan-400/40 transition">
+                    <div class="w-10 h-10 rounded-full bg-cyan-400/15 border border-cyan-400/30 text-cyan-300 flex items-center justify-center font-mono font-black text-xs shrink-0">
+                      {{ (m.business_name || m.full_name).slice(0, 2).toUpperCase() }}
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <p class="text-sm font-bold text-white truncate">{{ m.business_name || m.full_name }}</p>
+                      <p class="text-[10px] font-mono text-stone-400 truncate">{{ m.full_name }} · {{ m.phone || 'sin teléfono' }}</p>
+                    </div>
+                    <button type="button" (click)="delegarA(m)" [disabled]="delegando()" class="px-3.5 py-2 rounded-xl bg-cyan-400/15 hover:bg-cyan-400/30 border border-cyan-400/40 text-cyan-300 font-mono text-[11px] font-bold transition shrink-0 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
+                      Delegar
+                    </button>
+                  </div>
+                } @empty {
+                  <div class="py-6 text-center text-xs font-mono text-stone-400">
+                    Todavía no hay mecánicos habilitados en la red.
+                  </div>
+                }
+              </div>
+            }
+
+            @if (delegando()) {
+              <div class="p-3 rounded-xl bg-cyan-400/10 text-[11px] font-mono text-cyan-300 text-center animate-pulse">
+                Creando solicitud y avisando al mecánico…
+              </div>
+            }
+            @if (delegarError()) {
+              <div class="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-[11px] font-mono text-red-300">
+                {{ delegarError() }}
+              </div>
+            }
+
+            <button (click)="cerrarMecanicos()" class="w-full py-3 rounded-2xl bg-white/10 hover:bg-white/15 text-stone-200 font-mono text-xs font-bold transition cursor-pointer">
+              Volver
+            </button>
+          }
+        </div>
+      </div>
+    }
 
 <!-- MODAL DE REGISTRO EN 2 PASOS: CUENTA + CÉDULA VERDE -->
 @if (registroAbierto()) {
@@ -1090,13 +1260,17 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div class="space-y-1">
+                <label class="block text-stone-300 font-bold uppercase text-[10px]" for="signupEmail">Email (para entrar a tu cuenta):</label>
+                <input type="email" id="signupEmail" required [(ngModel)]="regEmail" placeholder="Ej: martin@gmail.com" class="w-full bg-black/80 border border-white/20 focus:border-amber-400 rounded-xl p-3 text-white text-xs focus:outline-none" />
+              </div>
+              <div class="space-y-1">
                 <label class="block text-stone-300 font-bold uppercase text-[10px]" for="signupPhone">WhatsApp (Para avisos):</label>
                 <input type="tel" id="signupPhone" required [(ngModel)]="regWhatsapp" placeholder="Ej: 280 442-8812" class="w-full bg-black/80 border border-white/20 focus:border-emerald-400 rounded-xl p-3 text-emerald-300 text-xs focus:outline-none" />
               </div>
-              <div class="space-y-1">
-                <label class="block text-stone-300 font-bold uppercase text-[10px]" for="signupPass">Contraseña de Acceso:</label>
-                <input type="password" id="signupPass" required [(ngModel)]="regPass" placeholder="••••••••••••" class="w-full bg-black/80 border border-white/20 focus:border-amber-400 rounded-xl p-3 text-white text-xs focus:outline-none" />
-              </div>
+            </div>
+            <div class="space-y-1">
+              <label class="block text-stone-300 font-bold uppercase text-[10px]" for="signupPass">Contraseña de Acceso (mínimo 6 caracteres):</label>
+              <input type="password" id="signupPass" required [(ngModel)]="regPass" placeholder="••••••••••••" class="w-full bg-black/80 border border-white/20 focus:border-amber-400 rounded-xl p-3 text-white text-xs focus:outline-none" />
             </div>
           </div>
 

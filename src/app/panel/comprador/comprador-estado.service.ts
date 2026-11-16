@@ -2,6 +2,7 @@ import { Injectable, OnDestroy, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import * as L from 'leaflet';
 import { VehiculoActivoService } from '../../../application/services/vehiculo-activo.service';
+import { DemoApiService } from '../../../application/services/demo-api.service';
 
 // Estado compartido de las etapas del panel comprador:
 // Etapa 3 (Destino & Moto) · Etapa 4 (Pasarela de pago) · Etapa 5 (Moto en Ruta)
@@ -13,13 +14,14 @@ export class CompradorEstadoService implements OnDestroy {
   private readonly router = inject(Router);
   volver(): void { this.router.navigate(['/']); }
   private readonly activoSvc = inject(VehiculoActivoService);
+  private readonly demoApi = inject(DemoApiService);
   autoActivo = this.activoSvc.activo;
   tab = signal('solicitudes');
   splitOpen = signal(false);
   altaOpen = signal(false);
   decodificando = signal(false);
   nuevoVin = 'WVWZZZ3CZ6P108422';
-  autos = signal<{ nombre: string; version: string; patente: string; vin: string }[]>([]);
+  autos = signal<{ id?: string; nombre: string; version: string; patente: string; vin: string }[]>([]);
   vinDecodificado = signal({ marca: 'Volkswagen Passat B6 Sedán', anio: '2006', motor: '2.0 TDI (140 CV) · BKP' });
 
   respuestaElegida = signal<string | null>(null);
@@ -29,6 +31,8 @@ export class CompradorEstadoService implements OnDestroy {
   private timerId?: number;
 
   constructor() {
+    // Garaje real: los vehículos vienen del backend (tabla vehicles de Supabase)
+    this.cargarGarajeReal();
     // Reloj en vivo para vencimientos de ofertas (tick por segundo)
     this.timerId = window.setInterval(() => this.reloj.set(Date.now()), 1000);
     // Notificación tipo toast: se autodescarta a los 5 segundos
@@ -391,6 +395,22 @@ export class CompradorEstadoService implements OnDestroy {
     return false;
   }
 
+  // Vehículos reales del usuario demo (backend FastAPI → Supabase)
+  private cargarGarajeReal(): void {
+    this.demoApi.garaje(this.demoApi.idComprador).subscribe({
+      next: vehiculos => {
+        this.autos.set(vehiculos.map(v => ({
+          id: v.id,
+          nombre: `${v.brand} ${v.model}`,
+          version: `${v.engine_details ? v.engine_details + ' · ' : ''}${v.year}`,
+          patente: v.license_plate,
+          vin: v.vin ?? 'PENDIENTE',
+        })));
+      },
+      error: () => { /* backend caído: el garaje queda con lo que haya localmente */ },
+    });
+  }
+
   decodificar(): void {
     const v = this.nuevoVin.trim().toUpperCase();
     this.decodificando.set(true);
@@ -409,11 +429,32 @@ export class CompradorEstadoService implements OnDestroy {
   guardarVehiculo(): void {
     const v = this.nuevoVin.trim().toUpperCase();
     if (!v) return;
-    this.autos.update(list => [...list, { nombre: this.vinDecodificado().marca, version: this.vinDecodificado().motor + ' · ' + this.vinDecodificado().anio, patente: v, vin: v.length === 17 ? v : 'PENDIENTE' }]);
-    this.nuevoVin = '';
-    this.altaOpen.set(false);
-    this.tab.set('garage');
-    alert('¡Vehículo verificado e incorporado con éxito a Mi Garage!');
+    // Persistencia REAL: alta del vehículo en el backend (tabla vehicles de Supabase)
+    const dec = this.vinDecodificado();
+    const partesMarca = dec.marca.split(' ');
+    this.decodificando.set(true);
+    this.demoApi.altaVehiculo({
+      ownerId: this.demoApi.idComprador,
+      licensePlate: v.length === 17 ? 'PENDIENTE' : v,
+      brand: partesMarca[0],
+      model: partesMarca.slice(1).join(' ') || 'Modelo sin identificar',
+      year: parseInt(dec.anio, 10) || new Date().getFullYear(),
+      vin: v.length === 17 ? v : undefined,
+      engineDetails: dec.motor,
+    }).subscribe({
+      next: () => {
+        this.decodificando.set(false);
+        this.nuevoVin = '';
+        this.altaOpen.set(false);
+        this.cargarGarajeReal();
+        this.tab.set('garage');
+        alert('¡Vehículo verificado, guardado en la base real e incorporado a Mi Garage!');
+      },
+      error: () => {
+        this.decodificando.set(false);
+        alert('No se pudo guardar en la base (¿el backend está corriendo en :10000?)');
+      },
+    });
   }
 
   activarVehiculo(nombre: string, vin?: string, version?: string): void {

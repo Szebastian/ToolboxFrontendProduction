@@ -1,4 +1,5 @@
 import { Component, computed, effect, HostListener, inject, signal, WritableSignal } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { rolSesion as rolSesionGlobal, setRolSesion } from '../sesion';
@@ -7,6 +8,8 @@ import { VehiculoActivoService } from '../../application/services/vehiculo-activ
 import { VehiculoGarajeService } from '../../application/services/vehiculo-garaje.angular.service';
 import { SearchQueryService } from '../../application/services/search-query.service';
 import { CatalogoRepuestosService } from '../../application/services/catalogo-repuestos.angular.service';
+import { SupabaseService, type RolSupabase } from '../../application/services/supabase.service';
+import { DemoApiService, type MecanicoBackend, setUsuarioSesion, usuarioSesion } from '../../application/services/demo-api.service';
 
 // Assets locales (public/img): las URLs externas originales (lh3.googleusercontent.com) devolvían 403.
 const URL_PASSAT = '/img/veh-passat.jpg';
@@ -24,6 +27,7 @@ export const IMAGENES_EJEMPLO = { URL_PASSAT, URL_HILUX, URL_RANGER, URL_PASSAT_
 interface GarageAuto { garageId: string; corto: string; nombreLargo: string; resumen: string; vin: string; img: string; }
 const GARAGE_COMPRADOR: GarageAuto[] = [
   { garageId: 'passat', corto: 'VW Passat', nombreLargo: 'Volkswagen Passat', resumen: '2006', vin: 'PD-514', img: URL_PASSAT },
+  { garageId: 'vento', corto: 'VW Vento', nombreLargo: 'Volkswagen Vento', resumen: '2006', vin: 'VN-207', img: URL_PASSAT },
   { garageId: 'hilux', corto: 'Toyota Hilux', nombreLargo: 'Toyota Hilux', resumen: '2018', vin: 'HL-920', img: URL_HILUX },
   { garageId: 'ranger', corto: 'Ford Ranger', nombreLargo: 'Ford Ranger', resumen: '2015', vin: 'RG-340', img: URL_RANGER },
 ];
@@ -37,7 +41,7 @@ const CARRITO_COMPRADOR: CarritoItem[] = [
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, DatePipe],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css',
 })
@@ -64,6 +68,7 @@ export class HomeComponent {
   piezaActiva = signal<string | null>(null);
   tabAuto = signal(0);
   private readonly catalogo = inject(CatalogoRepuestosService);
+  private readonly api = inject(DemoApiService);
   resultados = this.catalogo.resultados;
   cargando = this.catalogo.cargando;
   seleccionadoId = signal<string | null>(null);
@@ -110,6 +115,133 @@ export class HomeComponent {
     }, 1600);
   }
 
+  // ══ ELECCIÓN DE MODO ANTES DEL BUSCADOR (dos caminos, Apple-style) ══
+  // false: se muestran las dos opciones y el buscador queda oculto;
+  // true: aparece el buscador spotlight ("Buscar yo").
+  modoBusqueda = signal(false);
+
+  elegirBuscarYo(): void {
+    this.modoBusqueda.set(true);
+    setTimeout(() => this.focoBuscador(), 60);
+  }
+
+  // ══ DELEGACIÓN DE LA LISTA A UN MECÁNICO HABILITADO ══
+  // El comprador puede dejar que un mecánico de la red especifique los repuestos:
+  // se crea una solicitud real (PENDING_MECHANIC) + token de acceso 48h con link.
+  verMecanicos = signal(false);
+  mecanicos = signal<MecanicoBackend[]>([]);
+  mecanicosCargando = signal(false);
+  delegando = signal(false);
+  delegarError = signal('');
+  delegacionHecha = signal<{ nombre: string; link: string; vence: string } | null>(null);
+
+  abrirMecanicos(): void {
+    this.verMecanicos.set(true);
+    this.delegacionHecha.set(null);
+    this.delegarError.set('');
+    if (!this.mecanicos().length) {
+      this.mecanicosCargando.set(true);
+      this.api.mecanicos().subscribe({
+        next: ms => { this.mecanicos.set(ms); this.mecanicosCargando.set(false); },
+        error: () => { this.delegarError.set('No se pudo cargar la lista de mecánicos.'); this.mecanicosCargando.set(false); },
+      });
+    }
+  }
+
+  cerrarMecanicos(): void {
+    this.verMecanicos.set(false);
+    if (this.delegacionHecha()) {
+      // Delegó con éxito: la lista ya viajó al mecánico, el carrito queda vacío
+      this.carrito.set([]);
+      this.delegacionHecha.set(null);
+    }
+  }
+
+  delegarA(m: MecanicoBackend): void {
+    if (this.delegando() || !this.carrito().length) return;
+    if (!m.phone) { this.delegarError.set(m.full_name + ' no tiene teléfono cargado.'); return; }
+    this.delegando.set(true);
+    this.delegarError.set('');
+    // La solicitud viaja con el vehículo real del garaje del comprador
+    this.api.garaje(this.api.idComprador).subscribe({
+      next: autos => {
+        const vehiculo = autos[0];
+        if (!vehiculo) {
+          this.delegando.set(false);
+          this.delegarError.set('No hay un vehículo registrado en tu garaje.');
+          return;
+        }
+        // Si el comprador delega sin carrito, la ficha queda libre para que el mecánico marque las piezas
+        const items = this.carrito().length
+          ? this.carrito().map(i => ({
+              partName: i.nombre,
+              partNumber: this.oemDe(i),
+              description: i.detalle,
+              quantity: i.cantidad,
+            }))
+          : [{
+              partName: 'A especificar por el mecánico',
+              description: 'Ficha técnica libre: el mecánico define los repuestos necesarios para el vehículo.',
+              quantity: 1,
+            }];
+        this.api.crearSolicitud({
+          customerId: this.api.idComprador,
+          vehicleId: vehiculo.id,
+          isDelegated: true,
+          urgencyLevel: 'STANDARD',
+          items,
+        }).subscribe({
+          next: sol => {
+            this.api.delegar({
+              partsRequestId: sol.id,
+              mechanicName: m.business_name || m.full_name,
+              mechanicPhone: m.phone!,
+            }).subscribe({
+              next: d => {
+                this.delegando.set(false);
+                this.delegacionHecha.set({ nombre: m.business_name || m.full_name, link: d.accessUrl, vence: d.expiresAt });
+              },
+              error: () => { this.delegando.set(false); this.delegarError.set('No se pudo crear la delegación.'); },
+            });
+          },
+          error: () => { this.delegando.set(false); this.delegarError.set('No se pudo crear la solicitud.'); },
+        });
+      },
+      error: () => { this.delegando.set(false); this.delegarError.set('No se pudo cargar tu garaje.'); },
+    });
+  }
+
+  private oemDe(i: CarritoItem): string | undefined {
+    const m = /OEM\s+([^\s·]+)/.exec(i.detalle);
+    return m ? m[1] : undefined;
+  }
+
+  // Identidad de la píldora de sesión: usuario real del registro si existe,
+  // si no los nombres demo por rol (Lucas R., Rep. Centro, etc.)
+  get inicialesPildora(): string {
+    const s = usuarioSesion();
+    if (s) {
+      return s.nombre.split(/\s+/).map(p => p[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || 'LR';
+    }
+    switch (this.rolSesion()) {
+      case 'repuestero': return 'RC';
+      case 'admin': return 'AD';
+      case 'repartidor': return 'RP';
+      default: return 'LR';
+    }
+  }
+
+  get nombrePildora(): string {
+    const s = usuarioSesion();
+    if (s) return s.nombre;
+    switch (this.rolSesion()) {
+      case 'repuestero': return 'Rep. Centro';
+      case 'admin': return 'Admin';
+      case 'repartidor': return 'Flota TB';
+      default: return 'Lucas R.';
+    }
+  }
+
   autoCorto(): string {
     const largo = this.autoActivo().nombreLargo;
     if (largo.includes('Passat')) return 'Passat';
@@ -124,9 +256,9 @@ export class HomeComponent {
     this.activoSvc.set({ nombre: a.corto, nombreLargo: a.nombreLargo, resumen: a.resumen, vin: a.vin, img: a.img });
   }
 
-  // Auto del garage actualmente seleccionado (con imagen garantizada)
-  autoGarageActivo() {
-    return this.garageAutos()[this.tabAuto()] || this.garageAutos()[0];
+  // Auto del garage actualmente seleccionado (undefined si el garaje está vacío)
+  autoGarageActivo(): GarageAuto | undefined {
+    return this.garageAutos()[this.tabAuto()] ?? this.garageAutos()[0];
   }
 
   // Menú desplegable del garage: lista de todos los autos del comprador
@@ -139,6 +271,8 @@ export class HomeComponent {
   elegirAutoDeLista(i: number): void {
     this.elegirAuto(i);
     this.listaAutosAbierta.set(false);
+    // Si hay una búsqueda en curso, se refiltra por el auto recién elegido
+    if (this.busquedaRapida.trim().length > 2) this.catalogo.buscar(this.busquedaRapida, this.datosAutoActivo());
   }
 
   cargarAuto(): void {
@@ -237,7 +371,16 @@ export class HomeComponent {
     this.busquedaRapida = v;
     this.piezaActiva.set(null);
     this.drawerAbierto.set(v.trim().length > 1);
-    if (v.trim().length > 2) { this.catalogo.buscar(v); this.q.set(v, ''); }
+    if (v.trim().length > 2) { this.catalogo.buscar(v, this.datosAutoActivo()); this.q.set(v, ''); }
+  }
+
+  // Datos del auto activo para filtrar compatibilidad de repuestos
+  datosAutoActivo(): { marca: string; modelo: string } {
+    const partes = this.autoActivo().nombreLargo.split(' ');
+    const marcas = ['Volkswagen', 'Toyota', 'Ford', 'Chevrolet', 'Fiat', 'Renault', 'Peugeot'];
+    const marca = partes.find(p => marcas.includes(p));
+    const modelo = partes.filter(p => p !== marca).join(' ');
+    return { marca: marca ?? '', modelo };
   }
 
   onBlur(): void { if (this.busquedaRapida.trim().length <= 1) this.drawerAbierto.set(false); }
@@ -249,6 +392,7 @@ export class HomeComponent {
     private readonly q: SearchQueryService,
     private readonly activoSvc: VehiculoActivoService,
     private readonly router: Router,
+    private readonly supa: SupabaseService,
   ) {
     this.autoActivo = activoSvc.activo;
     // Sesión persistida: si se recargó la página con sesión de comprador, se restauran sus datos
@@ -278,9 +422,10 @@ export class HomeComponent {
   rolSesion = rolSesionGlobal; // señal global: sobrevive la navegación (ver src/app/sesion.ts)
 
   rolesSesion = [
-    { id: 'comprador' as const, nombre: 'Comprador de Repuestos', detalle: 'Lucas R. · Taller Don Bosco · Trelew', desc: 'Presupuestos y compras de repuestos', inicial: 'LR', destino: '/cliente', color: 'text-amber-300', chip: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
+    { id: 'comprador' as const, nombre: 'Comprador de Repuestos', detalle: 'Lucas R. · Cliente particular · Trelew', desc: 'Presupuestos y compras de repuestos', inicial: 'LR', destino: '/cliente', color: 'text-amber-300', chip: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
     { id: 'repuestero' as const, nombre: 'Vendedor de repuestos', detalle: 'Repuestos Centro Trelew · San Martín 450', desc: 'Cotizaciones en 3 clicks y stock', inicial: 'RC', destino: '/mostrador', color: 'text-emerald-300', chip: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
     { id: 'repartidor' as const, nombre: 'Repartidor', detalle: 'Flota Toolbox · Cadete en 30 min', desc: 'Rutas, entregas y cobros en viaje', inicial: 'RP', destino: '/repartidor', color: 'text-cyan-300', chip: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30' },
+    { id: 'mecanico' as const, nombre: 'Mecánico / Taller', detalle: 'Taller Don Bosco · Rivadavia 890', desc: 'Fichas técnicas y listas de repuestos', inicial: 'TDB', destino: '/taller', color: 'text-lime-300', chip: 'bg-lime-500/20 text-lime-300 border-lime-500/30' },
     { id: 'admin' as const, nombre: 'Administrador', detalle: 'Consola global · Marketplace Toolbox', desc: 'Auditoría, altas manuales y métricas', inicial: 'AD', destino: '/admin', color: 'text-rose-300', chip: 'bg-rose-500/20 text-rose-300 border-rose-500/30' },
   ];
 
@@ -292,7 +437,7 @@ export class HomeComponent {
     this.menuSesionAbierto.set(false);
   }
 
-  iniciarSesionComo(rol: 'comprador' | 'repuestero' | 'repartidor' | 'admin', destino: string): void {
+  iniciarSesionComo(rol: 'comprador' | 'repuestero' | 'repartidor' | 'admin' | 'mecanico', destino: string): void {
     setRolSesion(rol);
     this.cerrarMenuSesion();
     if (rol === 'comprador') {
@@ -306,10 +451,60 @@ export class HomeComponent {
 
   cerrarSesion(): void {
     setRolSesion(null);
+    this.supa.cerrarSesion().catch(() => {}); // cierra también la sesión real de Supabase
     this.vaciarDatosUsuario();
     this.svc.limpiar(); // vehículo registrado en Mi Garage (localStorage)
     this.cerrarMenuSesion();
     if (this.router.url !== '/') this.router.navigate(['/']);
+  }
+
+  // ── Login REAL con Supabase Auth (email + contraseña) ──
+  loginEmail = '';
+  loginPass = '';
+  loginCargando = signal(false);
+  loginError = signal('');
+
+  /** Mapea el rol de la base (profiles) al rol de la app (el frontend usa otros nombres) */
+  private rolDeBase(rol: RolSupabase): 'comprador' | 'repuestero' | 'repartidor' | 'admin' | 'mecanico' {
+    switch (rol) {
+      case 'vendor': return 'repuestero';
+      case 'courier': return 'repartidor';
+      case 'mechanic': return 'mecanico';
+      case 'customer': return 'comprador';
+      default: return rol;
+    }
+  }
+
+  private destinoDeRol(rol: 'comprador' | 'repuestero' | 'repartidor' | 'admin' | 'mecanico'): string {
+    return this.rolesSesion.find(r => r.id === rol)?.destino ?? '/';
+  }
+
+  async iniciarSesionReal(): Promise<void> {
+    if (!this.loginEmail.trim() || !this.loginPass) return;
+    this.loginCargando.set(true);
+    this.loginError.set('');
+    try {
+      const ses = await this.supa.iniciarSesion(this.loginEmail.trim(), this.loginPass);
+      const rolApp = this.rolDeBase(ses.rol);
+      setRolSesion(rolApp);
+      // Sesión real: identidad + auto activo del garaje del usuario
+      setUsuarioSesion({ id: ses.id, email: ses.email, nombre: ses.nombre });
+      this.activoSvc.sincronizarConGaraje(ses.id);
+      if (rolApp === 'comprador') this.cargarDatosComprador();
+      else this.vaciarDatosUsuario();
+      this.cerrarMenuSesion();
+      this.loginPass = '';
+      this.router.navigate([this.destinoDeRol(rolApp)]);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Error de conexión';
+      this.loginError.set(
+        msg.includes('Invalid login credentials') ? 'Email o contraseña incorrectos.'
+        : msg.includes('Email not confirmed') ? 'Confirmá tu email antes de entrar.'
+        : 'No se pudo iniciar sesión. Intentá de nuevo.',
+      );
+    } finally {
+      this.loginCargando.set(false);
+    }
   }
 
   // ── Registro de comprador: modal en 2 pasos (cuenta + Cédula Verde) ──
@@ -318,12 +513,12 @@ export class HomeComponent {
   cedulaEscaneada = signal(false);
   regNombre = '';
   regWhatsapp = '';
+  regEmail = '';
   regPass = '';
 
   abrirRegistro(): void {
     this.cerrarMenuSesion();
-    this.irPaso1();
-    this.registroAbierto.set(true);
+    this.router.navigate(['/registro']); // registro Typeform dedicado (/registro)
   }
 
   cerrarRegistro(): void {
@@ -340,6 +535,14 @@ export class HomeComponent {
       alert('Por favor completá tu nombre y WhatsApp para crear tu cuenta.');
       return;
     }
+    if (!/^\S+@\S+\.\S+$/.test(this.regEmail.trim())) {
+      alert('Ingresá un email válido: con él vas a entrar a tu cuenta.');
+      return;
+    }
+    if (this.regPass.length < 6) {
+      alert('La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
     this.registroPaso.set(2);
   }
 
@@ -348,11 +551,26 @@ export class HomeComponent {
     this.cedulaEscaneada.set(true);
   }
 
-  confirmarRegistro(): void {
-    setRolSesion('comprador');
-    this.cargarDatosComprador();
-    this.cerrarRegistro();
-    this.router.navigate(['/cliente']);
+  async confirmarRegistro(): Promise<void> {
+    try {
+      // Cuenta REAL en Supabase: el trigger handle_new_user crea el perfil
+      // en public.users con rol 'comprador' (ver /supabase/01_schema.sql)
+      const res = await this.supa.registrarComprador(this.regEmail.trim(), this.regPass, this.regNombre.trim());
+      if (res.necesitaConfirmar) {
+        alert('¡Cuenta creada! Revisá tu email para confirmarla antes de entrar.');
+      }
+      setRolSesion('comprador');
+      this.cargarDatosComprador();
+      this.cerrarRegistro();
+      this.router.navigate(['/cliente']);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Error de conexión';
+      alert(
+        msg.includes('already registered') ? 'Ese email ya está registrado. Iniciá sesión.'
+        : msg.includes('Password') ? 'La contraseña debe tener al menos 6 caracteres.'
+        : 'No se pudo crear la cuenta: ' + msg,
+      );
+    }
   }
 
   @HostListener('document:keydown.escape')
@@ -362,9 +580,38 @@ export class HomeComponent {
   }
 
   private cargarDatosComprador(): void {
+    // Con usuario real de sesión: carrito y notificaciones arrancan vacíos
+    // (nada de datos mock); el garaje se trae del backend.
+    const ses = usuarioSesion();
+    if (ses) {
+      this.carrito.set([]);
+      this.notifPendientes.set(0);
+      this.api.garaje(ses.id).subscribe({
+        next: vehiculos => {
+          this.garageAutos.set(vehiculos.map((v, i) => ({
+            garageId: v.id,
+            corto: `${v.brand} ${(v.model || '').split(' · ')[0]}`.trim(),
+            nombreLargo: `${v.brand} ${v.model}`.trim(),
+            resumen: [v.year, v.engine_details?.split(' · ')[0]].filter(Boolean).join(' · '),
+            vin: v.vin ?? 'SIN VIN',
+            img: this.imgDeVehiculo(i),
+          })));
+          this.tabAuto.set(0);
+        },
+        error: () => { this.garageAutos.set([]); /* backend caído: garaje vacío */ },
+      });
+      return;
+    }
+    // Sesión demo por rol: datos mock de Lucas R.
     this.garageAutos.set(GARAGE_COMPRADOR.map(a => ({ ...a })));
     this.carrito.set(CARRITO_COMPRADOR.map(i => ({ ...i })));
     this.notifPendientes.set(2);
+  }
+
+  /** Imagen por vehículo del garaje (rotando entre las disponibles) */
+  private imgDeVehiculo(i: number): string {
+    const urls = [URL_PASSAT, URL_RANGER];
+    return urls[i % urls.length];
   }
 
   private vaciarDatosUsuario(): void {
@@ -378,9 +625,11 @@ export class HomeComponent {
     this.q.set(tag, tag);
   }
   irBuscar(): void {
-    const pieza = this.busquedaRapida.trim() || this.piezaActiva() || 'Pastillas de freno delanteras';
+    const pieza = this.busquedaRapida.trim() || this.piezaActiva() || '';
+    if (!pieza) return;
     this.q.set(pieza, pieza);
-    this.q.requestFlow();
+    // Los resultados abren en una página limpia dedicada
+    this.router.navigate(['/buscar'], { queryParams: { q: pieza } });
   }
 
   toggleDark(): void {

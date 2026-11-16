@@ -1,6 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { RepuesteroRealComponent } from './panel-repuestero-real.component';
+import { RolBadgeComponent } from '../rol-badge.component';
 
 type TabKey = 'quotes' | 'logistics' | 'winrate' | 'finance';
 type StockMode = 'imm' | 'dep' | 'out';
@@ -15,7 +17,7 @@ const IMG_MUESTRA_CLIENTE = '/img/muestra-pastillas.jpg';
 @Component({
   selector: 'app-panel-repuestero',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RepuesteroRealComponent, RolBadgeComponent],
   styles: [`
     .glass-shell{background:rgba(22,19,17,.94);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border:1px solid rgba(255,255,255,.12);box-shadow:0 35px 80px -20px rgba(0,0,0,.7),0 0 0 1px rgba(0,0,0,.35)}
     .segment-tab{transition:all .2s cubic-bezier(.16,1,.3,1);cursor:pointer;color:#9CA3AF}
@@ -56,6 +58,9 @@ const IMG_MUESTRA_CLIENTE = '/img/muestra-pastillas.jpg';
         </div>
       </div>
 
+      <!-- Badge de rol activo (textual) -->
+      <app-rol-badge />
+
       <!-- Segmented Control tipo macOS -->
       <div class="flex items-center p-1 rounded-2xl bg-black/50 border border-white/10 font-mono text-xs shadow-inner">
         <button type="button" (click)="tab.set('quotes')" [class]="tab()==='quotes' ? 'segment-tab active px-3.5 py-1.5 rounded-xl flex items-center gap-1.5' : 'segment-tab px-3.5 py-1.5 rounded-xl flex items-center gap-1.5'">
@@ -95,6 +100,9 @@ const IMG_MUESTRA_CLIENTE = '/img/muestra-pastillas.jpg';
       </div>
 
     </header>
+
+    <!-- Solicitudes REALES abiertas + cotización en vivo (backend FastAPI → Supabase) -->
+    <app-repuestero-real [class.hidden]="tab() !== 'quotes'" class="block w-full max-w-7xl mx-auto mb-5 z-10" />
 
     <!-- ===================================================================== -->
     <!-- VISTA 1: COTIZACIÓN EN 3 TOQUES                                       -->

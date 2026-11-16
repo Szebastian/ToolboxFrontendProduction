@@ -1,0 +1,53 @@
+/* ═══ Registro Typeform — Crear Cuenta & Cédula Verde ═══ */
+
+:host {
+  display: block;
+  min-height: 100vh;
+  background-color: #080706;
+  background-image:
+    radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 10% 20%, rgba(200, 142, 98, 0.08) 0%, transparent 35%),
+    linear-gradient(180deg, #0A0908 0%, #050505 100%);
+  background-attachment: fixed;
+  color: #F5F5F7;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  padding: 16px;
+}
+
+@media (min-width: 640px) {
+  :host { padding: 32px; }
+}
+
+.panel-frame {
+  max-width: 980px;
+  margin: 0 auto;
+  min-height: calc(100vh - 32px);
+}
+
+@media (min-width: 640px) {
+  .panel-frame { min-height: calc(100vh - 64px); }
+}
+
+/* Monolito de cristal oscuro */
+.jobs-monolith {
+  background: rgba(18, 17, 16, 0.85);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 30px 80px -20px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    inset 0 1px 1px rgba(255, 255, 255, 0.25);
+  border-radius: 1.75rem;
+}
+
+/* Transición entre pasos */
+.step-slide {
+  animation: fadeInSlide 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes fadeInSlide {
+  from { opacity: 0; transform: translateY(12px) scale(0.995); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
