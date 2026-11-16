@@ -6,6 +6,6 @@ export const environment = {
   supabaseUrl: 'https://cwezvfhytzxuyjndpiel.supabase.co',
   supabaseAnonKey: 'sb_publishable_AG_kGyEz3UWSxVAblAgLJQ_1HLaVeWP',
 
-  // Backend publicado en Render (uvicorn). Sin dominio propio: toolbox-backend-api.onrender.com
-  apiUrl: 'https://toolbox-backend-api.onrender.com/api/v1',
+  // Backend publicado en Render (uvicorn). Dominio real del servicio.
+  apiUrl: 'https://toolboxbackendproduction-1.onrender.com/api/v1',
 };
