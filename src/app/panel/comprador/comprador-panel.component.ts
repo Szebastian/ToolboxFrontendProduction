@@ -48,17 +48,17 @@ import { usuarioSesion } from '../../../application/services/demo-api.service';
           <span class="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-mono text-[9px] font-extrabold shrink-0">AUTO-LOCK</span>
         </div>
 
-        <!-- Badge Flotante de Notificaciones Asincrónicas de Vendedores -->
-        <button (click)="estado.switchTab('solicitudes')" class="relative flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-[#0E0F12]/95 border border-white/10 text-stone-300 hover:text-white transition shadow-md group cursor-pointer" title="3 ofertas recibidas en segundo plano">
-          <svg class="w-4 h-4 text-cyan-400 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-          <span class="text-[11px] font-mono font-bold text-white hidden sm:inline">3 Ofertas</span>
-          <span class="w-2 h-2 rounded-full bg-cyan-400 absolute top-1.5 right-1.5 animate-ping"></span>
-        </button>
+        <!-- Badge Flotante de Notificaciones Asincrónicas de Vendedores:
+             solo visible mientras haya ofertas sin ver (desaparece al abrirlas) -->
+        @if (!estado.nuevasVistas() && estado.comerciosNuevas() > 0) {
+          <button (click)="estado.switchTab('solicitudes')" class="relative flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-[#0E0F12]/95 border border-white/10 text-stone-300 hover:text-white transition shadow-md group cursor-pointer" title="Ofertas recibidas en segundo plano">
+            <svg class="w-4 h-4 text-cyan-400 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+            <span class="text-[11px] font-mono font-bold text-white hidden sm:inline">{{ estado.comerciosNuevas() }} Ofertas</span>
+            <span class="w-2 h-2 rounded-full bg-cyan-400 absolute top-1.5 right-1.5 animate-ping"></span>
+          </button>
+        }
 
-        <!-- Badge de rol activo (textual) -->
-        <app-rol-badge />
-
-        <!-- Avatar Comprador (identidad real de la sesión) -->
+        <!-- Avatar Comprador (identidad real de la sesión; el rol ya queda claro en el texto al lado) -->
         <div class="flex items-center gap-2.5 pl-2">
           <div class="w-9 h-9 rounded-2xl bg-gradient-to-tr from-amber-600 via-amber-500 to-amber-300 p-0.5 flex items-center justify-center text-[#171412] font-mono font-extrabold text-xs shadow-md">
             {{ iniciales }}
@@ -142,7 +142,9 @@ import { usuarioSesion } from '../../../application/services/demo-api.service';
                 <svg class="w-4 h-4 shrink-0 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"/></svg>
                 <span class="font-bold whitespace-nowrap">Presupuestos &amp; Stock</span>
               </div>
-              <span class="px-2 py-0.5 rounded-full bg-cyan-400 text-stone-950 text-[10px] font-black shrink-0 whitespace-nowrap">3 nuevas</span>
+              @if (!estado.nuevasVistas()) {
+                <span class="px-2 py-0.5 rounded-full bg-cyan-400 text-stone-950 text-[10px] font-black shrink-0 whitespace-nowrap">{{ estado.comerciosNuevas() }} nuevas</span>
+              }
             </button>
 
             <!-- Tab 2: Mi Garage (Pestaña separada) -->
