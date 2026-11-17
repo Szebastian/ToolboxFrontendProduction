@@ -134,12 +134,12 @@ import { usuarioSesion } from '../../../application/services/demo-api.service';
 
           <!-- ANILLO: PERFIL PREVENTIVO (4 bloques de 25% → alertas de service) -->
           <button (click)="perfil.abrir()" class="w-full rounded-2xl border border-cyan-400/25 bg-cyan-400/5 hover:bg-cyan-400/10 p-3.5 flex items-center gap-3.5 transition cursor-pointer text-left group" title="Completar perfil preventivo">
-            <span class="relative w-12 h-12 shrink-0">
-              <svg viewBox="0 0 44 44" class="w-12 h-12 -rotate-90">
+            <span class="relative w-14 h-14 shrink-0">
+              <svg viewBox="0 0 44 44" class="w-14 h-14 -rotate-90">
                 <circle cx="22" cy="22" r="19" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="5"></circle>
                 <circle cx="22" cy="22" r="19" fill="none" [attr.stroke]="perfil.completitud() === 100 ? '#10B981' : '#06B6D4'" stroke-width="5" stroke-linecap="round" [attr.stroke-dasharray]="perfil.completitud() * 1.1938 + ' 999'"></circle>
               </svg>
-              <span class="absolute inset-0 flex items-center justify-center text-[11px] font-mono font-black" [class.text-emerald-300]="perfil.completitud() === 100" [class.text-cyan-300]="perfil.completitud() !== 100">{{ perfil.completitud() }}%</span>
+              <span class="absolute inset-0 flex items-center justify-center text-[12px] font-mono font-black" [class.text-emerald-300]="perfil.completitud() === 100" [class.text-cyan-300]="perfil.completitud() !== 100">{{ perfil.completitud() }}%</span>
             </span>
             <span class="min-w-0 flex-1">
               <span class="block text-xs font-bold text-white">Perfil preventivo</span>
