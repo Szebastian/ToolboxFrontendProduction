@@ -421,7 +421,7 @@
         @if (autoGarageActivo(); as ag) {
           <button type="button" (click)="alternarListaAutos()" class="direct-car-tab auto-tab-activo w-full justify-between gap-2" title="Ver todos los autos de tu garage">
             <span class="flex items-center gap-2 min-w-0">
-              <span class="relative inline-flex w-9 h-9 shrink-0 items-center justify-center cursor-pointer"
+              <span class="relative inline-flex w-11 h-11 shrink-0 items-center justify-center cursor-pointer"
                 role="button" tabindex="0"
                 (click)="irAPerfilPreventivo($event)"
                 [title]="perfil.completitud() === 100 ? 'Alertas de service activas ✅' : 'Perfil preventivo al ' + perfil.completitud() + '% · clic para completar'">
@@ -429,10 +429,10 @@
                   <img [src]="ag.img" [alt]="ag.corto" class="w-full h-full object-cover">
                 </span>
                 <svg class="absolute inset-0 w-full h-full -rotate-90 pointer-events-none" viewBox="0 0 44 44">
-                  <circle cx="22" cy="22" r="19" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="4"></circle>
-                  <circle cx="22" cy="22" r="19" fill="none" [attr.stroke]="perfil.completitud() === 100 ? '#10B981' : '#06B6D4'" stroke-width="4.5" stroke-linecap="round" [attr.stroke-dasharray]="perfil.completitud() * 1.1938 + ' 999'"></circle>
+                  <circle cx="22" cy="22" r="19" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="5"></circle>
+                  <circle cx="22" cy="22" r="19" fill="none" [attr.stroke]="perfil.completitud() === 100 ? '#10B981' : '#06B6D4'" stroke-width="5.5" stroke-linecap="round" [attr.stroke-dasharray]="perfil.completitud() * 1.1938 + ' 999'"></circle>
                 </svg>
-                <span class="absolute -bottom-0.5 -right-1 min-w-[15px] h-[15px] px-[3px] rounded-full bg-[#0C0A09] border border-cyan-400/70 text-cyan-300 text-[7px] font-black font-mono flex items-center justify-center leading-none"
+                <span class="absolute -bottom-0.5 -right-1 min-w-[17px] h-[17px] px-[4px] rounded-full bg-[#0C0A09] border-[1.5px] border-cyan-400/80 text-cyan-300 text-[9px] font-black font-mono flex items-center justify-center leading-none"
                   [class.border-emerald-400]="perfil.completitud() === 100" [class.text-emerald-300]="perfil.completitud() === 100">{{ perfil.completitud() }}%</span>
               </span>
               <span class="truncate">{{ ag.corto }}</span>
