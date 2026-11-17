@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import * as L from 'leaflet';
 import { VehiculoActivoService } from '../../../application/services/vehiculo-activo.service';
 import { DemoApiService } from '../../../application/services/demo-api.service';
+import { PerfilPreventivoService } from '../../perfil-preventivo.service';
 
 // Estado compartido de las etapas del panel comprador:
 // Etapa 3 (Destino & Moto) · Etapa 4 (Pasarela de pago) · Etapa 5 (Moto en Ruta)
@@ -15,14 +16,22 @@ export class CompradorEstadoService implements OnDestroy {
   volver(): void { this.router.navigate(['/']); }
   private readonly activoSvc = inject(VehiculoActivoService);
   private readonly demoApi = inject(DemoApiService);
+  /** Perfil preventivo (4 bloques de 25%): el mismo que muestra el anillo del buscador. */
+  private readonly perfilSvc = inject(PerfilPreventivoService);
   autoActivo = this.activoSvc.activo;
   tab = signal('solicitudes');
   splitOpen = signal(false);
   altaOpen = signal(false);
-  decodificando = signal(false);
-  nuevoVin = 'WVWZZZ3CZ6P108422';
+  altaGuardando = signal(false);
+  altaEscaneando = signal(false);
+  altaError = signal('');
+  altaPatente = '';
+  altaMarca = '';
+  altaModelo = '';
+  altaAnio = '';
+  altaVin = '';
+  altaMotor = '';
   autos = signal<{ id?: string; nombre: string; version: string; patente: string; vin: string }[]>([]);
-  vinDecodificado = signal({ marca: 'Volkswagen Passat B6 Sedán', anio: '2006', motor: '2.0 TDI (140 CV) · BKP' });
 
   respuestaElegida = signal<string | null>(null);
   venceFerodo = Date.now() + 41 * 60000;
@@ -421,55 +430,92 @@ export class CompradorEstadoService implements OnDestroy {
           patente: v.license_plate,
           vin: v.vin ?? 'PENDIENTE',
         })));
+        // Vehículo real en el garaje = cédula verde ya cargada → bloque de 25% del perfil
+        this.perfilSvc.setBaseCedula(vehiculos.length > 0);
       },
       error: () => { /* backend caído: el garaje queda con lo que haya localmente */ },
     });
   }
 
-  decodificar(): void {
-    const v = this.nuevoVin.trim().toUpperCase();
-    this.decodificando.set(true);
-    setTimeout(() => {
-      if (v.length === 17) {
-        this.vinDecodificado.set({ marca: 'Volkswagen Passat B6 Sedán', anio: '2006', motor: '2.0 TDI (140 CV) · BKP' });
-      } else if (v.startsWith('8AJ')) {
-        this.vinDecodificado.set({ marca: 'Toyota Hilux SRX 4x4', anio: '2018', motor: '2.8 D-4D (177 CV)' });
-      } else {
-        this.vinDecodificado.set({ marca: 'Vehículo detectado por ' + (v || 'VIN/Patente'), anio: '—', motor: 'Verificación en curso' });
-      }
-      this.decodificando.set(false);
-    }, 450);
+  /** Foto de la Cédula Verde → OCR/vision del backend autocompleta el alta (mismos campos que el registro). */
+  onFotoCedulaAlta(ev: Event): void {
+    const input = ev.target as HTMLInputElement;
+    const files = Array.from(input.files ?? []);
+    if (!files.length) return;
+    this.altaEscaneando.set(true);
+    this.altaError.set('');
+    this.demoApi.extraerCedula(files[0]).subscribe({
+      next: (c) => {
+        const limpio = (v: string | null) => (v && v !== 'NO DETECTADO' ? v : '');
+        this.altaPatente = limpio(c.dominio) || this.altaPatente;
+        this.altaMarca = limpio(c.marca) || this.altaMarca;
+        this.altaModelo = limpio(c.modelo) || this.altaModelo;
+        // El año suele venir en modelo_detalle: "Generación B6 (Año 2006)"
+        const anio = (c.modelo_detalle ?? '').match(/(?:A[ñnio]+|year)\s*:?\s*(\d{4})/i)?.[1]
+          ?? (c.modelo_detalle ?? '').match(/\b(19|20)\d{2}\b/)?.[0] ?? '';
+        if (anio) this.altaAnio = anio;
+        this.altaVin = limpio(c.chasis) || this.altaVin;
+        this.altaMotor = limpio(c.motor_codigo) || this.altaMotor;
+        if (!this.altaPatente && !this.altaMarca) {
+          this.altaError.set('No se pudo leer la cédula. Probá con una foto más nítida o cargá los datos a mano.');
+        }
+        this.altaEscaneando.set(false);
+        input.value = '';
+      },
+      error: () => {
+        this.altaEscaneando.set(false);
+        this.altaError.set('No se pudo escanear la cédula (¿backend dormido?). Podés cargar los datos a mano.');
+        input.value = '';
+      },
+    });
   }
 
+  /** Alta real del vehículo: POST /vehicles/ con los mismos datos del registro (patente, marca, modelo, año, chasis, motor). */
   guardarVehiculo(): void {
-    const v = this.nuevoVin.trim().toUpperCase();
-    if (!v) return;
-    // Persistencia REAL: alta del vehículo en el backend (tabla vehicles de Supabase)
-    const dec = this.vinDecodificado();
-    const partesMarca = dec.marca.split(' ');
-    this.decodificando.set(true);
+    const patente = this.altaPatente.trim().toUpperCase();
+    const marca = this.altaMarca.trim();
+    const modelo = this.altaModelo.trim();
+    const anio = Number(this.altaAnio);
+    if (!patente || !marca || !modelo || !anio || anio < 1900 || anio > 2100) {
+      this.altaError.set('Completá patente, marca, modelo y un año válido.');
+      return;
+    }
+    this.altaGuardando.set(true);
+    this.altaError.set('');
     this.demoApi.altaVehiculo({
       ownerId: this.demoApi.idComprador,
-      licensePlate: v.length === 17 ? 'PENDIENTE' : v,
-      brand: partesMarca[0],
-      model: partesMarca.slice(1).join(' ') || 'Modelo sin identificar',
-      year: parseInt(dec.anio, 10) || new Date().getFullYear(),
-      vin: v.length === 17 ? v : undefined,
-      engineDetails: dec.motor,
+      licensePlate: patente,
+      brand: marca,
+      model: modelo,
+      year: anio,
+      vin: this.altaVin.trim() || undefined,
+      engineDetails: this.altaMotor.trim() || undefined,
     }).subscribe({
       next: () => {
-        this.decodificando.set(false);
-        this.nuevoVin = '';
+        this.altaGuardando.set(false);
         this.altaOpen.set(false);
+        this.altaPatente = ''; this.altaMarca = ''; this.altaModelo = '';
+        this.altaAnio = ''; this.altaVin = ''; this.altaMotor = '';
         this.cargarGarajeReal();
         this.tab.set('garage');
         alert('¡Vehículo verificado, guardado en la base real e incorporado a Mi Garage!');
       },
       error: () => {
-        this.decodificando.set(false);
+        this.altaGuardando.set(false);
         alert('No se pudo guardar en la base (¿el backend está corriendo en :10000?)');
       },
     });
+  }
+
+  /** ¿Es este auto del garage el que está activo en búsquedas? (badge del garage) */
+  esActivo(a: { nombre: string; vin?: string }): boolean {
+    const act = this.autoActivo();
+    const nAct = (act?.nombre ?? '').toLowerCase();
+    const nA = (a.nombre ?? '').toLowerCase();
+    if (nAct && nA && (nAct === nA || nAct.includes(nA) || nA.includes(nAct))) return true;
+    const vAct = (act?.vin ?? '').toUpperCase();
+    const vA = (a.vin ?? '').toUpperCase();
+    return !!vAct && !!vA && (vAct === vA || vAct.startsWith(vA) || vA.startsWith(vAct));
   }
 
   activarVehiculo(nombre: string, vin?: string, version?: string): void {

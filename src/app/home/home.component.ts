@@ -3,6 +3,7 @@ import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { rolSesion as rolSesionGlobal, setRolSesion } from '../sesion';
+import { PerfilPreventivoService } from '../perfil-preventivo.service';
 import type { VehiculoActivo } from '../../application/services/vehiculo-activo.service';
 import { modeloBase, VehiculoActivoService } from '../../application/services/vehiculo-activo.service';
 import { VehiculoGarajeService } from '../../application/services/vehiculo-garaje.angular.service';
@@ -75,6 +76,18 @@ export class HomeComponent {
 
   // Autos de Mi Garage (tabs directos sobre el buscador) — vacíos sin sesión de comprador
   garageAutos = signal<GarageAuto[]>([]);
+
+  // ══ ALTA DE VEHÍCULO (modal): mismos datos que el registro por Cédula Verde ══
+  altaVehiculoOpen = signal(false);
+  altaGuardando = signal(false);
+  altaEscaneando = signal(false);
+  altaError = signal('');
+  altaPatente = '';
+  altaMarca = '';
+  altaModelo = '';
+  altaAnio = '';
+  altaVin = '';
+  altaMotor = '';
 
   // Carrito / Lista de cotización — vacío sin sesión de comprador
   carrito = signal<CarritoItem[]>([]);
@@ -288,19 +301,106 @@ export class HomeComponent {
       this.alternarMenuSesion();
       return;
     }
-    const val = prompt('Ingresá patente o modelo (ej. AE 345 BB):');
-    if (val && val.trim()) {
-      const codigo = val.trim().toUpperCase();
-      this.garageAutos.update(list => [...list, {
-        garageId: 'auto-' + Date.now(),
-        corto: codigo,
-        nombreLargo: codigo,
-        resumen: 'Recién cargado',
-        vin: 'VIN-' + codigo.replace(/[^A-Z0-9]/g, '').slice(0, 6),
-        img: URL_RANGER,
-      }]);
-      this.elegirAuto(this.garageAutos().length - 1);
+    this.altaError.set('');
+    this.altaVehiculoOpen.set(true);
+  }
+
+  // ══ ANILLO DE PERFIL PREVENTIVO (avatar del buscador) ══
+  /** 4 bloques de 25%: cédula + km + último service + uso. */
+  protected readonly perfil = inject(PerfilPreventivoService);
+
+  /** El anillo sobre el avatar lleva al panel, donde se completa el cuestionario. */
+  irAPerfilPreventivo(ev: Event): void {
+    ev.stopPropagation();
+    this.router.navigate(['/cliente']);
+  }
+
+  cerrarAltaVehiculo(): void {
+    if (this.altaGuardando()) return;
+    this.altaVehiculoOpen.set(false);
+  }
+
+  /** Foto de la Cédula Verde → OCR/vision del backend autocompleta el formulario
+   *  (mismos campos que se piden en el registro). */
+  onFotoCedulaAlta(ev: Event): void {
+    const input = ev.target as HTMLInputElement;
+    const files = Array.from(input.files ?? []);
+    if (!files.length) return;
+    this.altaEscaneando.set(true);
+    this.altaError.set('');
+    this.api.extraerCedula(files[0]).subscribe({
+      next: (c) => {
+        const limpio = (v: string | null) => (v && v !== 'NO DETECTADO' ? v : '');
+        this.altaPatente = limpio(c.dominio) || this.altaPatente;
+        this.altaMarca = limpio(c.marca) || this.altaMarca;
+        this.altaModelo = limpio(c.modelo) || this.altaModelo;
+        // El año suele venir en modelo_detalle: "Generación B6 (Año 2006)"
+        const anio = (c.modelo_detalle ?? '').match(/(?:A[ñnio]+|year)\s*:?\s*(\d{4})/i)?.[1]
+          ?? (c.modelo_detalle ?? '').match(/\b(19|20)\d{2}\b/)?.[0] ?? '';
+        if (anio) this.altaAnio = anio;
+        this.altaVin = limpio(c.chasis) || this.altaVin;
+        this.altaMotor = limpio(c.motor_codigo) || this.altaMotor;
+        if (!this.altaPatente && !this.altaMarca) {
+          this.altaError.set('No se pudo leer la cédula. Probá con una foto más nítida o cargá los datos a mano.');
+        }
+        this.altaEscaneando.set(false);
+        input.value = '';
+      },
+      error: () => {
+        this.altaEscaneando.set(false);
+        this.altaError.set('No se pudo escanear la cédula (¿backend dormido? esperá un momento y reintentá). Podés cargar los datos a mano.');
+        input.value = '';
+      },
+    });
+  }
+
+  /** Alta real del vehículo: POST /vehicles/ con la sesión del comprador. */
+  guardarVehiculoAlta(): void {
+    if (this.altaGuardando()) return;
+    const ses = usuarioSesion();
+    const patente = this.altaPatente.trim().toUpperCase();
+    const marca = this.altaMarca.trim();
+    const modelo = this.altaModelo.trim();
+    const anio = Number(this.altaAnio);
+    if (!ses) { this.alternarMenuSesion(); this.altaVehiculoOpen.set(false); return; }
+    if (!patente || !marca || !modelo || !anio || anio < 1900 || anio > 2100) {
+      this.altaError.set('Completá patente, marca, modelo y un año válido.');
+      return;
     }
+    this.altaGuardando.set(true);
+    this.altaError.set('');
+    this.api.altaVehiculo({
+      ownerId: ses.id,
+      licensePlate: patente,
+      brand: marca,
+      model: modelo,
+      year: anio,
+      vin: this.altaVin.trim() || undefined,
+      engineDetails: this.altaMotor.trim() || undefined,
+    }).subscribe({
+      next: (v) => {
+        const modeloLimpio = modeloBase(v.model);
+        const nuevo: GarageAuto = {
+          garageId: v.id,
+          corto: `${v.brand} ${modeloLimpio}`.trim(),
+          nombreLargo: `${v.brand} ${modeloLimpio}`.trim(),
+          resumen: [v.year, v.engine_details?.split(' · ')[0]].filter(Boolean).join(' · '),
+          vin: v.vin ?? 'SIN VIN',
+          img: this.imgDeVehiculo(this.garageAutos().length),
+        };
+        this.garageAutos.update(list => [...list.filter(a => a.garageId !== 'cache'), nuevo]);
+        this.elegirAuto(this.garageAutos().length - 1);
+        this.altaGuardando.set(false);
+        this.altaVehiculoOpen.set(false);
+        this.altaPatente = ''; this.altaMarca = ''; this.altaModelo = '';
+        this.altaAnio = ''; this.altaVin = ''; this.altaMotor = '';
+      },
+      error: (err) => {
+        this.altaGuardando.set(false);
+        const detalle = err?.error?.detail;
+        this.altaError.set(typeof detalle === 'string' ? detalle : 'No se pudo guardar el vehículo. Reintentá en un momento.');
+      },
+    });
   }
 
   lineaAccionVisible = computed(() => this.busquedaRapida.trim().length > 1 || !!this.piezaActiva());
@@ -619,6 +719,8 @@ export class HomeComponent {
             img: this.imgDeVehiculo(i),
           })));
           this.tabAuto.set(0);
+          // Vehículo real = cédula verde ya cargada → 25% del perfil preventivo
+          this.perfil.setBaseCedula(vehiculos.length > 0);
         },
         error: () => {
           // Backend caído: si el seed del cache ya pobló el garaje, se conserva
@@ -630,6 +732,8 @@ export class HomeComponent {
     }
     // Sesión demo por rol: datos mock de Lucas R.
     this.garageAutos.set(GARAGE_COMPRADOR.map(a => ({ ...a })));
+    // La cédula/garaje demo también arranca con el bloque 1 completado
+    this.perfil.setBaseCedula(true);
     this.carrito.set(CARRITO_COMPRADOR.map(i => ({ ...i })));
     this.notifPendientes.set(2);
   }

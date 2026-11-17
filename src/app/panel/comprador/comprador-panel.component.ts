@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CompradorEstadoService } from './comprador-estado.service';
+import { PerfilPreventivoService, RANGOS_KM, PERIODOS_SERVICE, USOS } from '../../perfil-preventivo.service';
 import { RolBadgeComponent } from '../../rol-badge.component';
 import { COMPRADOR_STYLES } from './comprador-styles';
 import { usuarioSesion } from '../../../application/services/demo-api.service';
@@ -131,6 +132,26 @@ import { usuarioSesion } from '../../../application/services/demo-api.service';
             <p class="text-[11px] lg:text-xs text-stone-400 font-sans mt-1 leading-relaxed">Control de vehículos guardados, pedidos y ofertas recibidas.</p>
           </div>
 
+          <!-- ANILLO: PERFIL PREVENTIVO (4 bloques de 25% → alertas de service) -->
+          <button (click)="perfil.abrir()" class="w-full rounded-2xl border border-cyan-400/25 bg-cyan-400/5 hover:bg-cyan-400/10 p-3.5 flex items-center gap-3.5 transition cursor-pointer text-left group" title="Completar perfil preventivo">
+            <span class="relative w-12 h-12 shrink-0">
+              <svg viewBox="0 0 44 44" class="w-12 h-12 -rotate-90">
+                <circle cx="22" cy="22" r="19" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="5"></circle>
+                <circle cx="22" cy="22" r="19" fill="none" [attr.stroke]="perfil.completitud() === 100 ? '#10B981' : '#06B6D4'" stroke-width="5" stroke-linecap="round" [attr.stroke-dasharray]="perfil.completitud() * 1.1938 + ' 999'"></circle>
+              </svg>
+              <span class="absolute inset-0 flex items-center justify-center text-[11px] font-mono font-black" [class.text-emerald-300]="perfil.completitud() === 100" [class.text-cyan-300]="perfil.completitud() !== 100">{{ perfil.completitud() }}%</span>
+            </span>
+            <span class="min-w-0 flex-1">
+              <span class="block text-xs font-bold text-white">Perfil preventivo</span>
+              @if (perfil.completitud() === 100) {
+                <span class="block text-[10.5px] font-mono text-emerald-400 mt-0.5 truncate">✅ Alertas de service activas</span>
+              } @else {
+                <span class="block text-[10.5px] font-mono text-stone-400 group-hover:text-cyan-300 mt-0.5 truncate">Falta {{ perfil.etiquetaFaltante().join(', ') }}</span>
+              }
+            </span>
+            <svg class="w-3.5 h-3.5 text-stone-500 group-hover:text-cyan-300 shrink-0 transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+
           <!-- Separador técnico -->
           <div class="lg:block hidden h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
 
@@ -214,7 +235,7 @@ import { usuarioSesion } from '../../../application/services/demo-api.service';
               <div>
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0E0F12]/90 text-cyan-300 text-xs font-mono mb-1.5 border border-cyan-500/20 shadow">
                   <svg class="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13a8 8 0 0 0-13.7-4.7L4 7"/><path d="M4 21v-6"/><path d="M20 13a8 8 0 0 0-13.7-4.7L4 7"/><circle cx="12" cy="13" r="3"/></svg>
-                  <span>Mi Garage de Precisión · {{ estado.autos().length + 2 }} Chasis Verificados</span>
+                  <span>Mi Garage de Precisión · {{ estado.autos().length }} Chasis Verificados</span>
                 </div>
                 <h2 class="text-2xl sm:text-3xl font-extrabold text-[#171412] tracking-tight">
                   Vehículos vinculados a repuestos exactos
@@ -231,181 +252,117 @@ import { usuarioSesion } from '../../../application/services/demo-api.service';
               </button>
             </div>
 
-            <!-- GRID DE TARJETAS DE AUTOS (CARDS DETALLADAS) -->
+            <!-- GRID DE TARJETAS DE AUTOS (CARDS DETALLADAS · SOLO DATOS REALES) -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-              <!-- AUTO 1: PASSAT 2.0 TDI (ACTIVO) -->
-              <div class="card-technical card-best p-5 sm:p-6 rounded-[32px] relative overflow-hidden flex flex-col justify-between space-y-4 shadow-2xl">
-
-                <!-- Badge de Vehículo Activo -->
-                <div class="flex items-center justify-between">
-                  <span class="px-3 py-1 rounded-full bg-cyan-400 text-stone-950 text-[10px] font-mono font-extrabold shadow flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-stone-950 animate-ping"></span>
-                    VEHÍCULO ACTIVO EN BÚSQUEDAS
-                  </span>
-
-                  <div class="flex items-center gap-2">
-                    <button class="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-stone-400 hover:text-white transition" title="Editar chasis">
-                      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                    </button>
-                    <button class="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-stone-400 hover:text-red-400 transition" title="Eliminar del garage">
-                      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Foto e Información Central -->
-                <div class="space-y-3">
-                  <div class="h-40 rounded-2xl bg-gradient-to-b from-stone-900/60 to-black/90 border border-white/10 p-2 flex items-center justify-center overflow-hidden relative group">
-                    <img src="/img/muestra-taller.jpg" alt="VW Passat 2.0 TDI" class="w-full h-full object-cover rounded-xl filter contrast-115 drop-shadow-2xl group-hover:scale-105 transition duration-500">
-                    <div class="absolute bottom-2 left-2 px-2.5 py-0.5 rounded-lg bg-black/85 backdrop-blur text-[10px] font-mono text-stone-300 border border-white/10">
-                      Sedán 4 Puertas · Plata Réflex
-                    </div>
-                    <div class="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-emerald-400/20 text-emerald-300 text-[9px] font-mono font-bold border border-emerald-400/30">
-                      OEM VW Match
-                    </div>
-                  </div>
-
-                  <div>
-                    <div class="flex items-baseline justify-between">
-                      <h3 class="text-xl font-extrabold text-white tracking-tight">Volkswagen Passat</h3>
-                      <span class="text-xs font-mono font-bold text-cyan-300 bg-cyan-400/10 px-2.5 py-0.5 rounded border border-cyan-400/20">2006</span>
-                    </div>
-                    <p class="text-xs text-stone-300 font-mono mt-0.5">2.0 TDI 140 CV · Motor BKP / BMP (Inyector Bomba)</p>
-                  </div>
-
-                  <!-- Píldoras Técnicas: Patente y VIN -->
-                  <div class="space-y-1.5 text-xs font-mono">
-                    <div class="flex items-center justify-between p-2 rounded-xl bg-white/[0.04] border border-white/5">
-                      <span class="text-stone-400">Patente Argentina:</span>
-                      <span class="plate-badge px-2.5 py-0.5 rounded text-[11px] font-bold">FXW 892</span>
-                    </div>
-                    <div class="flex items-center justify-between p-2 rounded-xl vin-badge">
-                      <span class="text-stone-400">VIN Chasis (17d):</span>
-                      <span class="text-emerald-400 font-bold tracking-widest text-[11px]">WVWZZZ3CZ6P108422</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Acciones Rápidas del Auto -->
-                <div class="pt-3 border-t border-cyan-500/30 space-y-2">
-                  <button (click)="estado.buscarPara('VW Passat 2.0 TDI', 'WVWZZZ3CZ6P108422', '2006 · BKP')" class="w-full py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-stone-950 font-bold text-xs font-mono flex items-center justify-center gap-2 shadow-lg transition active:scale-95">
-                    <svg class="w-3.5 h-3.5 text-stone-950" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                    <span>Buscar Repuestos para este Auto (1-Clic)</span>
-                  </button>
-
-                  <div class="flex items-center justify-between text-[11px] font-mono px-1">
-                    <button (click)="estado.historial('Passat')" class="text-stone-400 hover:text-white underline transition">
-                      Ver estado.historial: 3 compras previas
-                    </button>
-                    <span class="text-emerald-400 font-semibold flex items-center gap-1">
-                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> 100% Calce OK
-                    </span>
-                  </div>
-                </div>
-
-              </div>
-
-              <!-- AUTO 2: TOYOTA HILUX 4X4 (SILUETA VECTORIAL REFINADA) -->
-              <div class="card-technical p-5 sm:p-6 rounded-[32px] relative overflow-hidden flex flex-col justify-between space-y-4 shadow-2xl">
-
-                <!-- Header de Auto Secundario -->
-                <div class="flex items-center justify-between">
-                  <span class="px-3 py-1 rounded-full bg-white/10 text-stone-300 text-[10px] font-mono font-medium border border-white/10">
-                    GUARDADO EN GARAGE
-                  </span>
-
-                  <div class="flex items-center gap-2">
-                    <button class="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-stone-400 hover:text-white transition" title="Editar chasis">
-                      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                    </button>
-                    <button class="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-stone-400 hover:text-red-400 transition" title="Eliminar del garage">
-                      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Silueta Vectorizada e Información Técnica -->
-                <div class="space-y-3">
-                  <div class="h-40 rounded-2xl bg-gradient-to-b from-stone-900/60 to-black/90 border border-white/10 p-4 flex flex-col items-center justify-center relative group">
-                    <svg class="w-32 h-16 text-stone-400 group-hover:text-cyan-400 transition-colors duration-300 drop-shadow-lg" viewBox="0 0 120 50" fill="none" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 32h15m20 0h40m20 0h15M10 32l6-14h24l16 8h36l12 6h6v6H10v-6z"></path>
-                      <circle cx="28" cy="32" r="7" stroke-width="2.5"></circle>
-                      <circle cx="92" cy="32" r="7" stroke-width="2.5"></circle>
-                      <path stroke-linecap="round" d="M42 18h20v8H38l4-8z"></path>
-                      <path stroke-linecap="round" d="M66 18h16l4 8H66v-8z"></path>
-                    </svg>
-                    <span class="text-[10px] font-mono text-stone-400 mt-2">Silueta Vectorial SRX 4x4</span>
-                    <div class="absolute bottom-2 left-2 px-2.5 py-0.5 rounded-lg bg-black/85 backdrop-blur text-[10px] font-mono text-stone-300 border border-white/10">
-                      Doble Cabina SRX · Blanco Perlado
-                    </div>
-                  </div>
-
-                  <div>
-                    <div class="flex items-baseline justify-between">
-                      <h3 class="text-xl font-extrabold text-white tracking-tight">Toyota Hilux 4x4</h3>
-                      <span class="text-xs font-mono font-bold text-stone-300 bg-white/10 px-2.5 py-0.5 rounded">2018</span>
-                    </div>
-                    <p class="text-xs text-stone-300 font-mono mt-0.5">2.8 D-4D 1GD-FTV · 177 CV (Common Rail Turbo)</p>
-                  </div>
-
-                  <!-- Píldoras Técnicas: Patente y VIN -->
-                  <div class="space-y-1.5 text-xs font-mono">
-                    <div class="flex items-center justify-between p-2 rounded-xl bg-white/[0.04] border border-white/5">
-                      <span class="text-stone-400">Patente Mercosur:</span>
-                      <span class="plate-badge px-2.5 py-0.5 rounded text-[11px] font-bold">AD 340 JK</span>
-                    </div>
-                    <div class="flex items-center justify-between p-2 rounded-xl vin-badge">
-                      <span class="text-stone-400">VIN Chasis (17d):</span>
-                      <span class="text-amber-300 font-bold tracking-widest text-[11px]">8AJBA3CD4J1245081</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Acciones Rápidas del Auto -->
-                <div class="pt-3 border-t border-white/10 space-y-2">
-                  <button (click)="estado.activarVehiculo('Toyota Hilux 4x4', '8AJBA3CD4J1245081', '2018 · 2.8 D-4D')" class="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs font-mono flex items-center justify-center gap-2 transition active:scale-95 border border-white/10">
-                    <span>Activar como Vehículo de Búsqueda</span>
-                    <svg class="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                  </button>
-
-                  <div class="flex items-center justify-between text-[11px] font-mono px-1">
-                    <button (click)="estado.historial('Hilux')" class="text-stone-400 hover:text-white underline transition">
-                      Ver estado.historial: 1 compra previa
-                    </button>
-                    <span class="text-stone-400">Filtro gasoil Mann</span>
-                  </div>
-                </div>
-
-              </div>
-
-              <!-- AUTOS AGREGADOS DINÁMICAMENTE -->
               @for (a of estado.autos(); track a.vin) {
                 <div class="card-technical p-5 sm:p-6 rounded-[32px] relative overflow-hidden flex flex-col justify-between space-y-4 shadow-2xl">
                   <div class="flex items-center justify-between">
-                    <span class="px-3 py-1 rounded-full bg-white/10 text-stone-300 text-[10px] font-mono font-medium border border-white/10">NUEVO EN GARAGE</span>
-                    <span class="text-[10px] font-mono text-emerald-400">✓ Verificado</span>
-                  </div>
-                  <div>
-                    <h3 class="text-xl font-extrabold text-white tracking-tight">{{ a.nombre }}</h3>
-                    <p class="text-xs text-stone-300 font-mono mt-0.5">{{ a.version }}</p>
-                  </div>
-                  <div class="space-y-1.5 text-xs font-mono">
-                    <div class="flex items-center justify-between p-2 rounded-xl bg-white/[0.04] border border-white/5">
-                      <span class="text-stone-400">Patente / VIN:</span>
-                      <span class="plate-badge px-2.5 py-0.5 rounded text-[11px] font-bold">{{ a.patente }}</span>
+                    @if (estado.esActivo(a)) {
+                      <span class="px-3 py-1 rounded-full bg-cyan-400 text-stone-950 text-[10px] font-mono font-extrabold shadow flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-stone-950 animate-ping"></span>
+                        VEHÍCULO ACTIVO EN BÚSQUEDAS
+                      </span>
+                    } @else {
+                      <span class="px-3 py-1 rounded-full bg-white/10 text-stone-300 text-[10px] font-mono font-medium border border-white/10">
+                        GUARDADO EN GARAGE
+                      </span>
+                    }
+                    <div class="flex items-center gap-2">
+                      <button class="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-stone-400 hover:text-white transition" title="Editar chasis">
+                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                      </button>
+                      <button class="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-stone-400 hover:text-red-400 transition" title="Eliminar del garage">
+                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                      </button>
                     </div>
-                    <div class="flex items-center justify-between p-2 rounded-xl vin-badge">
-                      <span class="text-stone-400">VIN Chasis (17d):</span>
-                      <span class="text-emerald-400 font-bold tracking-widest text-[11px]">{{ a.vin }}</span>
+                  </div>
+
+                  <div class="space-y-3">
+                    @if (estado.esActivo(a)) {
+                      <div class="h-40 rounded-2xl bg-gradient-to-b from-stone-900/60 to-black/90 border border-white/10 p-2 flex items-center justify-center overflow-hidden relative group">
+                        <img [src]="estado.autoActivo()?.img" alt="{{ a.nombre }}" class="w-full h-full object-cover rounded-xl filter contrast-115 drop-shadow-2xl group-hover:scale-105 transition duration-500">
+                        <div class="absolute bottom-2 left-2 px-2.5 py-0.5 rounded-lg bg-black/85 backdrop-blur text-[10px] font-mono text-stone-300 border border-white/10">
+                          {{ a.version }}
+                        </div>
+                        <div class="absolute top-2 right-2 px-2.5 py-0.5 rounded-md bg-emerald-400/20 text-emerald-300 text-[9px] font-mono font-bold border border-emerald-400/30">
+                          OEM Match
+                        </div>
+                      </div>
+                    } @else {
+                      <div class="h-40 rounded-2xl bg-gradient-to-b from-stone-900/60 to-black/90 border border-white/10 p-4 flex flex-col items-center justify-center relative group">
+                        <svg class="w-32 h-16 text-stone-400 group-hover:text-cyan-400 transition-colors duration-300 drop-shadow-lg" viewBox="0 0 120 50" fill="none" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M5 32h15m20 0h40m20 0h15M10 32l6-14h24l16 8h36l12 6h6v6H10v-6z"></path>
+                          <circle cx="28" cy="32" r="7" stroke-width="2.5"></circle>
+                          <circle cx="92" cy="32" r="7" stroke-width="2.5"></circle>
+                          <path stroke-linecap="round" d="M42 18h20v8H38l4-8z"></path>
+                          <path stroke-linecap="round" d="M66 18h16l4 8H66v-8z"></path>
+                        </svg>
+                        <span class="text-[10px] font-mono text-stone-400 mt-2">Silueta Vectorial</span>
+                        <div class="absolute bottom-2 left-2 px-2.5 py-0.5 rounded-lg bg-black/85 backdrop-blur text-[10px] font-mono text-stone-300 border border-white/10">
+                          {{ a.version }}
+                        </div>
+                      </div>
+                    }
+
+                    <div>
+                      <div class="flex items-baseline justify-between">
+                        <h3 class="text-xl font-extrabold text-white tracking-tight">{{ a.nombre }}</h3>
+                        <span class="text-xs font-mono font-bold text-stone-300 bg-white/10 px-2.5 py-0.5 rounded">{{ anioDe(a) }}</span>
+                      </div>
+                      <p class="text-xs text-stone-300 font-mono mt-0.5">{{ a.version }}</p>
+                    </div>
+
+                    <div class="space-y-1.5 text-xs font-mono">
+                      <div class="flex items-center justify-between p-2 rounded-xl bg-white/[0.04] border border-white/5">
+                        <span class="text-stone-400">Patente / VIN:</span>
+                        <span class="plate-badge px-2.5 py-0.5 rounded text-[11px] font-bold">{{ a.patente }}</span>
+                      </div>
+                      <div class="flex items-center justify-between p-2 rounded-xl vin-badge">
+                        <span class="text-stone-400">VIN Chasis (17d):</span>
+                        <span class="text-emerald-400 font-bold tracking-widest text-[11px]">{{ a.vin }}</span>
+                      </div>
                     </div>
                   </div>
-                  <button (click)="estado.activarVehiculo(a.nombre, a.vin, a.version)" class="w-full py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-stone-950 font-bold text-xs font-mono shadow-lg transition active:scale-95">
-                    Activar como Vehículo de Búsqueda
-                  </button>
+
+                  <div class="pt-3 border-t border-cyan-500/30 space-y-2">
+                    @if (estado.esActivo(a)) {
+                      <button (click)="estado.buscarPara(a.nombre, a.vin, a.version)" class="w-full py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-stone-950 font-bold text-xs font-mono flex items-center justify-center gap-2 shadow-lg transition active:scale-95">
+                        <svg class="w-3.5 h-3.5 text-stone-950" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                        <span>Buscar Repuestos para este Auto (1-Clic)</span>
+                      </button>
+                      <div class="flex items-center justify-between text-[11px] font-mono px-1">
+                        <button (click)="estado.historial('Vehículo')" class="text-stone-400 hover:text-white underline transition">Ver estado del vehículo</button>
+                        <span class="text-emerald-400 font-semibold flex items-center gap-1">
+                          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> 100% Calce OK
+                        </span>
+                      </div>
+                    } @else {
+                      <button (click)="estado.activarVehiculo(a.nombre, a.vin, a.version)" class="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs font-mono flex items-center justify-center gap-2 transition active:scale-95 border border-white/10">
+                        <svg class="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                        <span>Activar como Vehículo de Búsqueda</span>
+                      </button>
+                    }
+                  </div>
                 </div>
               }
 
+              @empty {
+                <div class="card-technical p-5 sm:p-6 rounded-[32px] relative overflow-hidden flex flex-col justify-between space-y-4 shadow-2xl">
+                  <div class="flex items-center gap-3">
+                    <span class="w-11 h-11 rounded-2xl bg-cyan-400/10 border border-cyan-400/30 flex items-center justify-center">
+                      <svg class="w-5 h-5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+                    </span>
+                    <div>
+                      <h3 class="text-lg font-extrabold text-white tracking-tight">Tu garage está listo</h3>
+                      <p class="text-xs text-stone-300 font-mono mt-0.5">Todavía no tenés vehículos cargados.</p>
+                    </div>
+                  </div>
+                  <button (click)="estado.altaOpen.set(true)" class="w-full py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-stone-950 font-bold text-xs font-mono flex items-center justify-center gap-2 shadow-lg transition active:scale-95">
+                    <svg class="w-3.5 h-3.5 text-stone-950" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                    <span>Agregar primer vehículo</span>
+                  </button>
+                </div>
+              }
             </div>
 
           </div>
@@ -881,7 +838,7 @@ import { usuarioSesion } from '../../../application/services/demo-api.service';
     </div>
     }
 
-    <!-- MODAL / FORMULARIO FLOTANTE: "AGREGAR VEHÍCULO" -->
+        <!-- MODAL / FORMULARIO FLOTANTE: "AGREGAR VEHÍCULO" -->
     @if (estado.altaOpen()) {
     <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
       <div class="w-full max-w-lg dark-console p-6 sm:p-8 rounded-[36px] border border-cyan-400/40 shadow-2xl relative">
@@ -896,36 +853,52 @@ import { usuarioSesion } from '../../../application/services/demo-api.service';
         </div>
 
         <p class="text-xs text-stone-300 mb-5 leading-relaxed font-sans">
-          Ingresá los datos del chasis. El decodificador oficial de Toolbox Patagonia detectará automáticamente la versión de motor, discos y filtros compatibles.
+          Ingresá los mismos datos que sacaste de la Cédula Verde: patente, marca, modelo, año, chasis y motor. Si tenés la foto de la cédula, el OCR local la completa automáticamente.
         </p>
 
         <form (ngSubmit)="estado.guardarVehiculo()" class="space-y-4 font-mono text-xs">
-          <div>
-            <label class="block text-stone-300 font-bold mb-1.5 uppercase text-[11px]">
-              Ingresá Patente o VIN (17 Dígitos) *
+          <label class="block rounded-2xl border-2 border-dashed border-cyan-400/40 hover:border-cyan-400 bg-black/40 hover:bg-black/60 p-4 text-center cursor-pointer transition group">
+            <input type="file" accept="image/*" class="hidden" (change)="estado.onFotoCedulaAlta($event)" [disabled]="estado.altaEscaneando()" />
+            @if (estado.altaEscaneando()) {
+              <span class="text-xs font-mono font-bold text-cyan-300">Leyendo la cédula…</span>
+            } @else {
+              <span class="text-xs font-mono font-bold text-cyan-300 group-hover:text-cyan-200">📷 Escanear Cédula Verde (autocompleta)</span>
+              <span class="block text-[10px] font-mono text-stone-500 mt-0.5">gratis · OCR local en el backend</span>
+            }
+          </label>
+
+          <div class="grid grid-cols-2 gap-3">
+            <label class="block">
+              <span class="block text-stone-300 font-bold mb-1.5 uppercase text-[11px]">Patente *</span>
+              <input name="altaPatente" [(ngModel)]="estado.altaPatente" type="text" placeholder="AB 412 TX" class="w-full px-4 py-3 rounded-2xl bg-black/70 border border-white/20 text-white font-bold focus:outline-none focus:border-cyan-400 transition uppercase" required>
             </label>
-            <div class="relative">
-              <input name="vinPatente" [(ngModel)]="estado.nuevoVin" type="text" placeholder="Ej: WVWZZZ3CZ6P108422 o FXW 892" class="w-full px-4 py-3 rounded-2xl bg-black/70 border border-white/20 text-white font-bold tracking-widest focus:outline-none focus:border-cyan-400 transition uppercase" required>
-              <button type="button" (click)="estado.decodificar()" class="absolute right-2 top-2 px-3 py-1.5 rounded-xl bg-cyan-400 text-stone-950 font-bold text-[11px] shadow hover:bg-cyan-300 transition">
-                Decodificar ⚡
-              </button>
-            </div>
+            <label class="block">
+              <span class="block text-stone-300 font-bold mb-1.5 uppercase text-[11px]">Año *</span>
+              <input name="altaAnio" [(ngModel)]="estado.altaAnio" type="number" min="1900" max="2100" placeholder="2006" class="w-full px-4 py-3 rounded-2xl bg-black/70 border border-white/20 text-white font-bold focus:outline-none focus:border-cyan-400 transition" required>
+            </label>
+            <label class="block">
+              <span class="block text-stone-300 font-bold mb-1.5 uppercase text-[11px]">Marca *</span>
+              <input name="altaMarca" [(ngModel)]="estado.altaMarca" type="text" placeholder="VOLKSWAGEN" class="w-full px-4 py-3 rounded-2xl bg-black/70 border border-white/20 text-white font-bold focus:outline-none focus:border-cyan-400 transition uppercase" required>
+            </label>
+            <label class="block">
+              <span class="block text-stone-300 font-bold mb-1.5 uppercase text-[11px]">Modelo *</span>
+              <input name="altaModelo" [(ngModel)]="estado.altaModelo" type="text" placeholder="PASSAT 2.0 TDI" class="w-full px-4 py-3 rounded-2xl bg-black/70 border border-white/20 text-white font-bold focus:outline-none focus:border-cyan-400 transition uppercase" required>
+            </label>
+            <label class="block">
+              <span class="block text-stone-300 font-bold mb-1.5 uppercase text-[11px]">Chasis / VIN</span>
+              <input name="altaVin" [(ngModel)]="estado.altaVin" type="text" placeholder="WVWZZZ3CZ6P108422" class="w-full px-4 py-3 rounded-2xl bg-black/70 border border-white/20 text-white font-bold tracking-widest focus:outline-none focus:border-cyan-400 transition uppercase" />
+            </label>
+            <label class="block">
+              <span class="block text-stone-300 font-bold mb-1.5 uppercase text-[11px]">Motor</span>
+              <input name="altaMotor" [(ngModel)]="estado.altaMotor" type="text" placeholder="BKP-104928" class="w-full px-4 py-3 rounded-2xl bg-black/70 border border-white/20 text-white font-bold focus:outline-none focus:border-cyan-400 transition uppercase" />
+            </label>
           </div>
 
-          <div [class.animate-pulse]="estado.decodificando()" class="p-4 rounded-2xl bg-white/[0.04] border border-white/10 space-y-2 text-[11px]">
-            <div class="flex justify-between text-stone-300">
-              <span class="text-stone-400">Marca / Modelo:</span>
-              <span class="font-bold text-white">{{ estado.vinDecodificado().marca }}</span>
+          @if (estado.altaError()) {
+            <div class="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-[11px] font-mono text-red-300">
+              {{ estado.altaError() }}
             </div>
-            <div class="flex justify-between text-stone-300">
-              <span class="text-stone-400">Año de Fabricación:</span>
-              <span class="text-white font-bold">{{ estado.vinDecodificado().anio }}</span>
-            </div>
-            <div class="flex justify-between text-stone-300">
-              <span class="text-stone-400">Motorización:</span>
-              <span class="text-emerald-400 font-bold">{{ estado.vinDecodificado().motor }}</span>
-            </div>
-          </div>
+          }
 
           <div class="pt-2 flex items-center justify-end gap-3">
             <button type="button" (click)="estado.altaOpen.set(false)" class="px-5 py-3 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-stone-300 font-semibold">
@@ -936,6 +909,93 @@ import { usuarioSesion } from '../../../application/services/demo-api.service';
             </button>
           </div>
         </form>
+      </div>
+    </div>
+    }
+
+    <!-- MODAL: MICRO-CUESTIONARIO PREVENTIVO (3 toques → 100% y alertas activas) -->
+    @if (perfil.abierto()) {
+    <div class="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" (click)="perfil.cerrar()">
+      <div class="w-full max-w-sm dark-console p-6 sm:p-7 rounded-[32px] border border-cyan-400/40 shadow-2xl relative max-h-[92vh] overflow-y-auto no-scrollbar" (click)="$event.stopPropagation()">
+        <button (click)="perfil.cerrar()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 text-stone-400 hover:text-white flex items-center justify-center transition text-xs cursor-pointer">✕</button>
+
+        <!-- Anillo en vivo (4 bloques de 25%) + título -->
+        <div class="flex items-center gap-4 mb-5 pr-8">
+          <span class="relative w-16 h-16 shrink-0">
+            <svg viewBox="0 0 44 44" class="w-16 h-16 -rotate-90">
+              <circle cx="22" cy="22" r="19" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="4"></circle>
+              <circle cx="22" cy="22" r="19" fill="none" [attr.stroke]="perfil.completitudDraft() === 100 ? '#10B981' : '#06B6D4'" stroke-width="4" stroke-linecap="round" [attr.stroke-dasharray]="perfil.completitudDraft() * 1.1938 + ' 999'" style="transition: stroke-dasharray .3s cubic-bezier(.16,1,.3,1)"></circle>
+            </svg>
+            <span class="absolute inset-0 flex items-center justify-center text-[13px] font-mono font-black" [class.text-emerald-300]="perfil.completitudDraft() === 100" [class.text-cyan-300]="perfil.completitudDraft() !== 100">{{ perfil.completitudDraft() }}%</span>
+          </span>
+          <span class="min-w-0">
+            <span class="block text-base font-bold text-white tracking-tight">Alertas preventivas</span>
+            <span class="block text-[11px] font-mono text-stone-400 mt-0.5 leading-snug">3 toques y tu auto te avisa antes de quedarte a pata con el service</span>
+          </span>
+        </div>
+
+        <div class="space-y-4 font-mono text-xs">
+          <!-- 1. Cédula verde: ya está (bloque de 25%) -->
+          <div class="flex items-center justify-between rounded-2xl bg-emerald-500/10 border border-emerald-500/25 px-3.5 py-2.5">
+            <span class="text-[11px] font-bold uppercase tracking-wide text-emerald-300">1 · Cédula Verde y datos</span>
+            <span class="text-[11px] font-bold text-emerald-300">✓ Ya lo tenés</span>
+          </div>
+
+          <!-- 2. Kilometraje (rangos rápidos + exacto opcional) -->
+          <div>
+            <span class="block text-stone-300 font-bold mb-1.5 uppercase text-[11px]">2 · Kilometraje actual *</span>
+            <div class="grid grid-cols-4 gap-1.5">
+              @for (r of rangosKm; track r.etiqueta) {
+                <button type="button" (click)="perfil.setKm(r.km)"
+                  class="py-2 rounded-xl border text-[10.5px] font-bold transition cursor-pointer"
+                  [class]="rangoElegido(r.km) ? 'bg-cyan-400 border-cyan-400 text-stone-950 shadow-lg shadow-cyan-500/20' : 'bg-white/[0.04] border-white/15 text-stone-300 hover:border-cyan-400/40 hover:text-white'">
+                  {{ r.etiqueta }}
+                </button>
+              }
+            </div>
+            <input name="perfilKm" [ngModel]="perfil.draft().km" (ngModelChange)="perfil.setKm($event)" type="number" min="0" placeholder="o escribí el km exacto (ej: 184.500)" class="mt-2 w-full px-4 py-2.5 rounded-2xl bg-black/70 border border-white/20 focus:border-cyan-400 text-white font-bold focus:outline-none transition text-xs">
+          </div>
+
+          <!-- 3. Último service (antigüedad) -->
+          <div>
+            <span class="block text-stone-300 font-bold mb-1.5 uppercase text-[11px]">3 · Último service / cambio de aceite *</span>
+            <div class="grid grid-cols-2 gap-1.5">
+              @for (p of periodosService; track p.valor) {
+                <button type="button" (click)="perfil.setPeriodo(p.valor)"
+                  class="py-2.5 rounded-xl border text-[10.5px] font-bold transition cursor-pointer"
+                  [class]="perfil.draft().periodo === p.valor ? 'bg-cyan-400 border-cyan-400 text-stone-950 shadow-lg shadow-cyan-500/20' : 'bg-white/[0.04] border-white/15 text-stone-300 hover:border-cyan-400/40 hover:text-white'">
+                  {{ p.etiqueta }}
+                </button>
+              }
+            </div>
+            <input name="perfilService" [ngModel]="perfil.draft().service" (ngModelChange)="perfil.setService($event)" type="number" min="0" placeholder="o el km del último service (ej: 165.000)" class="mt-2 w-full px-4 py-2.5 rounded-2xl bg-black/70 border border-white/20 focus:border-cyan-400 text-white font-bold focus:outline-none transition text-xs">
+          </div>
+
+          <!-- 4. Uso habitual -->
+          <div>
+            <span class="block text-stone-300 font-bold mb-1.5 uppercase text-[11px]">4 · Principalmente lo usás para *</span>
+            <div class="grid grid-cols-3 gap-1.5">
+              @for (u of usos; track u.valor) {
+                <button type="button" (click)="perfil.setUso(u.valor)"
+                  class="py-2.5 rounded-xl border text-[10.5px] font-bold transition cursor-pointer"
+                  [class]="perfil.draft().uso === u.valor ? 'bg-cyan-400 border-cyan-400 text-stone-950 shadow-lg shadow-cyan-500/20' : 'bg-white/[0.04] border-white/15 text-stone-300 hover:border-cyan-400/40 hover:text-white'">
+                  {{ u.etiqueta }}
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-4 flex items-center justify-between gap-3">
+          <button (click)="perfil.cerrar()" class="text-[11px] font-mono text-stone-500 hover:text-stone-300 underline underline-offset-2 transition cursor-pointer">
+            Saltar por ahora
+          </button>
+          <button (click)="perfil.guardar()" [disabled]="!perfil.draftValido()"
+            class="px-5 py-3 rounded-2xl font-bold shadow-xl transition active:scale-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            [class]="perfil.draftValido() ? 'bg-cyan-400 hover:bg-cyan-300 text-stone-950' : 'bg-white/10 text-stone-400'">
+            {{ perfil.completitudDraft() === 100 ? 'Activar alertas ✓' : 'Activar alertas' }}
+          </button>
+        </div>
       </div>
     </div>
     }
@@ -960,6 +1020,23 @@ import { usuarioSesion } from '../../../application/services/demo-api.service';
 })
 export class CompradorPanelComponent {
   protected readonly estado = inject(CompradorEstadoService);
+  /** Perfil preventivo: 4 bloques de 25% (cédula + km + service + uso). */
+  protected readonly perfil = inject(PerfilPreventivoService);
+  protected readonly rangosKm = RANGOS_KM;
+  protected readonly periodosService = PERIODOS_SERVICE;
+  protected readonly usos = USOS;
+
+  /** ¿Ese rango de kilometraje es el que está elegido? */
+  protected rangoElegido(km: number): boolean {
+    const actual = this.perfil.draft().km;
+    return actual !== '' && actual != null && Number(actual) === km;
+  }
+
+  /** Año de fabricación del auto (viene en version, ej: "2.0 TDI · 2006"). */
+  protected anioDe(a: { version?: string }): string {
+    const m = (a?.version ?? '').toString().match(/(\d{4})/);
+    return m ? m[1] : '';
+  }
   private readonly router = inject(Router);
 
   // Identidad real de la sesión (usuario del registro) con fallback al demo
