@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+﻿import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CompradorEstadoService } from './comprador-estado.service';
@@ -6,6 +6,8 @@ import { PerfilPreventivoService, RANGOS_KM, PERIODOS_SERVICE, USOS } from '../.
 import { RolBadgeComponent } from '../../rol-badge.component';
 import { COMPRADOR_STYLES } from './comprador-styles';
 import { usuarioSesion } from '../../../application/services/demo-api.service';
+import { SupabaseService } from '../../../application/services/supabase.service';
+import { setRolSesion } from '../../sesion';
 
 // Panel principal del comprador (consola, garage, pedidos)
 @Component({
@@ -69,6 +71,11 @@ import { usuarioSesion } from '../../../application/services/demo-api.service';
             <span class="text-[10px] font-mono text-stone-900 font-medium">Cliente particular · Trelew</span>
           </div>
         </div>
+
+        <!-- Cerrar sesion: limpia rol + sesion real de Supabase y vuelve al inicio -->
+        <button (click)="cerrarSesion()" class="flex items-center justify-center w-9 h-9 rounded-2xl bg-[#0E0F12]/95 border border-white/10 text-stone-400 hover:text-red-300 transition shadow-md hover:scale-105 active:scale-95 cursor-pointer" title="Cerrar sesion">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
 
       </div>
 
@@ -1038,6 +1045,7 @@ export class CompradorPanelComponent {
     return m ? m[1] : '';
   }
   private readonly router = inject(Router);
+  private readonly supa = inject(SupabaseService);
 
   // Identidad real de la sesión (usuario del registro) con fallback al demo
   protected readonly sesion = usuarioSesion();
@@ -1047,4 +1055,11 @@ export class CompradorPanelComponent {
 
   // El comprador busca repuestos desde el home (pantalla de inicio)
   irABuscar(): void { this.router.navigate(['/']); }
+
+  // Cierre de sesion: limpia el rol + la sesion real de Supabase y vuelve al inicio
+  async cerrarSesion(): Promise<void> {
+    setRolSesion(null);
+    try { await this.supa.cerrarSesion(); } catch { /* sesion local ya invalida */ }
+    if (this.router.url !== '/') this.router.navigate(['/']);
+  }
 }

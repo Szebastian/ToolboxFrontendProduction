@@ -5,27 +5,52 @@ import { CompradorDestinoComponent } from './comprador/comprador-destino.compone
 import { CompradorPasarelaComponent } from './comprador/comprador-pasarela.component';
 import { CompradorRutaComponent } from './comprador/comprador-ruta.component';
 import { CompradorPanelComponent } from './comprador/comprador-panel.component';
+import { CompradorMovilComponent } from './comprador/comprador-movil.component';
 import { COMPRADOR_STYLES } from './comprador/comprador-styles';
 
-// Panel del comprador: shell que compone las etapas.
-// El estado compartido vive en CompradorEstadoService (provider local del panel).
+// Panel del comprador: shell que compone las etapas en desktop
+// y delega en CompradorMovilComponent la experiencia táctil Steve Jobs en mobile (< md).
 @Component({
   selector: 'app-panel-comprador',
   standalone: true,
-  imports: [CompradorDestinoComponent, CompradorPasarelaComponent, CompradorRutaComponent, CompradorPanelComponent],
+  imports: [
+    CompradorDestinoComponent,
+    CompradorPasarelaComponent,
+    CompradorRutaComponent,
+    CompradorPanelComponent,
+    CompradorMovilComponent,
+  ],
   providers: [CompradorEstadoService],
   styles: [
-    `:host{display:block;background:radial-gradient(120% 90% at 50% -10%, #D49B7A 0%, #D9A07E 20%, #CF8E6C 45%, #8B4527 80%, #120B08 100%);color:#F3F4F6;min-height:1024px;font-family:'Plus Jakarta Sans',sans-serif}`,
+    `:host{display:block;min-height:100vh;font-family:'Plus Jakarta Sans',sans-serif}`,
+    `@media (min-width: 768px) {
+      :host {
+        background: radial-gradient(120% 90% at 50% -10%, #D49B7A 0%, #D9A07E 20%, #CF8E6C 45%, #8B4527 80%, #120B08 100%);
+        color: #F3F4F6;
+        min-height: 1024px;
+      }
+    }`,
+    `@media (max-width: 767px) {
+      :host {
+        background: #080706;
+      }
+    }`,
     ...COMPRADOR_STYLES,
   ],
   template: `
+    <!-- VISTA ESCRITORIO (>= 768px) -->
+    <div class="hidden md:block">
+      <button (click)="volver()" style="position:fixed;bottom:14px;left:14px;z-index:40;margin:0;background:rgba(14,15,18,.65);color:#D6D3D1;border:1px solid rgba(255,255,255,.14);padding:7px 14px;border-radius:999px;font-weight:600;font-size:12px;font-family:'JetBrains Mono',monospace;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);cursor:pointer;transition:all .2s ease">← Volver</button>
+      <app-comprador-panel />
+      <app-comprador-destino />
+      <app-comprador-pasarela />
+      <app-comprador-ruta />
+    </div>
 
-  <button (click)="volver()" style="position:fixed;bottom:14px;left:14px;z-index:40;margin:0;background:rgba(14,15,18,.65);color:#D6D3D1;border:1px solid rgba(255,255,255,.14);padding:7px 14px;border-radius:999px;font-weight:600;font-size:12px;font-family:'JetBrains Mono',monospace;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);cursor:pointer;transition:all .2s ease">← Volver</button>
-
-  <app-comprador-panel />
-  <app-comprador-destino />
-  <app-comprador-pasarela />
-  <app-comprador-ruta />
+    <!-- VISTA MÓVIL ESTILO STEVE JOBS (< 768px) -->
+    <div class="block md:hidden">
+      <app-comprador-movil />
+    </div>
   `,
 })
 export class PanelCompradorComponent {
