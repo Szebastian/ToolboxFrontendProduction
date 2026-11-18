@@ -1473,26 +1473,53 @@ type Sheet =
                   </div>
 
                   @if (destino() === 'taller') {
-                    <div class="space-y-2" role="radiogroup" aria-label="Elegí el taller">
-                      @for (t of talleres; track t.id) {
-                        <button type="button" (click)="elegirTaller(t.id)" role="radio" [attr.aria-checked]="tallerId() === t.id"
-                                class="w-full min-h-[56px] p-3 rounded-xl border flex items-center gap-3 text-left transition cursor-pointer"
-                                [ngClass]="tallerId() === t.id ? 'border-amber-400/80 bg-black/50' : 'border-white/10 bg-black/20 hover:border-white/20'">
-                          <span class="w-5 h-5 rounded-full border shrink-0 flex items-center justify-center" [ngClass]="tallerId() === t.id ? 'border-amber-400 bg-amber-400' : 'border-stone-600'">
-                            @if (tallerId() === t.id) {
-                              <svg aria-hidden="true" class="w-3.5 h-3.5 text-stone-950" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
-                            }
+                    <div class="space-y-2">
+                      <span class="t-micro font-bold text-stone-400 uppercase tracking-wider block">Elegí tu taller</span>
+                      <div class="rounded-2xl border overflow-hidden transition-colors duration-200"
+                           [ngClass]="tallerOpen() ? 'border-amber-400/60 bg-black/60' : 'border-white/15 bg-black/40'">
+                        <button type="button" (click)="toggleTaller()"
+                                class="w-full min-h-[56px] p-3 flex items-center gap-3 text-left hover:bg-white/[0.04] active:bg-white/[0.06] transition cursor-pointer"
+                                [attr.aria-expanded]="tallerOpen()" aria-controls="taller-lista" [attr.aria-label]="'Elegí tu taller. Actual: ' + tallerSeleccionado()?.nombre">
+                          <span class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border" [ngClass]="tallerOpen() ? 'bg-amber-400/15 border-amber-400/40 text-amber-300' : 'bg-white/[0.06] border-white/10 text-amber-300'">
+                            <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"></path></svg>
                           </span>
                           <span class="min-w-0 flex-1">
-                            <span class="t-body font-bold text-white flex items-center gap-2 flex-wrap">{{ t.nombre }}
-                              @if (t.id === 'ramos') {
-                                <span class="t-micro font-bold text-amber-300 bg-amber-400/10 border border-amber-400/30 rounded px-1.5 py-0.5">Tu taller de confianza</span>
-                              }
-                            </span>
-                            <span class="t-micro text-stone-400 block truncate">{{ t.detalle }}</span>
+                            <span class="t-body font-bold text-white block truncate">{{ tallerSeleccionado()?.nombre }}</span>
+                            <span class="t-micro text-stone-400 block truncate">{{ tallerSeleccionado()?.detalle }}</span>
                           </span>
+                          <svg aria-hidden="true" class="w-5 h-5 text-stone-400 shrink-0 transition-transform duration-200" [ngClass]="tallerOpen() ? 'rotate-180 text-amber-300' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7 7"></path></svg>
                         </button>
-                      }
+
+                        @if (tallerOpen()) {
+                          <div id="taller-lista" role="listbox" aria-label="Taller de destino" class="border-t border-white/10 divide-y divide-white/5">
+                            @for (t of talleres; track t.id) {
+                              <button type="button" role="option" [attr.aria-selected]="tallerId() === t.id" (click)="elegirTaller(t.id); tallerOpen.set(false)"
+                                      class="w-full min-h-[64px] p-3 flex items-center gap-3 text-left transition cursor-pointer"
+                                      [ngClass]="tallerId() === t.id ? 'bg-amber-400/10' : 'hover:bg-white/[0.05]'">
+                                <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" [ngClass]="tallerId() === t.id ? 'bg-amber-400 text-stone-950' : 'bg-white/[0.06] text-amber-300'">
+                                  <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"></path></svg>
+                                </span>
+                                <span class="min-w-0 flex-1">
+                                  <span class="flex items-center gap-2 flex-wrap">
+                                    <span class="t-body font-bold text-white">{{ t.nombre }}</span>
+                                    @if (t.id === 'ramos') {
+                                      <span class="t-micro font-bold text-amber-300 bg-amber-400/10 border border-amber-400/30 rounded px-1.5 py-0.5">Tu taller de confianza</span>
+                                    }
+                                  </span>
+                                  <span class="t-micro text-stone-400 block truncate">{{ t.detalle }}</span>
+                                </span>
+                                @if (tallerId() === t.id) {
+                                  <svg aria-hidden="true" class="w-5 h-5 text-amber-400 shrink-0 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                                }
+                              </button>
+                            }
+                          </div>
+                        }
+                      </div>
+                      <p class="t-micro flex items-center gap-1.5" [ngClass]="tallerId() === 'ramos' ? 'text-amber-300' : 'text-stone-500'">
+                        <svg aria-hidden="true" class="w-3.5 h-3.5 shrink-0" [ngClass]="tallerId() === 'ramos' ? 'text-amber-400' : 'text-emerald-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span>{{ tallerId() === 'ramos' ? 'Tu taller de confianza · retiro contra firma en horario comercial.' : 'El cadete entrega contra firma en horario comercial.' }}</span>
+                      </p>
                     </div>
                   } @else {
                     <div class="space-y-2">
@@ -1717,7 +1744,7 @@ type Sheet =
 
                   <div class="p-3.5 rounded-2xl bg-amber-400/10 border border-amber-400/30 space-y-1">
                     <span class="t-micro font-bold text-amber-300 uppercase tracking-wider block">PIN de entrega</span>
-                    <button type="button" (click)="copiarTransferencia('pin')" aria-label="Copiar PIN" class="w-full py-1 cursor-pointer">
+                    <button type="button" (click)="copiarTransferencia('pin')" aria-label="Copiar PIN" class="w-full min-h-[52px] py-2 cursor-pointer flex flex-col items-center justify-center gap-1 rounded-xl hover:bg-white/5 transition">
                       <span class="t-total font-black text-white tracking-[0.4em] tabular-nums block select-all leading-none pl-[0.4em]">{{ pin() }}</span>
                     </button>
                     <span class="t-micro text-stone-400 block">{{ copiado() === 'pin' ? '¡PIN copiado!' : 'Entregale este código al cadete junto con la bolsa' }}</span>
@@ -2355,6 +2382,8 @@ export class CompradorMovilComponent {
   /** Destinos grandes: taller de confianza o mi ubicación. */
   readonly destino = signal<'taller' | 'ubicacion'>('taller');
   readonly tallerId = signal('ramos');
+  readonly tallerOpen = signal(false);
+  readonly tallerSeleccionado = computed(() => this.talleres.find((t) => t.id === this.tallerId()));
   readonly ubicacion = signal('Av. Fontana 450 · Trelew');
   /** Velocidad: programado (1x consolidado) u urgente (2x viaje directo). */
   readonly velocidad = signal<'programado' | 'urgente'>('programado');
@@ -2821,7 +2850,8 @@ export class CompradorMovilComponent {
     return this.destino() === 'taller' || this.ubicacion().trim().length >= 4;
   }
 
-  elegirDestino(tipo: 'taller' | 'ubicacion'): void { this.destino.set(tipo); }
+  toggleTaller(): void { this.tallerOpen.update((v) => !v); }
+  elegirDestino(tipo: 'taller' | 'ubicacion'): void { this.destino.set(tipo); this.tallerOpen.set(false); }
   elegirTaller(id: string): void { this.tallerId.set(id); this.destino.set('taller'); }
   setUbicacion(event: Event): void { this.ubicacion.set((event.target as HTMLInputElement).value); }
   elegirVelocidad(v: 'programado' | 'urgente'): void { this.velocidad.set(v); }
@@ -2915,6 +2945,11 @@ export class CompradorMovilComponent {
   // ── Teclado ───────────────────────────────────────────────────────────────
   @HostListener('document:keydown.escape')
   onEscape(): void {
+    // Con el desplegable abierto, Escape cierra solo la lista (no el sheet).
+    if (this.tallerOpen()) {
+      this.tallerOpen.set(false);
+      return;
+    }
     this.closeSheet();
   }
 
