@@ -1,4 +1,4 @@
-﻿import { Component, ElementRef, HostListener, computed, effect, inject, signal, viewChild } from '@angular/core';
+﻿import { Component, DestroyRef, ElementRef, HostListener, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { SupabaseService } from '../../../application/services/supabase.service';
@@ -86,7 +86,7 @@ export interface GarageVehicle {
 }
 
 type Sheet =
-  | 'vehicle' | 'tasks' | 'item' | 'combo' | 'success' | 'addPart' | 'perfil'
+  | 'vehicle' | 'tasks' | 'item' | 'combo' | 'addPart' | 'perfil'
   | 'garageAdd' | 'garageKm' | 'garageService' | 'garageCheckup' | 'garageNotif';
 
 // Panel móvil del comprador (< 768px): estética Steve Jobs, selección de combo
@@ -99,12 +99,12 @@ type Sheet =
     :host {
       display: block;
       min-height: 100vh;
-      background-color: #E2A774;
+      background-color: #121212;
+      /* Halo cálido decorativo al 8–12%: no compite con el texto (contraste AA) */
       background-image:
-        radial-gradient(ellipse 110% 70% at 90% 15%, #E57D68 0%, #D96552 40%, transparent 80%),
-        radial-gradient(ellipse 90% 80% at 15% 15%, #F5D3B3 0%, #E8B98C 50%, transparent 85%),
-        radial-gradient(ellipse 100% 75% at 50% 95%, #C98850 0%, #B8733B 60%, transparent 90%),
-        linear-gradient(145deg, #F3D2B2 0%, #E6AC7E 35%, #DC7862 70%, #C47248 100%);
+        radial-gradient(ellipse 85% 45% at 88% 4%, rgba(229, 125, 104, 0.12) 0%, transparent 72%),
+        radial-gradient(ellipse 70% 50% at 6% 14%, rgba(245, 211, 179, 0.08) 0%, transparent 75%),
+        radial-gradient(ellipse 90% 45% at 50% 100%, rgba(196, 114, 72, 0.10) 0%, transparent 78%);
       background-attachment: fixed;
       color: #F5F5F7;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Plus Jakarta Sans", sans-serif;
@@ -165,7 +165,11 @@ type Sheet =
     .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
 
-    .dock-wrap { padding-bottom: max(0.6rem, env(safe-area-inset-bottom)); }
+    .dock-wrap {
+      padding-bottom: max(0.6rem, env(safe-area-inset-bottom));
+      /* Tapa el contenido que asoma por debajo del dock redondeado */
+      background: linear-gradient(to top, #14110E 0%, #14110E 72%, rgba(20, 17, 14, 0.94) 88%, rgba(20, 17, 14, 0) 100%);
+    }
     .sheet-panel {
       animation: sheet-in 0.28s cubic-bezier(0.16, 1, 0.3, 1);
       padding-bottom: calc(1.25rem + env(safe-area-inset-bottom));
@@ -179,12 +183,20 @@ type Sheet =
       outline: 2px solid #F5C342;
       outline-offset: 2px;
     }
+    .offer-card { padding: 12px; }
+
+    @media (max-width: 380px) {
+      .offer-card { padding-left: 10px; padding-right: 10px; }
+      .dock-total { font-size: 20px; }
+      .part-name { font-size: 14px; }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
     }
   `],
   template: `
-    <div class="selection:bg-amber-400 selection:text-stone-950 min-h-screen p-3 sm:p-5 relative">
+    <div class="selection:bg-amber-400 selection:text-stone-950 min-h-screen p-3 sm:p-5 relative overflow-x-hidden">
 
       <!-- TOP BAR ZEN -->
       <header class="flex items-center justify-between py-2 text-white max-w-md mx-auto mb-3">
@@ -194,7 +206,7 @@ type Sheet =
           </div>
           <div>
             <h1 class="t-body font-black tracking-tight text-white uppercase drop-shadow-sm">Toolbox <span class="text-amber-400">Patagonia</span></h1>
-            <p class="t-micro text-stone-800 font-semibold">{{ vista() === 'garaje' ? 'Mi Garaje Digital' : 'Consola Comprador' }}</p>
+            <p class="t-micro text-stone-400 font-semibold">{{ vista() === 'garaje' ? 'Mi Garaje Digital' : 'Consola Comprador' }}</p>
           </div>
         </div>
 
@@ -217,21 +229,21 @@ type Sheet =
         @if (vista() === 'pedidos') {
 
         <!-- 1. VEHÍCULO RESUMIDO -->
-        <button type="button" (click)="openVehicleSheet()" class="jobs-monolith w-full text-left p-3 text-white cursor-pointer active:scale-[0.99] transition hover:border-amber-400/40 flex items-center justify-between gap-2.5 group shadow-md">
+        <button type="button" (click)="openVehicleSheet()" class="jobs-monolith w-full text-left p-3 pb-3.5 text-white cursor-pointer active:scale-[0.99] transition hover:border-amber-400/40 flex items-center justify-between gap-2.5 group shadow-md">
           <span class="flex items-center gap-3 min-w-0 flex-1">
             <span class="relative w-11 h-11 rounded-xl overflow-hidden border border-white/20 bg-black/60 shrink-0 shadow-inner">
               <img [src]="vehicleImg" alt="" class="w-full h-full object-cover">
             </span>
-            <span class="leading-tight min-w-0 flex-1 space-y-1 block">
-              <span class="flex items-center gap-2 flex-wrap">
+            <span class="leading-tight min-w-0 flex-1 space-y-0.5 block">
+              <span class="flex items-center gap-x-2 gap-y-1 flex-wrap">
                 <span class="px-2 py-0.5 rounded bg-amber-400 text-stone-950 font-black t-micro tracking-wider">
                   AB 412 TX
                 </span>
                 <span class="t-title font-extrabold text-white truncate">VW Passat 2.0 TDI</span>
               </span>
               <span class="t-micro text-stone-300 flex items-center gap-1.5 truncate">
-                <span class="text-emerald-400 font-bold">✓ Cédula verde Trelew</span>
-                <span class="text-stone-400">· {{ partsCatalog.length }} piezas</span>
+                <span class="text-emerald-400 font-bold">✓ Verificado (Trelew)</span>
+                <span class="text-stone-400">· {{ comboCount() }}/{{ partsCatalog.length }} piezas</span>
               </span>
             </span>
           </span>
@@ -241,55 +253,112 @@ type Sheet =
           </span>
         </button>
 
-        <!-- 2. PROGRESO DEL PEDIDO (informativo, no es un CTA de compra) -->
+        <!-- 2. PROGRESO DEL PEDIDO / TRACKING DE ENTREGA -->
         <button type="button" (click)="openTasks()" class="jobs-monolith w-full text-left p-3.5 text-white cursor-pointer active:scale-[0.99] transition border border-white/10 hover:border-[#F5C342]/40 bg-[#141210] shadow-lg group flex items-center justify-between gap-3.5">
-          <span class="space-y-1 min-w-0 flex-1 block">
-            <span class="flex items-center gap-2">
-              <span class="t-title font-bold text-white tracking-tight">Progreso del pedido</span>
-            </span>
-            <span class="t-body text-stone-400 block">
-              {{ confirmado() ? 'Pedido confirmado' : comboComplete() ? '3 de 3 piezas elegidas' : comboCount() + ' de 3 piezas elegidas' }}
-            </span>
-            <span class="t-body font-bold block" [ngClass]="confirmado() ? 'text-[#2ECC71]' : 'text-[#F5C342]'">
-              {{ nextStepLabel() }}
-            </span>
-          </span>
+          @if (confirmado()) {
+            <!-- PEDIDO CERRADO: gráfico de progreso de entrega -->
+            <span class="space-y-2 min-w-0 flex-1 block">
+              <span class="flex items-center gap-2 flex-wrap">
+                <span class="t-title font-bold text-white tracking-tight">Seguimiento del pedido</span>
+                <span class="px-2 py-0.5 rounded-full t-micro font-bold border shrink-0"
+                      [ngClass]="entregaFase() === 'entregado' ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40' : 'bg-amber-400/10 text-amber-300 border-amber-400/40'">
+                  {{ entregaFase() === 'entregado' ? 'Entregado ✓' : entregaFase() === 'enCamino' ? 'En camino' : 'Cadete asignado' }}
+                </span>
+              </span>
 
-          <span class="flex items-center gap-3 shrink-0">
-            <span class="relative w-14 h-14 flex items-center justify-center shrink-0">
-              <svg aria-hidden="true" class="w-14 h-14 -rotate-90 ring-glow" viewBox="0 0 56 56">
-                <defs>
-                  <linearGradient id="ringAmberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#FFD768"></stop>
-                    <stop offset="100%" stop-color="#F5C342"></stop>
-                  </linearGradient>
-                </defs>
-                <circle cx="28" cy="28" r="22" fill="#0C0B0A"></circle>
-                <circle cx="28" cy="28" r="22" fill="none" stroke="#26231F" stroke-width="4.5"></circle>
-                <circle cx="28" cy="28" r="22" fill="none" [attr.stroke]="ringColor()" stroke-width="4.5" stroke-linecap="round"
-                        stroke-dasharray="138.23" [attr.stroke-dashoffset]="ringOffset()" class="transition-all duration-500"></circle>
-              </svg>
-              <span class="absolute inset-0 flex items-center justify-center leading-none select-none">
-                <span class="t-price font-bold text-white">{{ taskPercent() }}</span><span class="t-micro font-bold ml-0.5" [ngClass]="confirmado() ? 'text-[#2ECC71]' : 'text-[#F5C342]'">%</span>
+              <!-- TIMELINE: Pago acreditado → En camino → Entregado -->
+              <span class="block" role="img" [attr.aria-label]="'Entrega: paso ' + entregaPaso() + ' de 3'">
+                <span class="grid items-center gap-x-1" style="grid-template-columns: auto 1fr auto 1fr auto;" aria-hidden="true">
+                  <span class="w-[18px] h-[18px] rounded-full border flex items-center justify-center" [ngClass]="entregaDot(1)">
+                    <svg class="w-3 h-3 stroke-[3.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                  </span>
+                  <span class="h-[3px] rounded-full" [ngClass]="entregaLinea(2)"></span>
+                  <span class="w-[18px] h-[18px] rounded-full border flex items-center justify-center" [ngClass]="entregaDot(2)">
+                    @if (entregaPaso() >= 2) {
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M1 5h13v11H1zM14 9h4l3 3v4h-7M4.5 19a1.6 1.6 0 100-3.2 1.6 1.6 0 000 3.2zm11 0a1.6 1.6 0 100-3.2 1.6 1.6 0 000 3.2z"></path></svg>
+                    } @else {
+                      <span class="t-micro font-black">2</span>
+                    }
+                  </span>
+                  <span class="h-[3px] rounded-full" [ngClass]="entregaLinea(3)"></span>
+                  <span class="w-[18px] h-[18px] rounded-full border flex items-center justify-center" [ngClass]="entregaDot(3)">
+                    @if (entregaFase() === 'entregado') {
+                      <svg class="w-3 h-3 stroke-[3.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                    } @else {
+                      <span class="t-micro font-black">3</span>
+                    }
+                  </span>
+                </span>
+                <span class="grid gap-x-1 mt-1" style="grid-template-columns: auto 1fr auto 1fr auto;" aria-hidden="true">
+                  <span class="t-micro font-bold text-[10px] leading-tight text-center" [ngClass]="entregaLabelColor(1)">Pago</span>
+                  <span></span>
+                  <span class="t-micro font-bold text-[10px] leading-tight text-center" [ngClass]="entregaLabelColor(2)">En camino</span>
+                  <span></span>
+                  <span class="t-micro font-bold text-[10px] leading-tight text-center" [ngClass]="entregaLabelColor(3)">Entregado</span>
+                </span>
+              </span>
+
+              <span class="t-micro text-stone-400 flex items-center gap-1.5 min-w-0">
+                <svg aria-hidden="true" class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <span class="truncate">{{ entregaFase() === 'entregado' ? 'Entregado ' + entregadoEn() + ' · PIN validado' : entregaEstimada() + ' · ' + destinoTexto() }}</span>
               </span>
             </span>
-            <svg aria-hidden="true" class="w-4 h-4 text-[#C9C4BD] group-hover:text-[#F5C342] group-hover:translate-x-0.5 transition-all shrink-0 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg aria-hidden="true" class="w-4 h-4 text-emerald-400 group-hover:text-emerald-300 group-hover:translate-x-0.5 transition-all shrink-0 stroke-[2.2] self-center" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
             </svg>
-          </span>
+          } @else {
+            <span class="space-y-1 min-w-0 flex-1 block">
+              <span class="flex items-center gap-2">
+                <span class="t-title font-bold text-white tracking-tight">Progreso del pedido</span>
+              </span>
+              <span class="t-body text-stone-400 block">
+                {{ comboComplete() ? '3 de 3 piezas elegidas' : comboCount() + ' de 3 piezas elegidas' }}
+              </span>
+              <span class="t-body font-bold block text-[#F5C342]">{{ nextStepLabel() }}</span>
+            </span>
+
+            <span class="flex items-center gap-3 shrink-0">
+              <span class="relative w-[60px] h-[60px] flex items-center justify-center shrink-0">
+                <svg aria-hidden="true" class="w-[60px] h-[60px] -rotate-90 ring-glow" viewBox="0 0 56 56">
+                  <defs>
+                    <linearGradient id="ringAmberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#FFD768"></stop>
+                      <stop offset="100%" stop-color="#F5C342"></stop>
+                    </linearGradient>
+                  </defs>
+                  <circle cx="28" cy="28" r="22" fill="#0C0B0A"></circle>
+                  <circle cx="28" cy="28" r="22" fill="none" stroke="#26231F" stroke-width="4.5"></circle>
+                  <circle cx="28" cy="28" r="22" fill="none" [attr.stroke]="ringColor()" stroke-width="4.5" stroke-linecap="round"
+                          stroke-dasharray="138.23" [attr.stroke-dashoffset]="ringOffset()" class="transition-all duration-500"></circle>
+                </svg>
+                <span class="absolute inset-0 flex items-center justify-center select-none">
+                  <span class="flex items-baseline leading-none">
+                    <span class="t-price font-bold text-white">{{ taskPercent() }}</span>
+                    <span class="text-[10px] font-bold ml-[1px] text-[#F5C342]">%</span>
+                  </span>
+                </span>
+              </span>
+              <svg aria-hidden="true" class="w-4 h-4 text-[#C9C4BD] group-hover:text-[#F5C342] group-hover:translate-x-0.5 transition-all shrink-0 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </span>
+          }
         </button>
 
-        <!-- TÍTULO DE SECCIÓN + ACCIÓN -->
+        <!-- TÍTULO DE SECCIÓN + CONTROL DE EXPANSIÓN -->
         <div class="flex items-center justify-between px-1 pt-1 gap-2">
-          <h2 class="t-title text-stone-900 font-bold drop-shadow-sm">Elegí tus repuestos</h2>
-          <div class="flex items-center gap-1.5">
-            <span class="t-micro text-stone-900 font-bold flex items-center gap-1 bg-white/60 backdrop-blur-md px-2 py-1 rounded-full border border-stone-900/20 shadow-sm">
-              <span class="w-1.5 h-1.5 rounded-full bg-stone-800" aria-hidden="true"></span>
-              {{ totalOfertas() }} ofertas
-            </span>
+          <h2 class="t-title text-white font-bold truncate">Tus repuestos</h2>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <span class="t-micro text-stone-400 font-semibold whitespace-nowrap">{{ totalOfertas() }} ofertas</span>
             <button type="button" (click)="toggleAll()"
-                    class="t-body font-bold text-stone-900 underline decoration-stone-900/40 hover:decoration-stone-900 transition cursor-pointer px-1 min-h-[44px]">
-              {{ todoAbierto() ? 'Cerrar todas' : 'Mostrar todas' }}
+                    [attr.aria-expanded]="todoAbierto()"
+                    class="t-micro font-bold rounded-full pl-2.5 pr-1.5 min-h-[44px] flex items-center gap-1 border transition active:scale-95 cursor-pointer"
+                    [ngClass]="todoAbierto() ? 'bg-amber-400/15 border-amber-400/50 text-amber-300' : 'bg-white/[0.07] border-white/15 text-stone-200 hover:bg-white/10'">
+              <span>{{ todoAbierto() ? 'Contraer todas' : 'Expandir todas' }}</span>
+              <svg aria-hidden="true" class="w-3.5 h-3.5 stroke-[2.5] transition-transform duration-200"
+                   [ngClass]="todoAbierto() ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+              </svg>
             </button>
           </div>
         </div>
@@ -310,31 +379,31 @@ type Sheet =
                     </span>
                     <span class="min-w-0 flex-1 block">
                       <span class="flex items-center gap-1.5 flex-wrap">
-                        <span class="t-title font-extrabold text-white tracking-tight leading-snug">{{ part.name }}</span>
+                        <span class="t-title part-name font-extrabold text-white tracking-tight leading-snug">{{ part.name }}</span>
                         <span class="t-micro font-bold text-amber-300 bg-amber-400/10 px-1.5 py-0.5 rounded border border-amber-400/20 whitespace-nowrap">{{ part.items.length }} ofertas</span>
                       </span>
                       <span class="t-micro text-stone-400 mt-1 flex items-center gap-1 min-w-0">
                         @if (isPartOpen(part.key)) {
                           <span class="truncate">{{ part.spec }}</span>
-                        } @else {
+                        } @else if (selectedOf(part); as sel) {
                           <span class="text-emerald-400 font-bold shrink-0" aria-hidden="true">✓</span>
-                          <span class="text-stone-200 truncate min-w-0">{{ selectedOf(part).brand }}</span>
+                          <span class="text-stone-200 truncate min-w-0">{{ sel.brand }}</span>
                           <span class="text-stone-500 shrink-0" aria-hidden="true">·</span>
-                          <span class="text-stone-200 font-semibold shrink-0">{{ selectedOf(part).price }}</span>
+                          <span class="text-stone-200 font-semibold shrink-0">{{ sel.price }}</span>
+                          <span class="text-stone-400 shrink-0">({{ ciudadCorta(sel) }})</span>
+                        } @else {
+                          <span class="text-amber-300/90 font-bold truncate">Sin pieza elegida · tocá “Ver”</span>
                         }
                       </span>
                     </span>
                   </span>
 
-                  <span class="flex flex-col items-end gap-1 shrink-0">
-                    <span class="t-micro font-bold text-stone-300 whitespace-nowrap">
-                      Desde {{ minPrice(part) }}
-                    </span>
-                    <span class="flex items-center gap-1 px-2 py-1 rounded-xl transition-all"
-                          [ngClass]="isPartOpen(part.key) ? 'bg-amber-400/20 border border-amber-400/50 text-amber-300' : 'bg-white/10 border border-white/15 text-stone-200'">
+                  <span class="shrink-0">
+                    <span class="flex items-center gap-1 pl-2.5 pr-2 min-h-[36px] rounded-full border transition-all"
+                          [ngClass]="isPartOpen(part.key) ? 'bg-amber-400 border-amber-300 text-stone-950' : (selectedOf(part) ? 'bg-white/10 border-white/20 text-stone-100' : 'bg-amber-400/10 border-amber-400/50 text-amber-300')">
                       <span class="t-micro font-black uppercase tracking-tight">{{ isPartOpen(part.key) ? 'Cerrar' : 'Ver' }}</span>
-                      <svg aria-hidden="true" class="w-3.5 h-3.5 transition-transform duration-200 stroke-[3]"
-                           [ngClass]="isPartOpen(part.key) ? 'rotate-180 text-amber-400' : 'text-stone-300'"
+                      <svg aria-hidden="true" class="w-3.5 h-3.5 transition-transform duration-200 stroke-[2.5]"
+                           [ngClass]="isPartOpen(part.key) ? 'rotate-180' : ''"
                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
                       </svg>
@@ -352,66 +421,70 @@ type Sheet =
                       <div role="radio"
                            [attr.aria-checked]="isSelected(part.key, item.id)"
                            [attr.tabindex]="0"
-                           [attr.aria-label]="item.brand + ', ' + item.price + ', ' + item.store"
+                           [attr.aria-label]="item.brand + ', ' + item.price + ', ' + ciudad(item) + (isSelected(part.key, item.id) ? ', en tu pedido. Tocá para quitar' : ', tocá para agregar')"
                            (click)="selectComboItem(part.key, item.id)"
                            (keydown)="onRowKey($event, part.key, item.id)"
                            [ngClass]="isSelected(part.key, item.id) ? 'card-selected' : 'card-unselected hover:border-stone-600'"
-                           class="p-3 rounded-2xl cursor-pointer active:scale-[0.99] transition flex items-center justify-between gap-3 group min-h-[64px]">
+                           class="offer-card rounded-2xl cursor-pointer active:scale-[0.99] transition flex flex-col gap-2.5 group min-h-[64px]">
 
-                        <div class="flex items-center gap-3 min-w-0 flex-1">
-                          <!-- SELECTOR RADIO 20x20 -->
-                          @if (isSelected(part.key, item.id)) {
-                            <div class="w-5 h-5 rounded-full bg-[#F5C342] text-[#12100E] flex items-center justify-center shrink-0 shadow-sm" aria-hidden="true">
-                              <svg class="w-3.5 h-3.5 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
-                            </div>
-                          } @else {
-                            <div class="w-5 h-5 rounded-full border border-[#666666] bg-transparent shrink-0 group-hover:border-[#F5C342]/60 transition-colors" aria-hidden="true"></div>
-                          }
-
-                          <div class="space-y-1 min-w-0 flex-1">
-                            <div class="flex items-center gap-1.5 flex-wrap">
-                              <span class="px-2 py-0.5 rounded-full t-micro font-bold flex items-center gap-1"
-                                    [ngClass]="item.isMadryn ? 'bg-white/10 text-stone-300 border border-white/15' : (isCheapest(part, item) ? 'bg-[#F5C342]/15 text-[#F5C342] border border-[#F5C342]/30' : 'bg-white/10 text-stone-300 border border-white/15')">
-                                {{ item.isMadryn ? 'Madryn · 65 km' : (isCheapest(part, item) ? '★ Más barata' : 'Intermedia') }}
+                        <!-- FILA 1: nivel de precio, ciudad obligatoria y acceso a la ficha -->
+                        <div class="flex items-start justify-between gap-2 -mt-1 -mr-1">
+                          <div class="flex items-center gap-1.5 flex-wrap min-w-0">
+                            @if (!item.isMadryn) {
+                              <span class="px-2 py-0.5 rounded-full t-micro font-bold shrink-0"
+                                    [ngClass]="isCheapest(part, item) ? 'bg-[#F5C342]/15 text-[#F5C342] border border-[#F5C342]/30' : 'bg-white/10 text-stone-300 border border-white/15'">
+                                {{ isCheapest(part, item) ? '★ Más barata' : 'Intermedia' }}
                               </span>
-                            </div>
-
-                            <h4 class="t-title font-bold text-white tracking-tight leading-snug group-hover:text-[#F5C342] transition-colors">{{ item.brand }}</h4>
-
-                            <div class="flex items-center gap-1.5 t-micro text-stone-400">
+                            }
+                            <span class="px-2 py-0.5 rounded-full t-micro font-bold flex items-center gap-1 min-w-0"
+                                  [ngClass]="item.isMadryn ? 'bg-cyan-400/10 text-cyan-300 border border-cyan-400/30' : 'bg-white/[0.06] text-stone-300 border border-white/10'">
                               @if (item.isMadryn) {
-                                <svg aria-hidden="true" class="w-3.5 h-3.5 text-stone-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                <svg aria-hidden="true" class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zm10 0a2 2 0 11-4 0 2 2 0 014 0zM13 17V6h3l4 5v6M3 6h10v11"></path></svg>
+                                <span class="truncate">{{ ciudad(item) }} · 65 km</span>
                               } @else {
-                                <svg aria-hidden="true" class="w-3.5 h-3.5 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h18l-2 9H5L3 3zm0 9a3 3 0 006 0 3 3 0 006 0 3 3 0 006 0v7a2 2 0 01-2 2H5a2 2 0 01-2-2v-7z"></path></svg>
+                                <svg aria-hidden="true" class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                <span class="truncate">{{ ciudad(item) }}</span>
                               }
-                              <span class="truncate">{{ item.store }}</span>
-                            </div>
+                            </span>
                           </div>
+
+                          <button type="button" (click)="$event.stopPropagation(); openItemSheet(item, part)"
+                                  class="t-micro font-bold text-stone-300 hover:text-white flex items-center gap-0.5 shrink-0 px-2 min-h-[44px] -my-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer whitespace-nowrap"
+                                  title="Ver ficha técnica del repuesto" [attr.aria-label]="'Ver ficha técnica de ' + item.brand">
+                            <span>Ficha técnica</span>
+                            <svg aria-hidden="true" class="w-3.5 h-3.5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+                          </button>
                         </div>
 
-                        <div class="flex items-center gap-2 shrink-0">
-                          <div class="text-right">
-                            <span class="t-price font-bold block" [ngClass]="isSelected(part.key, item.id) ? 'text-[#F5C342]' : 'text-white'">{{ item.price }}</span>
-                            @if (item.isMadryn) {
-                              <div class="flex flex-col items-end t-micro mt-1">
-                                <span class="text-stone-400">Cadete Ruta 3</span>
-                                <span class="text-stone-200 font-semibold bg-white/5 px-1.5 py-0.5 rounded border border-white/10 mt-0.5">{{ item.shippingFee }} · {{ item.shippingEta }}</span>
+                        <!-- FILA 2: marca + precio (todo el ancho para el nombre) -->
+                        <div class="flex items-start justify-between gap-2.5">
+                          <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                            @if (isSelected(part.key, item.id)) {
+                              <div class="w-5 h-5 rounded-full bg-[#F5C342] text-[#12100E] flex items-center justify-center shrink-0 shadow-sm" aria-hidden="true">
+                                <svg class="w-3.5 h-3.5 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
                               </div>
                             } @else {
-                              <span class="block t-micro text-stone-400 mt-1">Mostrador hoy</span>
+                              <div class="w-5 h-5 rounded-full border border-[#666666] bg-transparent shrink-0 group-hover:border-[#F5C342]/60 transition-colors" aria-hidden="true"></div>
                             }
+                            <h4 class="t-title font-bold text-white tracking-tight leading-snug group-hover:text-[#F5C342] transition-colors min-w-0">{{ item.brand }}</h4>
                           </div>
+                          <span class="t-price font-bold shrink-0 pt-0.5" [ngClass]="isSelected(part.key, item.id) ? 'text-[#F5C342]' : 'text-white'">{{ item.price }}</span>
+                        </div>
 
-                          <!-- BOTÓN INFO (no selecciona) -->
-                          <button type="button" (click)="$event.stopPropagation(); openItemSheet(item, part)"
-                                  class="w-11 h-11 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-stone-400 hover:text-white hover:bg-white/15 transition-colors shrink-0 cursor-pointer"
-                                  title="Ver ficha y ubicación" [attr.aria-label]="'Ver ficha de ' + item.brand">
-                            <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                              <circle cx="12" cy="12" r="10"></circle>
-                              <line x1="12" y1="16" x2="12" y2="12"></line>
-                              <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                            </svg>
-                          </button>
+                        <!-- FILA 3: condición anónima del comercio + logística -->
+                        <div class="flex items-start justify-between gap-2 t-micro">
+                          <span class="text-stone-300 flex items-center gap-1 min-w-0">
+                            <svg aria-hidden="true" class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span class="truncate">Stock hoy · Garantía 6 meses</span>
+                          </span>
+                          @if (item.isMadryn) {
+                            <span class="text-right shrink-0">
+                              <span class="text-amber-300 font-bold block whitespace-nowrap">{{ item.shippingFee }} envío</span>
+                              <span class="text-stone-400 block whitespace-nowrap">{{ item.shippingEta }}</span>
+                            </span>
+                          } @else {
+                            <span class="text-stone-400 shrink-0 whitespace-nowrap">Mostrador hoy</span>
+                          }
                         </div>
                       </div>
                     }
@@ -834,7 +907,7 @@ type Sheet =
         }
 
         <!-- ESPACIADOR: deja scrollear el contenido por debajo de la barra fija -->
-        <div [ngClass]="vista() === 'garaje' ? 'h-24' : 'h-40'" aria-hidden="true"></div>
+        <div [ngClass]="vista() === 'garaje' ? 'h-28' : 'h-44'" aria-hidden="true"></div>
 
       </main>
 
@@ -848,19 +921,27 @@ type Sheet =
               <span class="t-micro font-bold uppercase tracking-wider text-amber-300 whitespace-nowrap">
                 {{ comboComplete() ? '3 de 3 piezas' : comboCount() + ' de 3 piezas' }}
               </span>
-              <span class="t-micro text-stone-300 truncate text-right">
-                {{ hasMadryn() ? 'entrega mixta ' + shippingFmt() : 'ahorrás ' + money(ahorroReferencia) }}
+              <span class="t-micro truncate text-right">
+                @if (hasMadryn()) {
+                  <span class="text-stone-400">incluye&nbsp;</span>
+                  <span class="text-amber-300 font-bold">{{ shippingFmt() }} envío</span>
+                } @else if (comboComplete()) {
+                  <span class="text-stone-400">ahorrás&nbsp;</span>
+                  <span class="text-emerald-300 font-bold">{{ money(ahorroReferencia) }}</span>
+                } @else {
+                  <span class="text-stone-400">sin flete · mostrador Trelew</span>
+                }
               </span>
             </div>
 
             <div class="flex items-center gap-3 pt-0.5 pb-2">
-              <span class="t-total font-black text-white tracking-tight leading-none shrink-0">{{ totalFmt() }}</span>
+              <span class="t-total dock-total font-black text-white tracking-tight leading-none shrink-0">{{ totalFmt() }}</span>
 
               <button type="button" (click)="openComboSheet()"
-                      class="flex-1 min-h-[46px] px-4 rounded-xl font-black t-body active:scale-[0.98] transition flex items-center justify-center gap-1.5 cursor-pointer"
+                      class="flex-1 min-h-[46px] px-3.5 rounded-xl font-black t-body active:scale-[0.98] transition flex items-center justify-center gap-1.5 cursor-pointer"
                       [ngClass]="comboComplete() ? 'bg-gradient-to-b from-amber-300 to-amber-500 text-stone-950 shadow-[0_6px_18px_rgba(245,195,66,0.3)]' : 'bg-[#F5C342]/10 border border-[#F5C342] text-[#F5C342]'">
-                <span>{{ confirmado() ? 'Ver pedido' : comboComplete() ? 'Pedir combo' : 'Completar' }}</span>
-                <svg aria-hidden="true" class="w-4 h-4 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+                <span class="whitespace-nowrap">{{ confirmado() ? 'Ver pedido' : comboComplete() ? 'Pedir combo' : 'Completar' }}</span>
+                <svg aria-hidden="true" class="w-4 h-4 stroke-[2.5] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
               </button>
             </div>
           </div>
@@ -932,8 +1013,7 @@ type Sheet =
               @if (activeSheet() === 'vehicle') { Ficha del vehículo }
               @if (activeSheet() === 'tasks') { Seguimiento del pedido }
               @if (activeSheet() === 'item') { {{ selectedItem()?.brand }} }
-              @if (activeSheet() === 'combo') { Confirmación y logística }
-              @if (activeSheet() === 'success') { Orden reservada }
+              @if (activeSheet() === 'combo') { Tu pedido }
               @if (activeSheet() === 'addPart') { Nueva pieza para cotizar }
               @if (activeSheet() === 'perfil') { Mi cuenta }
               @if (activeSheet() === 'garageAdd') { Sumar vehículo al garaje }
@@ -970,11 +1050,103 @@ type Sheet =
 
             <!-- SHEET TAREAS -->
             @if (activeSheet() === 'tasks') {
+
+              <!-- CONFIRMADO → TRACKING DE ENTREGA -->
+              @if (confirmado()) {
+              <div class="space-y-3">
+                <div class="p-3.5 rounded-2xl border flex items-center justify-between gap-3"
+                     [ngClass]="entregaFase() === 'entregado' ? 'bg-gradient-to-r from-emerald-500/15 to-white/5 border-emerald-500/40' : 'bg-gradient-to-r from-amber-500/15 to-white/5 border-[#F5C342]/40'">
+                  <div class="space-y-1 min-w-0">
+                    <span class="t-micro font-bold uppercase tracking-wider" [ngClass]="entregaFase() === 'entregado' ? 'text-emerald-300' : 'text-amber-300'">Tracking de entrega</span>
+                    <h4 class="t-title font-black text-white">{{ entregaFase() === 'entregado' ? '¡Entregado con éxito!' : entregaFase() === 'enCamino' ? 'En camino al destino' : 'Cadete asignado' }}</h4>
+                    <p class="t-body text-stone-300">{{ destinoTexto() }} · {{ entregaFase() === 'entregado' ? 'recibido ' + entregadoEn() : entregaEstimada() }}</p>
+                  </div>
+                  <div class="w-12 h-12 rounded-full bg-black/80 border-2 flex items-center justify-center font-black t-body shrink-0 num"
+                       [ngClass]="entregaFase() === 'entregado' ? 'border-emerald-500 text-emerald-300' : 'border-amber-400 text-amber-300'">
+                    {{ entregaPaso() }}/3
+                  </div>
+                </div>
+
+                <!-- HITOS DEL ENVÍO -->
+                <ol class="space-y-0 pt-1">
+                  <li class="relative flex items-start gap-3 pb-5">
+                    <span class="absolute left-[13px] top-7 bottom-1 w-[2px] rounded-full" [ngClass]="entregaPaso() >= 2 ? 'bg-emerald-500/60' : 'bg-white/10'" aria-hidden="true"></span>
+                    <span class="w-7 h-7 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0" aria-hidden="true">
+                      <svg class="w-4 h-4 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                    </span>
+                    <span class="min-w-0 flex-1 space-y-0.5">
+                      <span class="flex items-center justify-between gap-2">
+                        <span class="t-body font-bold text-white">Pago acreditado y stock reservado</span>
+                        <span class="t-micro text-emerald-300 font-bold shrink-0 text-right">{{ entregaMomento(1) }}</span>
+                      </span>
+                      <span class="t-micro text-stone-400 leading-snug block">Las 3 casas confirmaron disponibilidad del repuesto.</span>
+                    </span>
+                  </li>
+
+                  <li class="relative flex items-start gap-3 pb-5">
+                    <span class="absolute left-[13px] top-7 bottom-1 w-[2px] rounded-full" [ngClass]="entregaFase() === 'entregado' ? 'bg-emerald-500/60' : 'bg-white/10'" aria-hidden="true"></span>
+                    <span class="w-7 h-7 rounded-xl flex items-center justify-center shrink-0" [ngClass]="entregaPaso() >= 2 ? (entregaFase() === 'entregado' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-400/20 text-amber-300') : 'bg-white/10 text-stone-400'" aria-hidden="true">
+                      @if (entregaPaso() >= 2) {
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M1 5h13v11H1zM14 9h4l3 3v4h-7M4.5 19a1.6 1.6 0 100-3.2 1.6 1.6 0 000 3.2zm11 0a1.6 1.6 0 100-3.2 1.6 1.6 0 000 3.2z"></path></svg>
+                      } @else {
+                        <span class="t-body font-black">2</span>
+                      }
+                    </span>
+                    <span class="min-w-0 flex-1 space-y-0.5">
+                      <span class="flex items-center justify-between gap-2">
+                        <span class="t-body font-bold text-white">Cadete Ruta 3 retira y viaja</span>
+                        <span class="t-micro font-bold shrink-0 text-right" [ngClass]="entregaPaso() >= 2 ? 'text-amber-300' : 'text-stone-500'">{{ entregaMomento(2) }}</span>
+                      </span>
+                      <span class="t-micro text-stone-400 leading-snug block">Sin vueltas: retira cerrado en el comercio y viaja directo a {{ destinoTexto() }}.</span>
+                    </span>
+                  </li>
+
+                  <li class="flex items-start gap-3">
+                    <span class="w-7 h-7 rounded-xl flex items-center justify-center shrink-0" [ngClass]="entregaFase() === 'entregado' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/10 text-stone-400'" aria-hidden="true">
+                      @if (entregaFase() === 'entregado') {
+                        <svg class="w-4 h-4 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                      } @else {
+                        <span class="t-body font-black">3</span>
+                      }
+                    </span>
+                    <span class="min-w-0 flex-1 space-y-0.5">
+                      <span class="flex items-center justify-between gap-2">
+                        <span class="t-body font-bold text-white">Entrega con PIN</span>
+                        <span class="t-micro font-bold shrink-0 text-right" [ngClass]="entregaFase() === 'entregado' ? 'text-emerald-300' : 'text-stone-500'">{{ entregaMomento(3) }}</span>
+                      </span>
+                      <span class="t-micro text-stone-400 leading-snug block">El cadete valida tus 4 dígitos contra la bolsa antes de entregártela.</span>
+                    </span>
+                  </li>
+                </ol>
+
+                <!-- RESUMEN DE LA ENTREGA -->
+                <div class="p-3 rounded-2xl bg-black/60 border border-white/10 t-body space-y-1.5">
+                  <div class="flex justify-between gap-2"><span class="text-stone-400">Total pagado</span><span class="text-emerald-300 font-bold shrink-0">{{ totalFmt() }}</span></div>
+                  <div class="flex justify-between gap-2"><span class="text-stone-400">Destino</span><span class="text-white shrink-0 text-right truncate min-w-0">{{ destinoTexto() }}</span></div>
+                  <div class="flex justify-between gap-2"><span class="text-stone-400">PIN de entrega</span><span class="text-amber-300 font-bold shrink-0 tracking-[0.25em] tabular-nums">{{ pin() }}</span></div>
+                </div>
+
+                <!-- DEMO: avance manual del cadete -->
+                @if (entregaFase() !== 'entregado') {
+                  <button type="button" (click)="avanzarEntrega()" class="w-full min-h-[44px] rounded-xl border border-dashed border-amber-400/40 text-amber-300/90 t-micro font-bold hover:text-amber-200 hover:border-amber-400/70 transition cursor-pointer">
+                    {{ entregaFase() === 'asignando' ? 'Simular: el cadete salió con el paquete (demo)' : 'Simular: entrega completada con PIN (demo)' }}
+                  </button>
+                } @else {
+                  <div class="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-center t-body font-bold text-emerald-300">✓ Entrega confirmada · ¡Gracias por tu compra!</div>
+                }
+
+                <button type="button" (click)="closeSheet()" class="w-full min-h-[48px] rounded-2xl bg-[#F5C342] text-[#12100E] font-black t-body active:scale-[0.98] transition shadow-lg shadow-[#F5C342]/20 flex items-center justify-center gap-2 cursor-pointer">
+                  <span>Volver al pedido</span>
+                  <svg aria-hidden="true" class="w-4 h-4 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+              </div>
+
+              } @else {
               <div class="space-y-3">
                 <div class="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/15 to-white/5 border border-[#F5C342]/40 flex items-center justify-between gap-3">
                   <div class="space-y-1">
                     <span class="t-micro font-bold text-amber-300 uppercase tracking-wider">Estado actual</span>
-                    <h4 class="t-title font-black text-white">{{ confirmado() ? 'Pedido confirmado' : '3 de 4 tareas completadas' }}</h4>
+                    <h4 class="t-title font-black text-white">{{ confirmado() ? 'Envío asignado' : '3 de 4 tareas completadas' }}</h4>
                     <p class="t-body text-stone-300">{{ confirmado() ? 'Solo falta retirar o recibir el pedido.' : 'Falta confirmar tu selección de repuestos.' }}</p>
                   </div>
                   <div class="w-12 h-12 rounded-full bg-black/80 border-2 flex items-center justify-center font-black t-body shrink-0 num"
@@ -1064,6 +1236,7 @@ type Sheet =
                   <svg aria-hidden="true" class="w-4 h-4 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
                 </button>
               </div>
+              }
             }
 
             <!-- SHEET DETALLE DE REPUESTO -->
@@ -1074,8 +1247,8 @@ type Sheet =
                 </div>
                 <div class="min-w-0">
                   <span class="px-2 py-0.5 rounded t-micro font-black"
-                        [ngClass]="selectedItem()!.isMadryn ? 'bg-white/15 text-white' : 'bg-amber-400 text-stone-950'">
-                    {{ selectedItem()!.isMadryn ? 'Madryn · 65 km' : 'Cotización' }}
+                        [ngClass]="selectedItem()!.isMadryn ? 'bg-cyan-400/15 text-cyan-300 border border-cyan-400/30' : 'bg-white/10 text-stone-300 border border-white/10'">
+                    {{ selectedItem()!.isMadryn ? 'Pto. Madryn · 65 km' : 'Trelew' }}
                   </span>
                   <h4 class="t-title text-white font-extrabold truncate mt-1">{{ selectedItem()!.brand }}</h4>
                   <p class="t-micro text-stone-400 truncate">{{ selectedParentPart()!.name }}</p>
@@ -1085,23 +1258,17 @@ type Sheet =
               <div class="p-3.5 rounded-2xl bg-black/60 border border-white/10 space-y-2">
                 <div class="flex justify-between items-center pb-2 border-b border-white/10 gap-2">
                   <span class="t-body text-stone-200 font-bold flex items-center gap-1.5 min-w-0">
-                    <svg aria-hidden="true" class="w-4 h-4 shrink-0" [ngClass]="selectedItem()!.isMadryn ? 'text-stone-300' : 'text-amber-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                      @if (selectedItem()!.isMadryn) {
-                        <circle cx="5.5" cy="17.5" r="3.5"></circle><circle cx="18.5" cy="17.5" r="3.5"></circle><path stroke-linecap="round" stroke-linejoin="round" d="M15 6a2 2 0 100-4 2 2 0 000 4zm-3 5h4l2 3h3m-8-3l-3 4-2-1-2 3.5"></path>
-                      } @else {
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h18l-2 9H5L3 3zm0 9a3 3 0 006 0 3 3 0 006 0 3 3 0 006 0v7a2 2 0 01-2 2H5a2 2 0 01-2-2v-7z"></path>
-                      }
-                    </svg>
-                    <span class="truncate">{{ selectedItem()!.store }}</span>
+                    <svg aria-hidden="true" class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span class="truncate">Comercio verificado</span>
                   </span>
-                  <span class="t-micro text-stone-400 shrink-0">{{ selectedItem()!.dist }}</span>
+                  <span class="t-micro text-stone-400 shrink-0">Garantía 6 meses</span>
                 </div>
 
                 <div class="space-y-1.5 pt-1">
                   <div class="flex justify-between gap-2"><span class="t-body text-stone-400">Precio repuesto</span><span class="t-body text-white font-bold">{{ selectedItem()!.price }}</span></div>
                   @if (selectedItem()!.isMadryn) {
                     <div class="flex justify-between gap-2 py-1.5 border-b border-white/5">
-                      <span class="t-body text-stone-400">Cadete Ruta 3 (Madryn → Trelew)</span>
+                      <span class="t-body text-stone-400">Envío cadete Ruta 3 · {{ selectedItem()!.shippingEta }}</span>
                       <span class="t-body text-stone-200 font-bold shrink-0">{{ selectedItem()!.shippingFee }}</span>
                     </div>
                     <div class="flex justify-between items-baseline gap-2 pt-2">
@@ -1129,8 +1296,8 @@ type Sheet =
               </div>
 
               <div class="space-y-2 pt-1">
-                <button type="button" (click)="reservar(selectedItem()!)" class="w-full min-h-[48px] rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 font-extrabold t-body active:scale-[0.98] transition shadow-lg shadow-amber-400/25 flex items-center justify-center gap-2 cursor-pointer">
-                  {{ selectedItem()!.isMadryn ? 'Reservar con cadete Ruta 3' : 'Reservar en mostrador Trelew' }}
+                <button type="button" (click)="reservar()" class="w-full min-h-[48px] rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 font-extrabold t-body active:scale-[0.98] transition shadow-lg shadow-amber-400/25 flex items-center justify-center gap-2 cursor-pointer">
+                  {{ selectedItem()!.isMadryn ? 'Reservar con cadete Ruta 3 ›' : 'Reservar en mostrador Trelew ›' }}
                 </button>
                 <button type="button" (click)="closeSheet()" class="w-full min-h-[44px] text-stone-400 hover:text-white t-body cursor-pointer">
                   Volver a la lista
@@ -1138,13 +1305,31 @@ type Sheet =
               </div>
             }
 
-            <!-- SHEET COMBO / LOGÍSTICA -->
+            <!-- WIZARD DE PEDIDO: Selección → Destino → Velocidad → Transferencia → Validación → Confirmado -->
             @if (activeSheet() === 'combo') {
               <div class="space-y-3">
-                <div class="flex items-center justify-between t-micro pb-1 text-stone-400 gap-2">
-                  <span>Vehículo: <strong class="text-white">VW Passat 2.0 TDI (AB 412 TX)</strong></span>
-                  <span class="text-stone-200 font-bold shrink-0">✓ {{ comboCount() }} piezas</span>
+                <!-- STEPPER: 6 pasos del flujo logístico -->
+                <div class="flex items-center justify-between gap-3">
+                  <span class="t-micro font-bold text-white uppercase tracking-tight truncate">{{ faseTitulo() }}</span>
+                  <div class="flex items-center gap-1 shrink-0" aria-hidden="true">
+                    @for (paso of [1, 2, 3, 4, 5, 6]; track paso) {
+                      <span class="h-1.5 rounded-full transition-all duration-300"
+                            [ngClass]="paso <= pasoWizard() ? 'w-4 bg-amber-400' : 'w-2 bg-white/15'"></span>
+                    }
+                  </div>
                 </div>
+
+                @if (envioFase() === 'resumen') {
+                <div class="flex items-center justify-between t-micro pb-0.5 text-stone-400 gap-2">
+                  <span>Vehículo: <strong class="text-white">VW Passat 2.0 TDI (AB 412 TX)</strong></span>
+                  <span class="text-stone-200 font-bold shrink-0">{{ comboCount() ? '✓ ' + comboCount() + (comboCount() === 1 ? ' pieza' : ' piezas') : 'Sin piezas' }}</span>
+                </div>
+                @if (congelarSeg() > 0) {
+                  <div class="flex items-center gap-2 t-micro text-amber-300 bg-amber-400/5 border border-amber-400/25 rounded-xl px-3 py-2">
+                    <svg aria-hidden="true" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l2.5 2.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span>Precios congelados por <strong>{{ congelarTexto() }}</strong> min: las casas ya reservaron el stock.</span>
+                  </div>
+                }
 
                 <div class="space-y-2.5">
                   @if (trelewItems().length) {
@@ -1154,21 +1339,24 @@ type Sheet =
                         <span class="t-micro text-emerald-300 shrink-0">Hoy hasta 19:30</span>
                       </div>
 
-                      <div class="space-y-1.5 pt-0.5">
+                      <div class="space-y-2 pt-0.5">
                         @for (row of trelewItems(); track row.item.id) {
-                          <div class="p-2.5 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between gap-2">
-                            <div class="min-w-0">
-                              <span class="t-micro text-stone-400 block">{{ row.part.name }}</span>
-                              <h5 class="t-body font-bold text-white truncate">{{ row.item.brand }}</h5>
-                              <span class="t-micro text-stone-300 block truncate">{{ row.item.store }}</span>
+                          <div class="p-3 rounded-xl bg-black/40 border border-white/5">
+                            <span class="t-micro uppercase tracking-wider text-stone-400 block truncate">{{ row.part.name }}</span>
+                            <div class="flex items-baseline justify-between gap-3 mt-1">
+                              <h5 class="t-title font-bold text-white leading-tight min-w-0">{{ row.item.brand }}</h5>
+                              <span class="t-title font-extrabold text-white shrink-0 tabular-nums leading-tight">{{ row.item.price }}</span>
                             </div>
-                            <span class="t-body font-extrabold text-white shrink-0">{{ row.item.price }}</span>
+                            <div class="flex items-center justify-between gap-2 mt-1.5">
+                              <span class="t-micro text-stone-400 truncate">Comercio verificado</span>
+                              <span class="t-micro text-stone-400 shrink-0">Mostrador hoy</span>
+                            </div>
                           </div>
                         }
                       </div>
 
                       <div class="flex items-center justify-between pt-1.5 border-t border-white/5 t-body gap-2">
-                        <span class="text-stone-400">Subtotal ({{ trelewItems().length }} piezas)</span>
+                        <span class="text-stone-400">Subtotal ({{ trelewItems().length }} {{ trelewItems().length === 1 ? 'pieza' : 'piezas' }})</span>
                         <span class="text-white font-bold shrink-0">{{ money(trelewSubtotal()) }}</span>
                       </div>
                     </div>
@@ -1181,33 +1369,33 @@ type Sheet =
                         <span class="t-micro text-stone-300 shrink-0">~1h 15m</span>
                       </div>
 
-                      <div class="space-y-1.5 pt-0.5">
+                      <div class="space-y-2 pt-0.5">
                         @for (row of madrynItems(); track row.item.id) {
-                          <div class="p-2.5 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between gap-2">
-                            <div class="min-w-0">
-                              <span class="t-micro text-stone-400 block">{{ row.part.name }}</span>
-                              <h5 class="t-body font-bold text-white truncate">{{ row.item.brand }}</h5>
-                              <span class="t-micro text-stone-300 block truncate">{{ row.item.store }}</span>
+                          <div class="p-3 rounded-xl bg-black/40 border border-white/5">
+                            <span class="t-micro uppercase tracking-wider text-stone-400 block truncate">{{ row.part.name }}</span>
+                            <div class="flex items-baseline justify-between gap-3 mt-1">
+                              <h5 class="t-title font-bold text-white leading-tight min-w-0">{{ row.item.brand }}</h5>
+                              <span class="t-title font-extrabold text-white shrink-0 tabular-nums leading-tight">{{ row.item.price }}</span>
                             </div>
-                            <span class="text-right shrink-0">
-                              <span class="t-body font-extrabold text-white block">{{ row.item.price }}</span>
-                              <span class="t-micro text-stone-300 block">{{ row.item.shippingFee }} flete</span>
-                            </span>
+                            <div class="flex items-center gap-1.5 mt-1.5 t-micro text-stone-400">
+                              <span class="truncate">Comercio verificado</span>
+                              <span class="text-stone-600 shrink-0" aria-hidden="true">·</span>
+                              <span class="shrink-0 text-stone-500">cadete Ruta 3</span>
+                            </div>
                           </div>
                         }
                       </div>
 
-                      <div class="p-2.5 rounded-xl bg-black/60 border border-white/10 t-body flex items-start gap-2">
-                        <svg aria-hidden="true" class="w-4 h-4 text-stone-300 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                        <div class="min-w-0 flex-1">
-                          <div class="flex justify-between items-center gap-2">
-                            <span class="t-micro text-stone-400">Entrega en Trelew</span>
-                            <button type="button" class="text-amber-400 t-micro underline font-bold hover:text-amber-300 cursor-pointer px-1 py-2 -my-2">Cambiar</button>
-                          </div>
-                          <p class="text-white font-bold mt-0.5">Av. Fontana 450 (taller mecánico)</p>
-                          <p class="t-micro text-stone-400">Cadete con seguimiento GPS en vivo.</p>
-                        </div>
+                      <div class="flex items-center justify-between gap-2 pt-1.5 border-t border-white/5 t-body">
+                        <span class="text-stone-400">Envío consolidado · un solo flete para las {{ madrynItems().length }}</span>
+                        <span class="text-white font-bold shrink-0">{{ money(madrynFleteBase()) }}</span>
                       </div>
+                    </div>
+                  }
+                  @if (comboCount() === 0) {
+                    <div class="p-3 rounded-2xl bg-[#181818] border border-dashed border-amber-400/40 space-y-1">
+                      <p class="t-body font-bold text-white">Todavía no hay piezas en el pedido</p>
+                      <p class="t-micro text-stone-400 leading-snug">Cerrá este resumen y tocá una oferta para volver a sumarla. El total se actualiza al instante.</p>
                     </div>
                   }
                 </div>
@@ -1218,55 +1406,330 @@ type Sheet =
                     <span class="text-white font-bold shrink-0">{{ money(comboSubtotal()) }}</span>
                   </div>
                   <div class="flex justify-between items-center t-body text-stone-300 gap-2">
-                    <span>Flete cadete Ruta 3</span>
+                    <span>Flete cadete Ruta 3 · {{ velocidad() === 'urgente' ? 'urgente 2x' : 'programado 1x' }}</span>
                     <span class="shrink-0" [ngClass]="comboShipping() > 0 ? 'text-stone-100 font-bold' : 'text-stone-400'">{{ shippingFmt() }}</span>
                   </div>
                   <div class="flex justify-between items-end border-t border-white/10 pt-2.5 gap-2">
                     <div>
-                      <span class="t-micro uppercase tracking-wider text-stone-400 block">Total final</span>
+                      <span class="t-micro uppercase tracking-wider text-stone-400 block">Total a transferir</span>
                       <span class="t-micro text-stone-500">Precios finales con IVA</span>
                     </div>
                     <span class="t-total font-black text-[#F5C342] shrink-0">{{ totalFmt() }}</span>
                   </div>
                 </div>
 
+                <!-- CTA: congelar precios y continuar al envío -->
                 <div class="space-y-2 pt-1">
-                  <div class="p-3 rounded-xl bg-white/[0.04] border border-white/10 t-micro text-stone-300 space-y-1">
-                    <div class="flex items-center gap-1.5 text-emerald-300 font-bold">
-                      <svg aria-hidden="true" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                      <span>Pagás al retirar o contra entrega</span>
-                    </div>
-                    <p class="text-stone-400 leading-snug">Efectivo, débito, tarjeta o transferencia con comprobante.</p>
+                  <div class="p-3 rounded-xl bg-amber-400/5 border border-amber-400/25 t-micro text-amber-200 flex items-start gap-2">
+                    <svg aria-hidden="true" class="w-4 h-4 shrink-0 mt-0.5 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l2.5 2.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span>Al tocar <strong class="text-white">Continuar al envío</strong>, los precios quedan congelados 20 minutos y el stock se reserva al confirmar.</span>
                   </div>
 
-                  <button type="button" (click)="confirmarPedido()" class="w-full min-h-[48px] rounded-2xl bg-[#F5C342] text-[#12100E] font-black t-body active:scale-[0.98] transition shadow-lg shadow-[#F5C342]/25 flex items-center justify-center gap-2 cursor-pointer">
-                    <svg aria-hidden="true" class="w-4 h-4 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
-                    <span>Confirmar y reservar stock</span>
+                  <button type="button" (click)="irAlEnvio()"
+                          [disabled]="comboCount() === 0"
+                          [ngClass]="comboCount() === 0 ? 'bg-white/10 text-stone-400 cursor-not-allowed' : 'bg-[#F5C342] text-[#12100E] shadow-lg shadow-[#F5C342]/25 active:scale-[0.98] cursor-pointer'"
+                          class="w-full min-h-[48px] rounded-2xl font-black t-body transition flex items-center justify-center gap-1.5">
+                    <span class="whitespace-nowrap">{{ comboCount() === 0 ? 'Elegí al menos una pieza' : (congelarSeg() > 0 ? 'Precios congelados · ' + congelarTexto() : 'Continuar al envío') }}</span>
+                    <svg aria-hidden="true" class="w-4 h-4 stroke-[2.5] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
                   </button>
 
                   <button type="button" (click)="closeSheet()" class="w-full min-h-[44px] text-stone-400 hover:text-white t-body cursor-pointer">
                     Seguir ajustando piezas
                   </button>
                 </div>
-              </div>
-            }
+                }
 
-            <!-- SHEET ÉXITO -->
-            @if (activeSheet() === 'success') {
-              <div class="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-center space-y-3">
-                <div class="w-12 h-12 rounded-full bg-emerald-400 text-stone-950 flex items-center justify-center mx-auto shadow-lg" aria-hidden="true">
-                  <svg class="w-6 h-6 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                <!-- PASO 2: DESTINO DEL PAQUETE -->
+                @else if (envioFase() === 'destino') {
+                <div class="space-y-3">
+                  <p class="t-body text-stone-300">¿A dónde va tu paquete?</p>
+
+                  <div class="grid gap-2" role="radiogroup" aria-label="Destino de entrega">
+                    <button type="button" (click)="elegirDestino('taller')" role="radio" [attr.aria-checked]="destino() === 'taller'"
+                            class="min-h-[64px] p-3 rounded-2xl border flex items-center gap-3 text-left transition cursor-pointer"
+                            [ngClass]="destino() === 'taller' ? 'border-amber-400 bg-amber-400/10' : 'border-white/15 bg-white/[0.04] hover:border-white/25'">
+                      <span class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" [ngClass]="destino() === 'taller' ? 'bg-amber-400 text-stone-950' : 'bg-white/5 text-amber-300'">
+                        <svg aria-hidden="true" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"></path></svg>
+                      </span>
+                      <span class="min-w-0 flex-1">
+                        <span class="t-title font-extrabold text-white block">A un taller mecánico</span>
+                        <span class="t-micro text-stone-400 block leading-snug">Siempre hay alguien recibiendo · ideal para agrupar entregas</span>
+                      </span>
+                      <svg aria-hidden="true" class="w-5 h-5 shrink-0" [ngClass]="destino() === 'taller' ? 'text-amber-400' : 'text-stone-700'" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                    </button>
+
+                    <button type="button" (click)="elegirDestino('ubicacion')" role="radio" [attr.aria-checked]="destino() === 'ubicacion'"
+                            class="min-h-[64px] p-3 rounded-2xl border flex items-center gap-3 text-left transition cursor-pointer"
+                            [ngClass]="destino() === 'ubicacion' ? 'border-amber-400 bg-amber-400/10' : 'border-white/15 bg-white/[0.04] hover:border-white/25'">
+                      <span class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" [ngClass]="destino() === 'ubicacion' ? 'bg-amber-400 text-stone-950' : 'bg-white/5 text-cyan-300'">
+                        <svg aria-hidden="true" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                      </span>
+                      <span class="min-w-0 flex-1">
+                        <span class="t-title font-extrabold text-white block">A mi ubicación</span>
+                        <span class="t-micro text-stone-400 block leading-snug">Tu domicilio o un punto marcado en el mapa</span>
+                      </span>
+                      <svg aria-hidden="true" class="w-5 h-5 shrink-0" [ngClass]="destino() === 'ubicacion' ? 'text-amber-400' : 'text-stone-700'" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                    </button>
+                  </div>
+
+                  @if (destino() === 'taller') {
+                    <div class="space-y-2" role="radiogroup" aria-label="Elegí el taller">
+                      @for (t of talleres; track t.id) {
+                        <button type="button" (click)="elegirTaller(t.id)" role="radio" [attr.aria-checked]="tallerId() === t.id"
+                                class="w-full min-h-[56px] p-3 rounded-xl border flex items-center gap-3 text-left transition cursor-pointer"
+                                [ngClass]="tallerId() === t.id ? 'border-amber-400/80 bg-black/50' : 'border-white/10 bg-black/20 hover:border-white/20'">
+                          <span class="w-5 h-5 rounded-full border shrink-0 flex items-center justify-center" [ngClass]="tallerId() === t.id ? 'border-amber-400 bg-amber-400' : 'border-stone-600'">
+                            @if (tallerId() === t.id) {
+                              <svg aria-hidden="true" class="w-3.5 h-3.5 text-stone-950" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                            }
+                          </span>
+                          <span class="min-w-0 flex-1">
+                            <span class="t-body font-bold text-white flex items-center gap-2 flex-wrap">{{ t.nombre }}
+                              @if (t.id === 'ramos') {
+                                <span class="t-micro font-bold text-amber-300 bg-amber-400/10 border border-amber-400/30 rounded px-1.5 py-0.5">Tu taller de confianza</span>
+                              }
+                            </span>
+                            <span class="t-micro text-stone-400 block truncate">{{ t.detalle }}</span>
+                          </span>
+                        </button>
+                      }
+                    </div>
+                  } @else {
+                    <div class="space-y-2">
+                      <label for="domicilio" class="t-micro font-bold text-stone-400 uppercase tracking-wider block">Dirección de entrega</label>
+                      <input id="domicilio" type="text" [value]="ubicacion()" (input)="setUbicacion($event)"
+                             placeholder="Ej.: Av. Fontana 450, Trelew" autocomplete="street-address"
+                             class="w-full p-3 min-h-[48px] rounded-xl bg-black/70 border border-white/15 text-white t-body focus:border-amber-400 focus:outline-none placeholder-stone-600">
+                      <div class="relative h-28 rounded-2xl border border-white/10 bg-black/60 overflow-hidden" aria-hidden="true">
+                        <svg class="absolute inset-0 w-full h-full" viewBox="0 0 300 112" preserveAspectRatio="none">
+                          <g stroke="#2b2b2b" stroke-width="1"><path d="M0 28H300M0 56H300M0 84H300M60 0V112M120 0V112M180 0V112M240 0V112"></path></g>
+                          <path d="M0 84 300 20" stroke="#383838" stroke-width="5"></path>
+                        </svg>
+                        <svg class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-3/5 w-8 h-8 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><circle cx="12" cy="11" r="3" fill="#12100E"></circle></svg>
+                        <span class="absolute bottom-1.5 left-3 t-micro text-stone-500">Pin marcado en el mapa (demo)</span>
+                      </div>
+                    </div>
+                  }
+
+                  <div class="flex items-center gap-2 pt-1">
+                    <button type="button" (click)="irAResumen()" class="min-h-[48px] px-4 rounded-xl border border-white/15 text-stone-200 font-bold t-body hover:bg-white/5 cursor-pointer shrink-0">‹ Volver</button>
+                    <button type="button" (click)="irAVelocidad()" [disabled]="!destinoListo()"
+                            class="flex-1 min-h-[48px] rounded-2xl font-black t-body px-4 flex items-center justify-center gap-1.5 transition"
+                            [ngClass]="destinoListo() ? 'bg-[#F5C342] text-[#12100E] shadow-lg shadow-[#F5C342]/25 cursor-pointer' : 'bg-white/10 text-stone-500 cursor-not-allowed'">
+                      <span class="whitespace-nowrap">Continuar</span>
+                      <svg aria-hidden="true" class="w-4 h-4 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                  </div>
                 </div>
-                <h4 class="t-title font-extrabold text-white">Stock bloqueado en los comercios</h4>
-                <p class="t-body text-stone-300">
-                  Se emitieron las órdenes de retiro y el cadete Ruta 3 fue notificado para el despacho express.
-                </p>
-                <div class="p-2.5 rounded-xl bg-black/50 border border-white/10 t-body text-amber-300 font-bold">
-                  Total a abonar: {{ totalFmt() }}
+                }
+
+                <!-- PASO 3: VELOCIDAD Y FLETE -->
+                @else if (envioFase() === 'velocidad') {
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between gap-2">
+                    <p class="t-body text-stone-300 min-w-0">¿Cómo viaja tu pedido?</p>
+                    @if (congelarSeg() > 0) {
+                      <span class="t-micro text-amber-300 font-bold whitespace-nowrap">⏱ {{ congelarTexto() }}</span>
+                    }
+                  </div>
+
+                  @if (madrynItems().length) {
+                    <div class="grid gap-2" role="radiogroup" aria-label="Velocidad de entrega">
+                      <!-- PROGRAMADO · 1x -->
+                      <button type="button" role="radio" [attr.aria-checked]="velocidad() === 'programado'" (click)="elegirVelocidad('programado')"
+                              class="p-3.5 rounded-2xl border text-left transition cursor-pointer flex items-start gap-3"
+                              [ngClass]="velocidad() === 'programado' ? 'border-amber-400 bg-amber-400/10' : 'border-white/15 bg-white/[0.04] hover:border-white/25'">
+                        <span class="w-10 h-10 rounded-xl shrink-0 flex items-center justify-center" [ngClass]="velocidad() === 'programado' ? 'bg-amber-400 text-stone-950' : 'bg-white/5 text-amber-300'">
+                          <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l2.5 2.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </span>
+                        <span class="min-w-0 flex-1">
+                          <span class="flex items-center justify-between gap-2">
+                            <span class="t-title font-extrabold text-white">Programado</span>
+                            <span class="t-title font-black text-white shrink-0"><span class="text-amber-300">1x</span> {{ money(madrynFleteBase()) }}</span>
+                          </span>
+                          <span class="t-micro text-stone-300 block mt-1">Reparto consolidado · corte {{ ventanaReparto().corte }} hs</span>
+                          <span class="t-body font-bold text-white block leading-snug">{{ ventanaReparto().dia }} {{ ventanaReparto().rango }}</span>
+                          <span class="t-micro text-stone-400 block mt-1.5 leading-snug">@switch (madrynItems().length) { @case (1) { <span>Tu pieza viaja sola: pagás <strong class="text-stone-200">un solo envío</strong>.</span> } @default { <span>Las {{ madrynItems().length }} piezas viajan juntas: pagás <strong class="text-stone-200">un solo envío</strong>.</span> } }</span>
+                        </span>
+                      </button>
+
+                      <!-- URGENTE · 2x -->
+                      <button type="button" role="radio" [attr.aria-checked]="velocidad() === 'urgente'" (click)="elegirVelocidad('urgente')"
+                              class="p-3.5 rounded-2xl border text-left transition cursor-pointer flex items-start gap-3"
+                              [ngClass]="velocidad() === 'urgente' ? 'border-amber-400 bg-amber-400/10' : 'border-white/15 bg-white/[0.04] hover:border-white/25'">
+                        <span class="w-10 h-10 rounded-xl shrink-0 flex items-center justify-center" [ngClass]="velocidad() === 'urgente' ? 'bg-amber-400 text-stone-950' : 'bg-white/5 text-amber-300'">
+                          <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 12.5H11L9.5 22 18 11.5h-6.5L13 2z"></path></svg>
+                        </span>
+                        <span class="min-w-0 flex-1">
+                          <span class="flex items-center justify-between gap-2">
+                            <span class="t-title font-extrabold text-white">Urgente</span>
+                            <span class="t-title font-black text-white shrink-0"><span class="text-amber-300">2x</span> {{ money(madrynFleteBase() * 2) }}</span>
+                          </span>
+                          <span class="t-micro text-stone-300 block mt-1">Retiro inmediato · viaje directo</span>
+                          <span class="t-body font-bold text-white block leading-snug">Hoy en ~45 minutos</span>
+                          <span class="t-micro text-stone-400 block mt-1.5 leading-snug">Sin esperar consolidación: el precio del transporte se duplica para cubrir el viaje.</span>
+                        </span>
+                      </button>
+                    </div>
+                  } @else {
+                    <div class="p-4 rounded-2xl bg-white/[0.04] border border-white/10 text-center space-y-1.5">
+                      <div class="w-11 h-11 rounded-full bg-emerald-500/15 text-emerald-400 flex items-center justify-center mx-auto" aria-hidden="true">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                      </div>
+                      <p class="t-body font-bold text-white">Retiro en mostrador · Trelew</p>
+                      <p class="t-micro text-stone-400 leading-snug">Tus {{ comboCount() }} {{ comboCount() === 1 ? 'pieza queda' : 'piezas quedan' }} separadas en el comercio. Pasás y las buscás, sin flete ni demora.</p>
+                    </div>
+                  }
+
+                  <div class="flex items-center gap-2 pt-1">
+                    <button type="button" (click)="volverADestino()" class="min-h-[48px] px-4 rounded-xl border border-white/15 text-stone-200 font-bold t-body hover:bg-white/5 cursor-pointer shrink-0">‹ Volver</button>
+                    <button type="button" (click)="irATransferencia()"
+                            class="flex-1 min-h-[48px] rounded-2xl font-black t-body px-4 flex items-center justify-center gap-1.5 bg-[#F5C342] text-[#12100E] shadow-lg shadow-[#F5C342]/25 cursor-pointer">
+                      <span class="whitespace-nowrap">Continuar a la transferencia</span>
+                      <svg aria-hidden="true" class="w-4 h-4 stroke-[2.5] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                  </div>
                 </div>
-                <button type="button" (click)="closeSheet()" class="w-full min-h-[44px] rounded-xl bg-white/10 text-white font-bold t-body hover:bg-white/20 transition mt-2 cursor-pointer">
-                  Ver pedidos activos
-                </button>
+                }
+
+                <!-- PASO 4: TRANSFERENCIA Y COMPROBANTE -->
+                @else if (envioFase() === 'transferencia') {
+                <div class="space-y-3">
+                  <div class="p-3.5 rounded-2xl bg-[#181818] border border-white/10 space-y-1.5">
+                    <div class="flex justify-between gap-2 t-body text-stone-300"><span>Repuestos ({{ comboCount() }})</span><span class="text-white font-bold shrink-0">{{ money(comboSubtotal()) }}</span></div>
+                    <div class="flex justify-between gap-2 t-body text-stone-300"><span>Flete {{ velocidad() === 'urgente' ? '· urgente 2x' : '· programado 1x' }}</span><span class="shrink-0" [ngClass]="comboShipping() > 0 ? 'text-stone-100 font-bold' : 'text-stone-400'">{{ comboShipping() > 0 ? shippingFmt() : '$0' }}</span></div>
+                    <div class="flex justify-between items-end border-t border-white/10 pt-2 gap-2">
+                      <span class="t-micro uppercase tracking-wider text-stone-400">Total exacto</span>
+                      <span class="t-total font-black text-[#F5C342] shrink-0">{{ totalFmt() }}</span>
+                    </div>
+                  </div>
+
+                  <div class="space-y-2">
+                    <span class="t-micro font-bold text-stone-400 uppercase tracking-wider">Transferí al alias</span>
+
+                    <div class="flex items-center justify-between gap-2 p-3 rounded-xl bg-black/60 border border-white/10">
+                      <span class="min-w-0">
+                        <span class="block t-micro text-stone-400">Alias</span>
+                        <span class="block t-body font-bold text-white truncate">{{ aliasCbu.alias }}</span>
+                      </span>
+                      <button type="button" (click)="copiarTransferencia('alias')" [attr.aria-label]="'Copiar alias'"
+                              class="w-11 h-11 shrink-0 rounded-xl bg-white/5 border border-white/15 flex items-center justify-center text-stone-200 hover:bg-white/10 hover:text-white transition cursor-pointer">
+                        @if (copiado() === 'alias') {
+                          <svg aria-hidden="true" class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                        } @else {
+                          <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path stroke-linecap="round" stroke-linejoin="round" d="M5 15V5a2 2 0 012-2h10"></path></svg>
+                        }
+                      </button>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-2 p-3 rounded-xl bg-black/60 border border-white/10">
+                      <span class="min-w-0">
+                        <span class="block t-micro text-stone-400">CBU</span>
+                        <span class="block t-body font-bold text-white truncate num">{{ aliasCbu.cbu }}</span>
+                      </span>
+                      <button type="button" (click)="copiarTransferencia('cbu')" [attr.aria-label]="'Copiar CBU'"
+                              class="w-11 h-11 shrink-0 rounded-xl bg-white/5 border border-white/15 flex items-center justify-center text-stone-200 hover:bg-white/10 hover:text-white transition cursor-pointer">
+                        @if (copiado() === 'cbu') {
+                          <svg aria-hidden="true" class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                        } @else {
+                          <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path stroke-linecap="round" stroke-linejoin="round" d="M5 15V5a2 2 0 012-2h10"></path></svg>
+                        }
+                      </button>
+                    </div>
+                    <p class="t-micro text-stone-500 leading-snug">Transferí el total exacto. El stock se libera recién cuando el banco acredita el pago.</p>
+                  </div>
+
+                  <div class="space-y-2">
+                    <span class="t-micro font-bold text-stone-400 uppercase tracking-wider">Comprobante</span>
+                    <input #comprobanteInput id="comprobante-input" type="file" accept="image/*,application/pdf" (change)="onComprobante($event)" class="sr-only">
+                    <div class="flex flex-wrap items-center gap-2">
+                      <label for="comprobante-input" class="flex-1 min-w-0 flex items-center gap-2.5 p-3 min-h-[60px] rounded-2xl border border-dashed border-amber-400/40 bg-amber-400/5 cursor-pointer hover:bg-amber-400/10 transition">
+                        <svg aria-hidden="true" class="w-6 h-6 text-amber-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3M12 4v12m0 0l-4-4m4 4l4-4"></path></svg>
+                        <span class="min-w-0">
+                          <span class="t-body font-bold text-amber-200 block">{{ comprobanteNombre() ? 'Comprobante adjunto' : 'Adjuntar comprobante' }}</span>
+                          <span class="t-micro text-stone-400 block truncate">{{ comprobanteNombre() || 'Foto o PDF · JPG, PNG, PDF' }}</span>
+                        </span>
+                      </label>
+                      @if (comprobantePreview()) {
+                        <img [src]="comprobantePreview()" alt="Vista previa del comprobante" class="w-14 h-14 object-cover rounded-xl border border-white/15 shrink-0">
+                      }
+                      @if (comprobanteNombre()) {
+                        <button type="button" (click)="quitarComprobante()" aria-label="Quitar comprobante"
+                                class="w-11 h-11 shrink-0 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-stone-400 hover:text-white transition cursor-pointer">
+                          <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                      }
+                    </div>
+                    <button type="button" (click)="simularComprobante()" class="t-micro font-bold text-amber-300/90 hover:text-amber-200 underline underline-offset-2 min-h-[44px] px-1 cursor-pointer">Simular comprobante (demo)</button>
+                  </div>
+
+                  <div class="flex items-center gap-2 pt-1">
+                    <button type="button" (click)="irAVelocidad()" class="min-h-[48px] px-4 rounded-xl border border-white/15 text-stone-200 font-bold t-body hover:bg-white/5 cursor-pointer shrink-0">‹ Volver</button>
+                    <button type="button" (click)="enviarComprobante()" [disabled]="!comprobanteNombre()"
+                            class="flex-1 min-h-[48px] rounded-2xl font-black t-body px-4 flex items-center justify-center gap-1.5 transition"
+                            [ngClass]="comprobanteNombre() ? 'bg-[#F5C342] text-[#12100E] shadow-lg shadow-[#F5C342]/25 active:scale-[0.98] cursor-pointer' : 'bg-white/10 text-stone-500 cursor-not-allowed'">
+                      <span class="whitespace-nowrap">{{ comprobanteNombre() ? 'Enviar comprobante' : 'Adjuntá el comprobante' }}</span>
+                      <svg aria-hidden="true" class="w-4 h-4 stroke-[2.5] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                  </div>
+                </div>
+                }
+
+                <!-- PASO 5: COMPROBANTE ENVIADO · VALIDANDO -->
+                @else if (envioFase() === 'validando') {
+                <div class="space-y-3 text-center pt-1">
+                  <div class="w-14 h-14 rounded-2xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center mx-auto" aria-hidden="true">
+                    <svg class="w-7 h-7 text-amber-300 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.5 5.3A9 9 0 1112 3a9 9 0 018.5 12.3z"></path></svg>
+                  </div>
+                  <div>
+                    <h4 class="t-title font-extrabold text-white">Comprobante enviado</h4>
+                    <p class="t-body text-stone-300">Validando acreditación del pago…</p>
+                  </div>
+
+                  <div class="p-3.5 rounded-2xl bg-black/60 border border-white/10 text-left t-body space-y-1.5">
+                    <div class="flex justify-between gap-2"><span class="text-stone-400">Total transferido</span><span class="text-white font-bold shrink-0">{{ totalFmt() }}</span></div>
+                    <div class="flex justify-between gap-2"><span class="text-stone-400">Destino</span><span class="text-stone-200 text-right truncate min-w-0">{{ destino() === 'taller' ? tallerNombre() : ubicacion() }}</span></div>
+                    <div class="flex justify-between gap-2"><span class="text-stone-400">Llega</span><span class="text-amber-300 font-bold shrink-0">{{ entregaEstimada() }}</span></div>
+                  </div>
+
+                  <p class="t-micro text-stone-500 leading-snug">El cadete no sale hasta que el pago figure acreditado. Apenas se apruebe, vas a ver la hora exacta y tu PIN de entrega.</p>
+
+                  <button type="button" (click)="simularAprobacion()" class="w-full min-h-[44px] rounded-xl border border-dashed border-amber-400/40 text-amber-300/90 t-micro font-bold hover:text-amber-200 hover:border-amber-400/70 transition cursor-pointer">Simular aprobación del pago (demo admin)</button>
+                </div>
+                }
+
+                <!-- PASO 6: PAGO ACREDITADO · ENTREGA CON PIN -->
+                @else if (envioFase() === 'confirmado') {
+                <div class="space-y-3 text-center pt-1">
+                  <div class="w-14 h-14 rounded-full bg-[#2ECC71] text-stone-950 flex items-center justify-center mx-auto shadow-lg shadow-emerald-400/30" aria-hidden="true">
+                    <svg class="w-7 h-7 stroke-[3.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                  </div>
+                  <div>
+                    <h4 class="t-title font-extrabold text-white">¡Pedido confirmado!</h4>
+                    <p class="t-micro text-stone-400">Pago acreditado{{ confirmadaEn() ? ' el ' + confirmadaEn() : '' }} · stock reservado</p>
+                  </div>
+
+                  <div class="p-3.5 rounded-2xl bg-black/60 border border-white/10 text-left t-body space-y-1.5">
+                    <div class="flex justify-between gap-2"><span class="text-stone-400">Entrega</span><span class="text-white font-bold shrink-0">{{ entregaEstimada() }}</span></div>
+                    <div class="flex justify-between gap-2"><span class="text-stone-400">Destino</span><span class="text-stone-200 text-right truncate min-w-0">{{ destino() === 'taller' ? tallerNombre() : ubicacion() }}</span></div>
+                    <div class="flex justify-between gap-2"><span class="text-stone-400">Total pagado</span><span class="text-emerald-300 font-bold shrink-0">{{ totalFmt() }}</span></div>
+                  </div>
+
+                  <div class="p-3.5 rounded-2xl bg-amber-400/10 border border-amber-400/30 space-y-1">
+                    <span class="t-micro font-bold text-amber-300 uppercase tracking-wider block">PIN de entrega</span>
+                    <button type="button" (click)="copiarTransferencia('pin')" aria-label="Copiar PIN" class="w-full py-1 cursor-pointer">
+                      <span class="t-total font-black text-white tracking-[0.4em] tabular-nums block select-all leading-none pl-[0.4em]">{{ pin() }}</span>
+                    </button>
+                    <span class="t-micro text-stone-400 block">{{ copiado() === 'pin' ? '¡PIN copiado!' : 'Entregale este código al cadete junto con la bolsa' }}</span>
+                  </div>
+
+                  <button type="button" (click)="verSeguimiento()" class="w-full min-h-[48px] rounded-2xl bg-[#F5C342] text-[#12100E] font-black t-body shadow-lg shadow-[#F5C342]/25 flex items-center justify-center gap-1.5 cursor-pointer">
+                    <span class="whitespace-nowrap">Ver seguimiento del pedido</span>
+                    <svg aria-hidden="true" class="w-4 h-4 stroke-[2.5] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+                  </button>
+                </div>
+                }
+
               </div>
             }
 
@@ -1838,34 +2301,122 @@ export class CompradorMovilComponent {
   readonly selectedParentPart = signal<CatalogPart | null>(null);
 
   /** Repuesto elegido por cada sección del combo (por defecto, el más económico). */
-  readonly combo = signal<Record<string, string>>({
+  /** `null` = el comprador desmarcó esa pieza: no suma al pedido. */
+  readonly combo = signal<Record<string, string | null>>({
     pastillas: 'frasle_trelew',
     filtro: 'filtro_wega',
     discos: 'discos_fremax',
   });
 
-  /** Confirmación del pedido: lleva el anillo al 100%. */
-  readonly confirmado = signal(false);
+  /** Fase del wizard de pedido: resumen → envío → pago → validación → confirmado. */
+  readonly envioFase = signal<'resumen' | 'destino' | 'velocidad' | 'transferencia' | 'validando' | 'confirmado'>('resumen');
+  /** Confirmado = fase final del wizard: lleva el anillo al 100%. */
+  readonly confirmado = computed(() => this.envioFase() === 'confirmado');
+
+  /** Fase de entrega del pedido confirmado: cadete asignado → en camino → entregado. */
+  readonly entregaFase = signal<'asignando' | 'enCamino' | 'entregado'>('asignando');
+  /** Paso actual de la entrega: pagado (1 ✓) → en camino (2) → entregado (3). */
+  readonly entregaPaso = computed(() => ({ asignando: 2, enCamino: 2, entregado: 3 }[this.entregaFase()]));
+  readonly enCaminoEn = signal('');
+  readonly entregadoEn = signal('');
+  /** Clases del punto (nodo) en la línea de entrega. */
+  entregaDot(paso: number): string {
+    const actual = this.entregaPaso();
+    if (paso < actual || this.entregaFase() === 'entregado') return 'border-emerald-400 bg-emerald-400 text-stone-950';
+    if (paso === actual) return 'border-amber-300 bg-amber-400 text-stone-950 ring-4 ring-amber-400/20';
+    return 'border-white/15 bg-white/[0.06] text-stone-500';
+  }
+
+  /** Clases de la línea que une el nodo actual con el anterior. */
+  entregaLinea(paso: number): string {
+    return this.entregaPaso() >= paso ? 'bg-emerald-500/70' : 'bg-white/10';
+  }
+
+  /** Color del rótulo de cada paso según su estado. */
+  entregaLabelColor(paso: number): string {
+    const actual = this.entregaPaso();
+    if (paso < actual || this.entregaFase() === 'entregado') return 'text-emerald-300';
+    if (paso === actual) return 'text-amber-300';
+    return 'text-stone-500';
+  }
+
+  /** Tiempo sellado de cada hito de entrega. */
+  entregaMomento(paso: number): string {
+    if (paso === 1) return this.confirmadaEn() ? 'Acreditado el ' + this.confirmadaEn() : 'Acreditado';
+    if (paso === 2) return this.enCaminoEn() || (this.entregaFase() === 'asignando' ? 'Asignado · recoge el paquete' : 'En camino');
+    return this.entregadoEn() || 'Pendiente';
+  }
+
+  readonly destinoTexto = computed(() =>
+    this.destino() === 'taller' ? this.tallerNombre() : this.ubicacion().trim() || 'Mi ubicación'
+  );
+
+  // ── Wizard de envío (Pasos 2–6 del flujo logístico) ─────────────────────────
+  /** Destinos grandes: taller de confianza o mi ubicación. */
+  readonly destino = signal<'taller' | 'ubicacion'>('taller');
+  readonly tallerId = signal('ramos');
+  readonly ubicacion = signal('Av. Fontana 450 · Trelew');
+  /** Velocidad: programado (1x consolidado) u urgente (2x viaje directo). */
+  readonly velocidad = signal<'programado' | 'urgente'>('programado');
+  /** Comprobante adjunto (demo: solo nombre + preview). */
+  readonly comprobanteNombre = signal<string | null>(null);
+  readonly comprobantePreview = signal<string | null>(null);
+  readonly comprobanteEsImagen = signal(false);
+  readonly copiado = signal<'' | 'alias' | 'cbu' | 'pin'>('');
+  /** Cuenta regresiva de los precios congelados al iniciar el flujo (20 min). */
+  readonly congelarSeg = signal(0);
+  readonly pin = signal('');
+  readonly confirmadaEn = signal('');
+
+  /** Talleres de destino (demo): el primero es el "taller de confianza". */
+  readonly talleres = [
+    { id: 'ramos', nombre: 'Taller Ramos', detalle: 'Av. Fontana 450 · Trelew', marca: 'Tu taller de confianza' },
+    { id: 'chelo', nombre: 'Taller del Chelo', detalle: '25 de Mayo 1.230 · Trelew', marca: 'Verificado' },
+    { id: 'liano', nombre: 'Taller Parque Norte', detalle: 'Av. Italia 2.340 · Trelew', marca: 'Horario comercial' },
+  ];
+
+  private congelaTimer: ReturnType<typeof setInterval> | null = null;
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly cleanupCongela = this.destroyRef.onDestroy(() => this.clearCongelaTimer());
 
   /** Secciones plegadas por defecto: la lista de casas no invade la pantalla. */
   readonly partsOpen = signal<Set<string>>(new Set());
 
   // ── Derivados del combo ────────────────────────────────────────────────────
-  readonly comboItems = computed(() =>
-    this.partsCatalog.map((part) => {
+  /** Solo las piezas efectivamente elegidas: al desmarcar una, sale del pedido y del total. */
+  private readonly chosenItems = computed(() =>
+    this.partsCatalog.flatMap((part) => {
       const id = this.combo()[part.key];
-      const item = part.items.find((i) => i.id === id) ?? this.sortedItems(part)[0];
-      return { part, item };
+      const item = id ? part.items.find((i) => i.id === id) : undefined;
+      return item ? [{ part, item }] : [];
     })
   );
 
-  readonly trelewItems = computed(() => this.comboItems().filter((r) => !r.item.isMadryn));
-  readonly madrynItems = computed(() => this.comboItems().filter((r) => r.item.isMadryn));
+  readonly trelewItems = computed(() => this.chosenItems().filter((r) => !r.item.isMadryn));
+  readonly madrynItems = computed(() => this.chosenItems().filter((r) => r.item.isMadryn));
 
-  readonly comboCount = computed(() => this.comboItems().filter((r) => !!r.item).length);
-  readonly comboSubtotal = computed(() => this.comboItems().reduce((acc, r) => acc + r.item.priceNum, 0));
-  readonly comboShipping = computed(() =>
-    this.comboItems().reduce((acc, r) => acc + (r.item.isMadryn ? (r.item.shippingFeeNum ?? 0) : 0), 0)
+  readonly comboCount = computed(() => this.chosenItems().length);
+  readonly comboSubtotal = computed(() => this.chosenItems().reduce((acc, r) => acc + r.item.priceNum, 0));
+  /** Un solo envío por origen (consolidado): el flete es el mayor de las piezas desde Madryn. */
+  readonly madrynFleteBase = computed(() =>
+    this.madrynItems().reduce((mx, r) => Math.max(mx, r.item.shippingFeeNum ?? 0), 0)
+  );
+  /** Urgente duplica el flete: viaje directo, sin consolidar con otros paquetes. */
+  readonly fleteFactor = computed(() => (this.velocidad() === 'urgente' ? 2 : 1));
+  readonly comboShipping = computed(() => this.madrynFleteBase() * this.fleteFactor());
+  /** Próxima ventana de reparto consolidado según la hora actual. */
+  readonly ventanaReparto = computed(() => {
+    const now = new Date();
+    const h = now.getHours() + now.getMinutes() / 60;
+    if (h < 11.5) return { dia: 'Hoy', corte: '11:30', rango: 'de 12:00 a 13:30 hs' };
+    if (h < 17) return { dia: 'Hoy', corte: '17:00', rango: 'de 17:00 a 18:30 hs' };
+    return { dia: 'Mañana', corte: '11:30', rango: 'de 12:00 a 13:30 hs' };
+  });
+  /** ETA visible: urgente ~45 min; programado según ventana. */
+  readonly entregaEstimada = computed(() =>
+    this.velocidad() === 'urgente'
+      ? 'Hoy en ~45 min'
+      : this.ventanaReparto().dia + ' ' + this.ventanaReparto().rango
   );
   readonly comboTotal = computed(() => this.comboSubtotal() + this.comboShipping());
   readonly comboComplete = computed(() => this.comboCount() === this.partsCatalog.length);
@@ -1881,21 +2432,49 @@ export class CompradorMovilComponent {
   readonly shippingFmt = computed(() =>
     this.comboShipping() > 0 ? '+$' + this.comboShipping().toLocaleString('es-AR') : '$0'
   );
+  readonly congelarTexto = computed(() => {
+    const s = Math.max(0, this.congelarSeg());
+    return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  });
+  /** Paso del wizard (1–6) para el stepper y los títulos. */
+  readonly pasoWizard = computed(() =>
+    ({ resumen: 1, destino: 2, velocidad: 3, transferencia: 4, validando: 5, confirmado: 6 }[this.envioFase()])
+  );
+  readonly faseTitulo = computed(() => {
+    switch (this.envioFase()) {
+      case 'resumen': return 'Paso 1 de 6 · Selección';
+      case 'destino': return 'Paso 2 de 6 · Destino';
+      case 'velocidad': return 'Paso 3 de 6 · Velocidad';
+      case 'transferencia': return 'Paso 4 de 6 · Transferencia';
+      case 'validando': return 'Paso 5 de 6 · Validando pago';
+      case 'confirmado': return 'Paso 6 de 6 · Confirmado';
+    }
+  });
+  /** Taller elegido (nombre para resúmenes). */
+  readonly tallerNombre = computed(() => this.talleres.find((t) => t.id === this.tallerId())?.nombre ?? 'Taller elegido');
   readonly trelewSubtotal = computed(() =>
     this.trelewItems().reduce((acc, r) => acc + r.item.priceNum, 0)
   );
 
-  /** Anillo: 4 tareas (0–75%) y 100% solo al confirmar el pedido. */
-  readonly taskPercent = computed(() =>
-    this.confirmado() ? 100 : Math.round((this.comboProgress() / 100) * 75)
-  );
+  /** Anillo: selección (0–75%), comprobante enviado (90%) y 100% al confirmar. */
+  readonly taskPercent = computed(() => {
+    const fase = this.envioFase();
+    if (fase === 'confirmado') return 100;
+    if (fase === 'validando') return 90;
+    return Math.round((this.comboProgress() / 100) * 75);
+  });
   readonly ringOffset = computed(() => 138.23 * (1 - this.taskPercent() / 100));
   readonly ringColor = computed(() =>
     this.confirmado() ? '#2ECC71' : 'url(#ringAmberGrad)'
   );
   readonly nextStepLabel = computed(() => {
-    if (this.confirmado()) return 'Pedido confirmado · stock reservado';
-    if (!this.comboComplete()) return 'Falta elegir ' + (this.partsCatalog.length - this.comboCount()) + ' pieza(s)';
+    const fase = this.envioFase();
+    if (fase === 'confirmado') return 'Pedido confirmado · stock reservado';
+    if (fase === 'validando') return 'Comprobante enviado · validando pago';
+    if (!this.comboComplete()) {
+      const faltan = this.partsCatalog.length - this.comboCount();
+      return 'Falta elegir ' + faltan + (faltan === 1 ? ' pieza' : ' piezas');
+    }
     return 'Falta confirmar el pedido';
   });
 
@@ -1904,17 +2483,23 @@ export class CompradorMovilComponent {
     return [...part.items].sort((a, b) => a.priceNum - b.priceNum);
   }
 
-  minPrice(part: CatalogPart): string {
-    return this.sortedItems(part)[0].price;
-  }
-
   isCheapest(part: CatalogPart, item: CatalogItem): boolean {
     return item.priceNum === this.sortedItems(part)[0].priceNum;
   }
 
-  selectedOf(part: CatalogPart): CatalogItem {
+  /** Ciudad de la oferta: siempre visible, nunca compite con el nombre del comercio. */
+  ciudad(item: CatalogItem): string {
+    return item.isMadryn ? 'Pto. Madryn' : 'Trelew';
+  }
+
+  /** Versión corta para las filas colapsadas, donde el ancho es escaso. */
+  ciudadCorta(item: CatalogItem): string {
+    return item.isMadryn ? 'Madryn' : 'Trelew';
+  }
+
+  selectedOf(part: CatalogPart): CatalogItem | undefined {
     const id = this.combo()[part.key];
-    return part.items.find((i) => i.id === id) ?? this.sortedItems(part)[0];
+    return id ? part.items.find((i) => i.id === id) : undefined;
   }
 
   isSelected(partKey: string, itemId: string): boolean {
@@ -1949,10 +2534,20 @@ export class CompradorMovilComponent {
   }
 
   // ── Selección del combo ───────────────────────────────────────────────────
+  /** Un tap elige la oferta; otro tap sobre la misma la desmarca y resta la pieza del pedido. */
   selectComboItem(partKey: string, itemId: string): void {
-    if (this.isSelected(partKey, itemId)) return;
-    this.confirmado.set(false);
-    this.combo.set({ ...this.combo(), [partKey]: itemId });
+    // Al editar piezas, el wizard vuelve al inicio (los precios congelados quedan sin efecto).
+    this.envioFase.set('resumen');
+    this.entregaFase.set('asignando');
+    this.enCaminoEn.set('');
+    this.entregadoEn.set('');
+    const next = { ...this.combo() };
+    if (this.isSelected(partKey, itemId)) {
+      delete next[partKey];
+    } else {
+      next[partKey] = itemId;
+    }
+    this.combo.set(next);
   }
 
   /** Enter/Espacio seleccionan la oferta cuando el foco está en la fila (no en el botón de ficha). */
@@ -2187,14 +2782,134 @@ export class CompradorMovilComponent {
     if (target && document.contains(target)) target.focus({ preventScroll: true });
   }
 
-  reservar(item: CatalogItem): void {
-    this.confirmarPedido();
-    this.selectedItem.set(item);
+  /** Ficha técnica → “Reservar…”: abre el wizard de envío desde el inicio. */
+  reservar(): void {
+    this.envioFase.set('resumen');
+    this.entregaFase.set('asignando');
+    this.enCaminoEn.set('');
+    this.entregadoEn.set('');
+    this.open('combo');
   }
 
-  confirmarPedido(): void {
-    this.confirmado.set(true);
-    this.activeSheet.set('success');
+  private clearCongelaTimer(): void {
+    if (this.congelaTimer) {
+      clearInterval(this.congelaTimer);
+      this.congelaTimer = null;
+    }
+  }
+
+  /** Paso 1 → 2: congela los precios 20 minutos y arranca la cuenta regresiva. */
+  irAlEnvio(): void {
+    if (this.comboCount() === 0) return;
+    this.congelarSeg.set(20 * 60);
+    this.clearCongelaTimer();
+    this.congelaTimer = setInterval(() => {
+      const next = this.congelarSeg() - 1;
+      this.congelarSeg.set(next > 0 ? next : 0);
+      if (next <= 0) this.clearCongelaTimer();
+    }, 1000);
+    this.envioFase.set('destino');
+  }
+
+  irAResumen(): void { this.envioFase.set('resumen'); }
+  irAVelocidad(): void { this.envioFase.set('velocidad'); }
+  irATransferencia(): void { this.envioFase.set('transferencia'); }
+  volverADestino(): void { this.envioFase.set('destino'); }
+
+  /** Destino válido: taller siempre; domicilio requiere dirección con al menos 4 caracteres. */
+  destinoListo(): boolean {
+    return this.destino() === 'taller' || this.ubicacion().trim().length >= 4;
+  }
+
+  elegirDestino(tipo: 'taller' | 'ubicacion'): void { this.destino.set(tipo); }
+  elegirTaller(id: string): void { this.tallerId.set(id); this.destino.set('taller'); }
+  setUbicacion(event: Event): void { this.ubicacion.set((event.target as HTMLInputElement).value); }
+  elegirVelocidad(v: 'programado' | 'urgente'): void { this.velocidad.set(v); }
+
+  /** Datos de transferencia (demo): alias y CBU copiables en un toque. */
+  readonly aliasCbu = { alias: 'toolbox.patagonia', cbu: '0110595730000048958795' };
+
+  async copiarTransferencia(campo: 'alias' | 'cbu' | 'pin'): Promise<void> {
+    const valor = campo === 'alias' ? this.aliasCbu.alias : campo === 'cbu' ? this.aliasCbu.cbu : this.pin();
+    if (!valor) return;
+    try {
+      await navigator.clipboard?.writeText(valor);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = valor;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch { /* portapapeles sin soporte */ }
+      ta.remove();
+    }
+    this.copiado.set(campo);
+    window.setTimeout(() => { if (this.copiado() === campo) this.copiado.set(''); }, 1600);
+  }
+
+  onComprobante(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    if (this.comprobantePreview()) URL.revokeObjectURL(this.comprobantePreview()!);
+    const esImagen = file.type.startsWith('image/');
+    this.comprobanteEsImagen.set(esImagen);
+    this.comprobantePreview.set(esImagen ? URL.createObjectURL(file) : null);
+    this.comprobanteNombre.set(file.name);
+    input.value = '';
+  }
+
+  /** Demo: genera un comprobante simulado para no bloquear el recorrido. */
+  simularComprobante(): void {
+    if (this.comprobantePreview()) URL.revokeObjectURL(this.comprobantePreview()!);
+    this.comprobantePreview.set(null);
+    this.comprobanteEsImagen.set(false);
+    this.comprobanteNombre.set('comprobante-demo.pdf');
+  }
+
+  quitarComprobante(): void {
+    if (this.comprobantePreview()) URL.revokeObjectURL(this.comprobantePreview()!);
+    this.comprobantePreview.set(null);
+    this.comprobanteNombre.set(null);
+  }
+
+  /** Paso 4 → 5: el comprobante entra a validación (anillo 90%). */
+  enviarComprobante(): void {
+    if (!this.comprobanteNombre()) return;
+    this.clearCongelaTimer();
+    this.envioFase.set('validando');
+  }
+
+  /** Demo admin: aprueba el pago y dispara la entrega (anillo 100%). */
+  simularAprobacion(): void {
+    this.pin.set(String(Math.floor(1000 + Math.random() * 9000)));
+    const now = new Date();
+    const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    this.confirmadaEn.set(`${now.getDate()} ${meses[now.getMonth()]} · ${hh}:${mm} hs`);
+    this.entregaFase.set('asignando');
+    this.enCaminoEn.set('');
+    this.entregadoEn.set('');
+    this.envioFase.set('confirmado');
+  }
+
+  /** Confirmado → seguimiento del pedido. */
+  verSeguimiento(): void { this.open('tasks'); }
+
+  /** Demo: avanza el cadete asignando → en camino → entregado (con sello horario). */
+  avanzarEntrega(): void {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    if (this.entregaFase() === 'asignando') {
+      this.entregaFase.set('enCamino');
+      this.enCaminoEn.set(`Hoy · ${hh}:${mm} hs`);
+    } else if (this.entregaFase() === 'enCamino') {
+      this.entregaFase.set('entregado');
+      this.entregadoEn.set(`Hoy · ${hh}:${mm} hs`);
+    }
   }
 
   // ── Teclado ───────────────────────────────────────────────────────────────
