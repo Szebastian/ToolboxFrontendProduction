@@ -30,8 +30,8 @@ export interface CatalogPart {
   items: CatalogItem[];
 }
 
-type Vista = 'pedidos' | 'garaje';
-type GarageTab = 'estado' | 'servicios' | 'historial';
+type Vista = 'inicio' | 'garaje' | 'solicitudes' | 'pedidos';
+type GarageTab = 'estado' | 'mantenimientos' | 'historial';
 type CheckupKey = 'bateria' | 'anticongelante' | 'distribucion' | 'neumaticos';
 type Tono = 'emerald' | 'cyan' | 'rose' | 'sky';
 
@@ -43,16 +43,6 @@ export interface GarageCheckup {
   estado: string;
   pct: number;
   tono: Tono;
-}
-
-export interface GarageService {
-  id: string;
-  nombre: string;
-  detalle: string;
-  ultimo: string;
-  nota: string;
-  alerta: boolean;
-  icono: 'aceite' | 'aire' | 'correa' | 'frenos';
 }
 
 export interface GarageHistory {
@@ -70,6 +60,8 @@ export interface GarageVehicle {
   id: string;
   corto: string;
   titulo: string;
+  marca: string;
+  modelo: string;
   patente: string;
   vin: string;
   motor: string;
@@ -81,7 +73,7 @@ export interface GarageVehicle {
   estado: string;
   specs: { motor: string; potencia: string; combustible: string; traccion: string; caja: string };
   checkups: GarageCheckup[];
-  servicios: GarageService[];
+
   historial: GarageHistory[];
 }
 
@@ -226,7 +218,7 @@ type Sheet =
 
       <main class="space-y-3 max-w-md mx-auto">
 
-        @if (vista() === 'pedidos') {
+        @if (vista() === 'solicitudes') {
 
         <!-- 1. VEHÍCULO RESUMIDO -->
         <button type="button" (click)="openVehicleSheet()" class="jobs-monolith w-full text-left p-3 pb-3.5 text-white cursor-pointer active:scale-[0.99] transition hover:border-amber-400/40 flex items-center justify-between gap-2.5 group shadow-md">
@@ -495,7 +487,113 @@ type Sheet =
           }
         </div>
 
-        } @else {
+        } @else if (vista() === 'inicio') {
+
+        <!-- ═══ INICIO ═══ -->
+        <!-- saludo -->
+        <div class="pt-1 pb-0.5">
+          <p class="t-micro font-bold text-amber-300 uppercase tracking-wider">Panel del comprador</p>
+          <h1 class="t-total font-black text-white leading-tight tracking-tight">Hola, {{ usuario?.nombre?.split(' ')?.[0] || 'Martín' }}</h1>
+          <p class="t-body text-stone-400">Hoy el Passat pide repuestos y vos esperás cotizaciones.</p>
+        </div>
+
+        <!-- cotización / pedido en curso -->
+        <button type="button" (click)="confirmado() ? openTasks() : irASolicitudes()"
+                class="jobs-monolith w-full text-left p-4 text-white flex items-center justify-between gap-3 cursor-pointer border border-white/10 hover:border-[#F5C342]/40 active:scale-[0.99] transition group shadow-lg">
+          <span class="flex items-center gap-3 min-w-0">
+            <span class="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0" [ngClass]="confirmado() ? 'bg-emerald-500/15 text-emerald-400' : 'bg-amber-400 text-stone-950'">
+              @if (confirmado()) {
+                <svg aria-hidden="true" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M1 5h13v11H1zM14 9h4l3 3v4h-7M4.5 19a1.6 1.6 0 100-3.2 1.6 1.6 0 000 3.2zm11 0a1.6 1.6 0 100-3.2 1.6 1.6 0 000 3.2z"></path></svg>
+              } @else {
+                <svg aria-hidden="true" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+              }
+            </span>
+            <span class="min-w-0">
+              <span class="t-micro font-bold text-stone-400 uppercase tracking-wider block">{{ confirmado() ? 'Pedido en viaje' : 'Cotización en curso' }}</span>
+              <span class="t-title font-black text-white block leading-tight">{{ confirmado() ? entregaEstimada() : comboCount() + ' de 3 piezas elegidas · ' + totalFmt() }}</span>
+              <span class="t-micro text-stone-400 block truncate">{{ confirmado() ? 'Destino: ' + destinoTexto() : 'Tocá para comparar ofertas y reservar' }}</span>
+            </span>
+          </span>
+          <svg aria-hidden="true" class="w-5 h-5 text-amber-400 group-hover:translate-x-0.5 transition-transform shrink-0 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+        </button>
+
+        <!-- mantenimiento preventivo -->
+        <section class="jobs-monolith p-4 space-y-3">
+          <div class="flex items-center justify-between gap-2">
+            <span class="flex items-center gap-2 min-w-0">
+              <span class="w-9 h-9 rounded-xl bg-white/[0.06] text-amber-300 flex items-center justify-center shrink-0">
+                <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6 3-3-1.6-1.6a1 1 0 00-1.4 0l-9 9a3 3 0 01-2.1.9H9l-3.2 3.2a1.9 1.9 0 002.7 2.7L11.7 17H17a1 1 0 00.8-.4l6-7.4a1 1 0 00-.1-1.3l-3-3a1 1 0 00-1.4 0l-1.2 1.2z"></path></svg>
+              </span>
+              <span class="t-title font-black text-white tracking-tight">Mantenimiento preventivo</span>
+            </span>
+            <button type="button" (click)="irAGaraje()" class="t-micro font-bold text-amber-300 underline underline-offset-2 min-h-[44px] px-1 cursor-pointer shrink-0">Ver garaje ›</button>
+          </div>
+          <div class="space-y-2">
+            <div class="p-3 rounded-xl bg-rose-500/5 border border-rose-500/40 flex items-start gap-2.5">
+              <span class="w-2 h-2 rounded-full bg-rose-400 mt-1.5 shrink-0" aria-hidden="true"></span>
+              <span class="min-w-0 flex-1">
+                <span class="t-body font-bold text-white block leading-snug">Distribución · toca a los 120.000 km</span>
+                <span class="t-micro text-stone-300 leading-snug">VW Passat 2.0 TDI · Kit correa + tensor · alerta desde los 115.000 km</span>
+              </span>
+              <span class="t-micro font-bold uppercase text-rose-300 shrink-0">Urgente</span>
+            </div>
+            <div class="p-3 rounded-xl bg-white/[0.03] border border-white/10 flex items-start gap-2.5">
+              <span class="w-2 h-2 rounded-full bg-amber-400 mt-1.5 shrink-0" aria-hidden="true"></span>
+              <span class="min-w-0 flex-1">
+                <span class="t-body font-bold text-white block leading-snug">Cambio de aceite · vence a los 80.000 km</span>
+                <span class="t-micro text-stone-300 leading-snug">Toyota Hilux · Castrol 5W-40 · último cambio hace 3.500 km</span>
+              </span>
+              <span class="t-micro font-bold uppercase text-amber-300 shrink-0">Pronto</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- notificaciones -->
+        <section class="jobs-monolith p-4 space-y-2">
+          <div class="flex items-center justify-between gap-2">
+            <span class="flex items-center gap-2 min-w-0">
+              <span class="w-9 h-9 rounded-xl bg-white/[0.06] text-amber-300 flex items-center justify-center shrink-0">
+                <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 00-4-5.7V5a2 2 0 10-4 0v.3C7.7 6.2 6 8.4 6 11v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+              </span>
+              <span class="t-title font-black text-white tracking-tight">Notificaciones</span>
+            </span>
+            <span class="t-micro font-bold text-amber-300 bg-amber-400/10 border border-amber-400/30 rounded-full px-2 py-0.5 shrink-0">2 nuevas</span>
+          </div>
+          <div class="divide-y divide-white/5">
+            @for (n of notificaciones; track n.id) {
+              <button type="button" (click)="notificacionGo(n)" class="w-full flex items-start gap-2.5 py-2.5 min-h-[44px] text-left cursor-pointer group">
+                <span class="w-2 h-2 rounded-full mt-1.5 shrink-0" [ngClass]="n.punto" aria-hidden="true"></span>
+                <span class="min-w-0 flex-1">
+                  <span class="t-body text-white font-semibold leading-snug group-hover:text-amber-100 transition-colors">{{ n.texto }}</span>
+                  <span class="t-micro text-stone-500 block">{{ n.cuando }}</span>
+                </span>
+                @if (!n.leida) {
+                  <span class="w-2 h-2 rounded-full bg-amber-400 mt-1.5 shrink-0" aria-label="No leída"></span>
+                }
+              </button>
+            }
+          </div>
+        </section>
+
+        <!-- actividad reciente -->
+        <section class="jobs-monolith p-4 space-y-2">
+          <span class="flex items-center gap-2">
+            <span class="w-9 h-9 rounded-xl bg-white/[0.06] text-amber-300 flex items-center justify-center shrink-0">
+              <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l2.5 2.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </span>
+            <span class="t-title font-black text-white tracking-tight">Actividad reciente</span>
+          </span>
+          <ol class="space-y-0 pt-1">
+            @for (a of actividadReciente; track a.hora + a.texto) {
+              <li class="flex items-baseline gap-3 pb-2.5 last:pb-0 border-b border-white/5 last:border-0">
+                <span class="t-micro text-stone-500 num shrink-0 w-9">{{ a.hora }}</span>
+                <span class="t-body text-stone-200 leading-snug">{{ a.texto }}</span>
+              </li>
+            }
+          </ol>
+        </section>
+
+        } @else if (vista() === 'garaje') {
 
         <!-- ═══ GARAJE ═══ -->
         @if (garageVehicle(); as v) {
@@ -507,11 +605,6 @@ type Sheet =
               <span class="w-2 h-2 rounded-full bg-emerald-400 shrink-0" aria-hidden="true"></span>
               <span class="truncate">Mis autos guardados ({{ garageVehicles().length }})</span>
             </span>
-            <button type="button" (click)="openGarageAdd()"
-                    class="min-h-[44px] px-3 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 font-black t-micro flex items-center gap-1 shadow-md shadow-amber-400/20 active:scale-95 transition cursor-pointer shrink-0">
-              <svg aria-hidden="true" class="w-3.5 h-3.5 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
-              <span>Sumar auto</span>
-            </button>
           </div>
 
           <div class="flex gap-2 pt-2.5 overflow-x-auto no-scrollbar" role="group" aria-label="Mis vehículos">
@@ -557,25 +650,25 @@ type Sheet =
           <div class="p-2.5 bg-black/40 border-b border-white/10">
             <div class="flex items-center rounded-2xl bg-black/60 p-1 border border-white/15" role="group" aria-label="Secciones del vehículo">
               <button type="button" (click)="garageTab.set('estado')" [attr.aria-pressed]="garageTab() === 'estado'"
-                      class="flex-1 min-h-[44px] px-2 rounded-xl t-micro font-bold transition cursor-pointer"
+                      class="flex-1 min-h-[44px] px-1 rounded-xl t-micro font-bold transition cursor-pointer"
                       [ngClass]="garageTab() === 'estado' ? 'bg-[#F5C342] text-stone-950 shadow-sm' : 'text-stone-400 hover:text-white'">
-                Estado
+                Pasaporte
               </button>
-              <button type="button" (click)="garageTab.set('servicios')" [attr.aria-pressed]="garageTab() === 'servicios'"
-                      class="flex-1 min-h-[44px] px-2 rounded-xl t-micro font-bold transition cursor-pointer flex items-center justify-center gap-1"
-                      [ngClass]="garageTab() === 'servicios' ? 'bg-[#F5C342] text-stone-950 shadow-sm' : 'text-stone-400 hover:text-white'">
-                <svg aria-hidden="true" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path stroke-linecap="round" d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"></path></svg>
-                <span>Servicios</span>
+              <button type="button" (click)="garageTab.set('mantenimientos')" [attr.aria-pressed]="garageTab() === 'mantenimientos'"
+                      class="flex-1 min-h-[44px] px-1 rounded-xl t-micro font-bold transition cursor-pointer whitespace-nowrap tracking-tight"
+                      [ngClass]="garageTab() === 'mantenimientos' ? 'bg-[#F5C342] text-stone-950 shadow-sm' : 'text-stone-400 hover:text-white'">
+                Mantenimientos
               </button>
               <button type="button" (click)="garageTab.set('historial')" [attr.aria-pressed]="garageTab() === 'historial'"
-                      class="flex-1 min-h-[44px] px-2 rounded-xl t-micro font-bold transition cursor-pointer flex items-center justify-center gap-1"
+                      class="flex-1 min-h-[44px] px-1 rounded-xl t-micro font-bold transition cursor-pointer"
                       [ngClass]="garageTab() === 'historial' ? 'bg-[#F5C342] text-stone-950 shadow-sm' : 'text-stone-400 hover:text-white'">
-                <svg aria-hidden="true" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <span>Historial</span>
+                Historial
               </button>
             </div>
           </div>
 
+          <!-- IDENTIDAD COMPLETA: solo Pasaporte -->
+          @if (garageTab() === 'estado') {
           <div class="p-3.5 bg-gradient-to-b from-[#1C1A17] to-[#12110F]">
             <div class="flex items-start gap-3">
               <div class="min-w-0 flex-1 space-y-1.5">
@@ -587,11 +680,14 @@ type Sheet =
                     <span class="t-micro text-emerald-300 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 whitespace-nowrap">✓ Calce garantizado</span>
                   }
                 </div>
-                <h2 class="t-price font-black tracking-tight leading-tight">{{ v.titulo }}</h2>
+                <h2 class="leading-tight">
+                  <span class="t-micro font-black uppercase tracking-[0.18em] text-stone-400 leading-none block">{{ v.marca }}</span>
+                  <span class="t-price font-black tracking-tight text-white block">{{ v.modelo }}</span>
+                </h2>
                 <p class="t-micro text-stone-400">
                   @if (garageTab() === 'estado') { Pasaporte digital y compatibilidad }
-                  @if (garageTab() === 'servicios') { Servicios y mantenimiento preventivo }
-                  @if (garageTab() === 'historial') { Historial y cronología }
+                  @if (garageTab() === 'mantenimientos') { Estado de mantenimientos }
+                  @if (garageTab() === 'historial') { Historial de servicios }
                 </p>
 
                 <div class="flex items-center gap-2 flex-wrap pt-0.5">
@@ -648,16 +744,34 @@ type Sheet =
               </div>
               <div class="px-1.5 py-2 bg-black/40 text-center min-w-0">
                 <span class="t-micro uppercase tracking-wide text-stone-500 block">Frenos</span>
-                <strong class="t-micro font-bold text-white block truncate">{{ v.frenos.split('(')[0].trim() }}</strong>
+                <strong class="t-micro font-bold text-white block truncate">{{ v.frenos }}</strong>
               </div>
             </div>
           </div>
+          }
 
-          <!-- PESTAÑA: ESTADO -->
+          <!-- BARRA COMPACTA: foto + nombre + patente + KM para el resto de tabs -->
+          @if (garageTab() !== 'estado') {
+            <div class="px-3 py-2.5 bg-[#1C1A17] border-b border-white/10 flex items-center gap-3">
+              <img [src]="v.img || vehicleImg" [alt]="v.titulo" class="w-11 h-11 rounded-lg object-cover border border-white/20 shrink-0">
+              <span class="min-w-0 flex-1">
+                <span class="t-body font-extrabold text-white block truncate">{{ v.corto }}</span>
+                <span class="t-micro text-stone-400 block">{{ v.patente }}</span>
+              </span>
+              <button type="button" (click)="openGarageKm()"
+                      class="shrink-0 min-h-[44px] pl-2 pr-2.5 rounded-xl bg-black/40 border border-white/10 flex items-center gap-1.5 cursor-pointer active:scale-95 transition">
+                <span class="t-micro text-stone-400">KM</span>
+                <span class="t-body font-extrabold text-white num">{{ kmFmt(v.km) }}</span>
+                <span class="t-micro text-amber-300 underline font-bold">Editar</span>
+              </button>
+            </div>
+          }
+
+          <!-- PASAPORTE DIGITAL: VIN + cédula -->
           @if (garageTab() === 'estado') {
             <div class="p-3.5 space-y-3 border-t border-white/10 bg-black/30">
               <div class="flex items-center justify-between gap-2">
-                <span class="t-micro font-bold text-stone-300 uppercase tracking-wider">Pasaporte de compatibilidad</span>
+                <span class="t-micro font-bold text-stone-300 uppercase tracking-wider">Pasaporte digital</span>
                 @if (v.estado === 'A verificar') {
                   <span class="t-micro text-amber-300 font-bold bg-amber-400/15 px-2 py-0.5 rounded-full border border-amber-400/30 shrink-0">! Sin validar</span>
                 } @else {
@@ -665,97 +779,98 @@ type Sheet =
                 }
               </div>
 
-              <div class="space-y-1.5">
-                <div class="p-2.5 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between gap-3">
-                  <span class="t-micro text-stone-400 shrink-0">Chasis (VIN)</span>
-                  <span class="t-micro text-amber-300 font-bold tracking-wider text-right break-all">{{ v.vin }}</span>
-                </div>
-                <div class="p-2.5 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between gap-3">
-                  <span class="t-micro text-stone-400 shrink-0">Código de motor</span>
-                  <span class="t-micro text-emerald-400 font-bold text-right">{{ v.motor }}</span>
-                </div>
-                <div class="p-2.5 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between gap-3">
-                  <span class="t-micro text-stone-400 shrink-0">Transmisión</span>
-                  <span class="t-micro text-white text-right">{{ v.transmision }}</span>
-                </div>
-                <div class="p-2.5 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between gap-3">
-                  <span class="t-micro text-stone-400 shrink-0">Sistema de frenos</span>
-                  <span class="t-micro text-white text-right">{{ v.frenos }}</span>
-                </div>
+              <div class="p-2.5 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between gap-3">
+                <span class="t-micro text-stone-400 shrink-0">Chasis (VIN)</span>
+                <span class="flex items-center gap-2 min-w-0">
+                  <span class="t-micro text-amber-300 font-bold tracking-wider break-all">{{ v.vin }}</span>
+                  <button type="button" (click)="copiarVin()" [attr.aria-label]="vinCopiado() ? 'VIN copiado' : 'Copiar VIN'" class="w-11 h-11 shrink-0 -my-2 rounded-lg hover:bg-white/10 flex items-center justify-center text-stone-400 hover:text-white transition cursor-pointer">
+                    @if (vinCopiado()) {
+                      <svg aria-hidden="true" class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                    } @else {
+                      <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path stroke-linecap="round" stroke-linejoin="round" d="M5 15V5a2 2 0 012-2h10"></path></svg>
+                    }
+                  </button>
+                </span>
               </div>
 
               <div class="grid grid-cols-2 gap-2 pt-1">
+                <button type="button" (click)="irASolicitudes()"
+                        class="min-h-[44px] px-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-black transition flex items-center justify-center gap-1 active:scale-95 cursor-pointer shadow-md">
+                  <span class="t-micro">Buscar repuestos</span>
+                  <svg aria-hidden="true" class="w-3.5 h-3.5 shrink-0 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+                </button>
                 <button type="button" (click)="openGarageKm()"
                         class="min-h-[44px] px-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-bold transition flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer">
                   <svg aria-hidden="true" class="w-3.5 h-3.5 text-amber-400 shrink-0 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
                   <span class="t-micro">Actualizar KM</span>
                 </button>
-                <button type="button" (click)="irAPedidos()"
-                        class="min-h-[44px] px-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-black transition flex items-center justify-center gap-1 active:scale-95 cursor-pointer shadow-md">
-                  <span class="t-micro">Buscar repuestos</span>
-                  <svg aria-hidden="true" class="w-3.5 h-3.5 shrink-0 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
-                </button>
               </div>
             </div>
           }
 
-          <!-- PESTAÑA: SERVICIOS -->
-          @if (garageTab() === 'servicios') {
+          <!-- PESTAÑA: MANTENIMIENTOS -->
+          @if (garageTab() === 'mantenimientos') {
             <div class="p-3.5 space-y-3 border-t border-white/10 bg-black/30">
               <div class="flex items-center justify-between gap-2">
                 <div class="min-w-0">
-                  <span class="t-micro text-stone-400 uppercase tracking-wider block">Servicios del vehículo</span>
-                  <h3 class="t-body font-bold text-white truncate">{{ v.corto }} · Mantenimientos</h3>
+                  <span class="t-micro text-stone-400 uppercase tracking-wider block">Estado de mantenimientos</span>
+                  <h3 class="t-body font-bold text-white truncate">{{ v.corto }} · por urgencia</h3>
                 </div>
-                <span class="t-micro text-amber-300 font-bold bg-amber-400/15 border border-amber-400/30 px-2 py-0.5 rounded-full shrink-0">{{ v.servicios.length }} registros</span>
+                @if (proximosVencidos(); as vencidos) {
+                  <span class="t-micro font-bold text-rose-300 bg-rose-500/20 border border-rose-500/40 px-2 py-0.5 rounded-full shrink-0">{{ vencidos }} vencido{{ vencidos > 1 ? 's' : '' }}</span>
+                } @else {
+                  <span class="t-micro font-bold text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-full shrink-0">Al día</span>
+                }
               </div>
 
-              @if (v.servicios.length) {
-                <div class="space-y-2">
-                  @for (s of v.servicios; track s.id) {
-                    <div class="p-2.5 rounded-2xl border flex items-center justify-between gap-2.5"
-                         [ngClass]="s.alerta ? 'bg-[#2D1A1F] border-rose-500/40' : 'bg-[#172230] border-white/10'">
-                      <div class="flex items-center gap-2.5 min-w-0">
-                        <span class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border"
-                              [ngClass]="s.icono === 'correa' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : s.icono === 'aire' ? 'bg-sky-400/15 text-sky-300 border-sky-400/30' : s.icono === 'frenos' ? 'bg-purple-400/15 text-purple-300 border-purple-400/30' : 'bg-amber-400/15 text-amber-300 border-amber-400/30'">
-                          @switch (s.icono) {
-                            @case ('aceite') {
-                              <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3s6 6.5 6 11a6 6 0 11-12 0c0-4.5 6-11 6-11z"></path></svg>
-                            }
-                            @case ('aire') {
-                              <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8h10a3 3 0 10-3-3M3 12h14a3 3 0 11-3 3M3 16h7"></path></svg>
-                            }
-                            @case ('correa') {
-                              <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><circle cx="12" cy="12" r="3"></circle><path stroke-linecap="round" d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"></path></svg>
-                            }
-                            @default {
-                              <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="3"></circle><path stroke-linecap="round" d="M12 4v2M12 18v2M4 12h2M18 12h2"></path></svg>
-                            }
+              <div class="space-y-2">
+                @for (m of proximosVehiculo(); track m.id) {
+                  <div class="p-3 rounded-2xl border space-y-1.5"
+                       [ngClass]="m.tono === 'rose' ? 'bg-rose-950/40 border-rose-500/40' : m.tono === 'amber' ? 'bg-[#242013] border-amber-400/25' : 'bg-white/[0.03] border-white/10'">
+                    <div class="flex items-start gap-3">
+                      <span class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border"
+                            [ngClass]="m.tono === 'rose' ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' : m.tono === 'amber' ? 'bg-amber-400/15 text-amber-300 border-amber-400/30' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25'">
+                        @switch (m.icon) {
+                          @case ('aceite') {
+                            <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6 6.5 6 11a6 6 0 11-12 0c0-4.5 6-11 6-11z"></path></svg>
                           }
-                        </span>
-                        <div class="min-w-0">
-                          <h4 class="t-body font-bold text-white leading-snug">{{ s.nombre }}</h4>
-                          <span class="t-micro text-stone-400 block truncate">Último: {{ s.ultimo }} · {{ s.detalle }}</span>
-                        </div>
-                      </div>
-                      <div class="text-right shrink-0">
-                        <span class="t-micro font-bold px-2 py-0.5 rounded-full border inline-block"
-                              [ngClass]="s.alerta ? 'text-rose-300 bg-rose-500/20 border-rose-500/40' : 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30'">
-                          {{ s.alerta ? 'Revisar' : 'Registrado' }}
-                        </span>
-                        <span class="t-micro text-stone-400 block pt-1">{{ s.nota }}</span>
-                      </div>
+                          @case ('aire') {
+                            <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10a3 3 0 10-3-3M3 12h14a3 3 0 11-3 3M3 16h7"></path></svg>
+                          }
+                          @case ('correa') {
+                            <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"></path></svg>
+                          }
+                          @case ('refrigerante') {
+                            <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9"></path></svg>
+                          }
+                          @default {
+                            <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="3"></circle></svg>
+                          }
+                        }
+                      </span>
+                      <span class="min-w-0 flex-1 space-y-0.5">
+                        <span class="t-body font-bold text-white block leading-snug">{{ m.titulo }}</span>
+                        <span class="t-micro text-stone-400 block leading-snug">{{ m.ultimo }} · {{ m.detalle }}</span>
+                      </span>
+                      <span class="t-micro font-bold px-2 py-0.5 rounded-full border shrink-0 self-start whitespace-nowrap"
+                            [ngClass]="m.tono === 'rose' ? 'text-rose-300 bg-rose-500/20 border-rose-500/40' : m.tono === 'amber' ? 'text-amber-300 bg-amber-400/15 border-amber-400/30' : 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30'">
+                        {{ m.chip }}
+                      </span>
                     </div>
-                  }
-                </div>
-              } @else {
-                <p class="t-body text-stone-400">Todavía no hay servicios registrados para este vehículo.</p>
-              }
+                    @if (m.tono !== 'emerald') {
+                      <button type="button" (click)="irASolicitudes()"
+                              class="ml-12 t-micro font-bold text-amber-300 underline underline-offset-2 min-h-[44px] px-1 inline-flex items-center active:text-amber-200 cursor-pointer">
+                        Cotizar este repuesto ›
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
 
               <button type="button" (click)="openGarageService()"
                       class="w-full min-h-[48px] rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 font-black t-body flex items-center justify-center gap-2 shadow-lg shadow-amber-400/20 active:scale-[0.98] transition cursor-pointer">
                 <svg aria-hidden="true" class="w-4 h-4 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
-                <span>Registrar nuevo servicio</span>
+                <span>Registrar mantenimiento realizado</span>
               </button>
             </div>
           }
@@ -889,7 +1004,7 @@ type Sheet =
         </section>
 
         <!-- 3. COTIZACIONES ACTIVAS -->
-        <button type="button" (click)="irAPedidos()"
+        <button type="button" (click)="irASolicitudes()"
                 class="jobs-monolith w-full text-left p-3.5 text-white flex items-center justify-between gap-3 cursor-pointer group active:scale-[0.99] transition">
           <span class="flex items-center gap-3 min-w-0">
             <span class="w-9 h-9 rounded-xl bg-amber-400 text-stone-950 font-black flex items-center justify-center shadow-md shrink-0">
@@ -902,12 +1017,102 @@ type Sheet =
           </span>
           <svg aria-hidden="true" class="w-4 h-4 text-amber-400 group-hover:translate-x-1 transition-transform shrink-0 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
         </button>
-
         }
+
+        } @else if (vista() === 'pedidos') {
+
+        <!-- ═══ PEDIDOS ═══ -->
+        <div class="pt-1 pb-0.5">
+          <p class="t-micro font-bold text-amber-300 uppercase tracking-wider">Mis compras</p>
+          <h1 class="t-total font-black text-white leading-tight tracking-tight">Pedidos</h1>
+          <p class="t-body text-stone-400">Compras confirmadas, pago y repartidor.</p>
+        </div>
+
+        @if (confirmado()) {
+        <!-- PEDIDO ACTIVO -->
+        <article class="jobs-monolith p-4 space-y-3 shadow-lg border border-white/10">
+          <div class="flex items-center justify-between gap-3 flex-wrap">
+            <span class="t-micro font-bold text-stone-400 uppercase tracking-wider">PEDIDO #C-2026-0118 · HOY</span>
+            <span class="px-2 py-0.5 rounded-full t-micro font-bold border shrink-0"
+                  [ngClass]="entregaFase() === 'entregado' ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40' : 'bg-amber-400/10 text-amber-300 border-amber-400/40'">
+              {{ entregaFase() === 'entregado' ? 'Entregado ✓' : entregaFase() === 'enCamino' ? 'En camino' : 'Cadete asignado' }}
+            </span>
+          </div>
+
+          <!-- vehículo + total -->
+          <div class="flex items-center gap-3">
+            <img [src]="vehicleImg" alt="VW Passat" class="w-12 h-12 rounded-xl object-cover border border-white/20 shrink-0">
+            <span class="min-w-0">
+              <span class="t-title font-black text-white block truncate">VW Passat 2.0 TDI</span>
+              <span class="t-micro text-stone-400 block">AB 412 TX · {{ comboCount() }} piezas</span>
+            </span>
+            <span class="ml-auto t-price font-black text-white shrink-0">{{ totalFmt() }}</span>
+          </div>
+
+          <!-- progreso de entrega -->
+          <div role="img" [attr.aria-label]="'Entrega: paso ' + entregaPaso() + ' de 3'" aria-hidden="true">
+            <div class="grid items-center gap-x-1.5" style="grid-template-columns: auto 1fr auto 1fr auto;">
+              <span class="w-[16px] h-[16px] rounded-full border flex items-center justify-center" [ngClass]="entregaDot(1)">
+                <svg class="w-2.5 h-2.5 stroke-[4]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+              </span>
+              <span class="h-[3px] rounded-full" [ngClass]="entregaLinea(2)"></span>
+              <span class="w-[16px] h-[16px] rounded-full border flex items-center justify-center" [ngClass]="entregaDot(2)">
+                <svg class="w-2.5 h-2.5 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M1 5h13v11H1zM14 9h4l3 3v4h-7"></path></svg>
+              </span>
+              <span class="h-[3px] rounded-full" [ngClass]="entregaLinea(3)"></span>
+              <span class="w-[16px] h-[16px] rounded-full border flex items-center justify-center" [ngClass]="entregaDot(3)">
+                @if (entregaFase() === 'entregado') {
+                  <svg class="w-2.5 h-2.5 stroke-[4]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                } @else {
+                  <span class="t-micro font-black leading-none">3</span>
+                }
+              </span>
+            </div>
+          </div>
+
+          <!-- repartidor -->
+          <div class="flex items-center gap-3 p-3 rounded-2xl bg-black/40 border border-white/10">
+            <span class="w-11 h-11 rounded-xl bg-amber-400/15 text-amber-300 border border-amber-400/30 font-black t-body flex items-center justify-center shrink-0" aria-hidden="true">C3</span>
+            <span class="min-w-0">
+              <span class="flex items-center gap-2 flex-wrap"><span class="t-body font-bold text-white">Cadete Ruta 3 · Renault Kangoo</span><span class="t-micro text-stone-500">AA 123 BB</span></span>
+              <span class="t-micro text-stone-400 block leading-snug">{{ entregaFase() === 'entregado' ? 'Entregado ' + entregadoEn() + ' · PIN validado por el cadete' : entregaFase() === 'enCamino' ? 'En ruta desde ' + (enCaminoEn() || 'hoy') + ' · GPS activo' : 'Asignado · sale a retirar del comercio' }}</span>
+            </span>
+          </div>
+
+          <!-- pago -->
+          <div class="flex items-center gap-3 p-3 rounded-2xl bg-emerald-500/[0.06] border border-emerald-500/25">
+            <svg aria-hidden="true" class="w-6 h-6 text-emerald-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span class="min-w-0 flex-1">
+              <span class="t-body font-bold text-white block">Transferencia · Toolbox Patagonia</span>
+              <span class="t-micro text-stone-400 block truncate">CBU ····8795 · acreditada el {{ confirmadaEn() }}</span>
+            </span>
+            <span class="t-micro font-bold text-emerald-300 bg-emerald-500/15 border border-emerald-500/40 rounded-full px-2 py-0.5 shrink-0">✓ Acreditado</span>
+          </div>
+
+          <button type="button" (click)="openTasks()" class="w-full min-h-[48px] rounded-2xl bg-[#F5C342] text-[#12100E] font-black t-body shadow-lg shadow-[#F5C342]/25 active:scale-[0.98] transition flex items-center justify-center gap-1.5 cursor-pointer">
+            <span class="whitespace-nowrap">Ver seguimiento del pedido</span>
+            <svg aria-hidden="true" class="w-4 h-4 stroke-[2.5] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+          </button>
+        </article>
+        } @else {
+        <!-- SIN PEDIDOS TODAVÍA -->
+        <div class="jobs-monolith p-6 text-center space-y-3 border border-dashed border-white/15">
+          <span class="w-16 h-16 rounded-2xl bg-white/[0.04] flex items-center justify-center mx-auto" aria-hidden="true">
+            <svg class="w-8 h-8 text-stone-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+          </span>
+          <p class="t-title font-black text-white">Todavía no tenés pedidos</p>
+          <p class="t-body text-stone-400 leading-snug">Cuando confirmes un combo, tu compra aparece acá con cadete asignado y seguimiento en vivo.</p>
+          <button type="button" (click)="irASolicitudes()" class="inline-flex items-center gap-1.5 min-h-[48px] px-5 rounded-xl bg-amber-400 text-stone-950 font-black t-body active:scale-[0.98] transition cursor-pointer">
+            <span class="whitespace-nowrap">Ir a Solicitudes</span>
+            <svg aria-hidden="true" class="w-4 h-4 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+          </button>
+        </div>
+        }
+
         }
 
         <!-- ESPACIADOR: deja scrollear el contenido por debajo de la barra fija -->
-        <div [ngClass]="vista() === 'garaje' ? 'h-28' : 'h-44'" aria-hidden="true"></div>
+        <div [ngClass]="vista() === 'garaje' ? 'h-28' : vista() === 'solicitudes' ? 'h-44' : 'h-36'" aria-hidden="true"></div>
 
       </main>
 
@@ -915,7 +1120,7 @@ type Sheet =
       <div class="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md px-3 dock-wrap">
         <div class="jobs-dock rounded-3xl overflow-hidden text-white">
 
-          @if (vista() === 'pedidos') {
+          @if (vista() === 'solicitudes') {
           <div class="px-3.5 pt-2">
             <div class="flex items-center justify-between gap-2">
               <span class="t-micro font-bold uppercase tracking-wider text-amber-300 whitespace-nowrap">
@@ -951,46 +1156,49 @@ type Sheet =
 
           <nav class="flex items-stretch justify-between px-1 py-0.5" aria-label="Navegación del comprador">
 
+            <button type="button" (click)="irAInicio()" [attr.aria-current]="vista() === 'inicio' ? 'page' : null"
+                    class="flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[46px] cursor-pointer transition-all active:scale-90"
+                    [ngClass]="vista() === 'inicio' ? 'text-amber-400 font-bold' : 'text-stone-400 hover:text-white'"
+                    aria-label="Inicio">
+              <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9M5 10v10h4v-6h6v6h4V10"></path></svg>
+              <span class="t-micro tracking-tight" [ngClass]="vista() === 'inicio' ? 'font-bold' : 'font-semibold'">Inicio</span>
+            </button>
+
             <button type="button" (click)="irAGaraje()" [attr.aria-current]="vista() === 'garaje' ? 'page' : null"
-                    class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-all active:scale-90 group min-h-[46px] cursor-pointer"
+                    class="flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[46px] cursor-pointer transition-all active:scale-90"
                     [ngClass]="vista() === 'garaje' ? 'text-amber-400 font-bold' : 'text-stone-400 hover:text-white'"
-                    aria-label="Garage">
+                    aria-label="Garaje">
               <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9L2 12v4c0 .6.4 1 1 1h2m14 0a2 2 0 100 4 2 2 0 000-4zm-14 0a2 2 0 100 4 2 2 0 000-4z"></path>
               </svg>
-              <span class="t-micro tracking-tight" [ngClass]="vista() === 'garaje' ? 'font-bold' : 'font-semibold'">Garage</span>
+              <span class="t-micro tracking-tight" [ngClass]="vista() === 'garaje' ? 'font-bold' : 'font-semibold'">Garaje</span>
             </button>
 
-            <button type="button" (click)="irAPedidos()" [attr.aria-current]="vista() === 'pedidos' ? 'page' : null"
-                    class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-all active:scale-90 min-h-[46px] cursor-pointer"
-                    [ngClass]="vista() === 'pedidos' ? 'text-amber-400 font-bold' : 'text-stone-400 hover:text-white'"
-                    aria-label="Pedidos activos">
-              <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-              </svg>
-              <span class="t-micro tracking-tight" [ngClass]="vista() === 'pedidos' ? 'font-bold' : 'font-semibold'">Pedidos</span>
-            </button>
-
-            <button type="button" (click)="openAddPartSheet()" class="flex-1 flex items-center justify-center min-h-[46px] cursor-pointer" title="Nueva consulta de repuesto" aria-label="Nueva consulta de repuesto">
-              <span class="w-11 h-11 rounded-xl bg-gradient-to-b from-amber-300 via-amber-400 to-amber-500 text-stone-950 flex items-center justify-center shadow-md active:scale-95 transition-transform">
+            <button type="button" (click)="openAddPartSheet()" class="flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[46px] cursor-pointer transition-all active:scale-90" aria-label="Solicitar repuestos" title="Solicitar repuestos">
+              <span class="w-9 h-9 rounded-xl bg-gradient-to-b from-amber-300 via-amber-400 to-amber-500 text-stone-950 flex items-center justify-center shadow-md active:scale-95 transition-transform">
                 <svg aria-hidden="true" class="w-5 h-5 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
                 </svg>
               </span>
+              <span class="t-micro text-amber-400/90 font-bold tracking-tight">Solicitar</span>
             </button>
 
-            <button type="button" (click)="irAConsultas()" class="flex-1 flex flex-col items-center justify-center gap-0.5 text-stone-400 hover:text-white transition-all active:scale-90 group min-h-[46px] cursor-pointer" aria-label="Consultas">
-              <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-              </svg>
-              <span class="t-micro font-semibold tracking-tight">Consultas</span>
+            <button type="button" (click)="irASolicitudes()" [attr.aria-current]="vista() === 'solicitudes' ? 'page' : null"
+                    class="flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[46px] cursor-pointer transition-all active:scale-90"
+                    [ngClass]="vista() === 'solicitudes' ? 'text-amber-400 font-bold' : 'text-stone-400 hover:text-white'"
+                    aria-label="Solicitudes">
+              <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+              <span class="t-micro tracking-tight" [ngClass]="vista() === 'solicitudes' ? 'font-bold' : 'font-semibold'">Solicitudes</span>
             </button>
 
-            <button type="button" (click)="irAFacturacion()" class="flex-1 flex flex-col items-center justify-center gap-0.5 text-stone-400 hover:text-white transition-all active:scale-90 group min-h-[46px] cursor-pointer" aria-label="Facturas">
-              <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"></path>
+            <button type="button" (click)="irAPedidos()" [attr.aria-current]="vista() === 'pedidos' ? 'page' : null"
+                    class="flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[46px] cursor-pointer transition-all active:scale-90"
+                    [ngClass]="vista() === 'pedidos' ? 'text-amber-400 font-bold' : 'text-stone-400 hover:text-white'"
+                    aria-label="Pedidos">
+              <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
               </svg>
-              <span class="t-micro font-semibold tracking-tight">Facturas</span>
+              <span class="t-micro tracking-tight" [ngClass]="vista() === 'pedidos' ? 'font-bold' : 'font-semibold'">Pedidos</span>
             </button>
 
           </nav>
@@ -1014,7 +1222,7 @@ type Sheet =
               @if (activeSheet() === 'tasks') { Seguimiento del pedido }
               @if (activeSheet() === 'item') { {{ selectedItem()?.brand }} }
               @if (activeSheet() === 'combo') { Tu pedido }
-              @if (activeSheet() === 'addPart') { Nueva pieza para cotizar }
+              @if (activeSheet() === 'addPart') { Solicitar repuestos }
               @if (activeSheet() === 'perfil') { Mi cuenta }
               @if (activeSheet() === 'garageAdd') { Sumar vehículo al garaje }
               @if (activeSheet() === 'garageKm') { Actualizar kilometraje }
@@ -1760,29 +1968,92 @@ type Sheet =
               </div>
             }
 
-            <!-- SHEET NUEVA PIEZA -->
+            <!-- SHEET SOLICITAR -->
             @if (activeSheet() === 'addPart') {
+              @if (solicitudEmitida()) {
+                <div class="text-center space-y-3 py-2">
+                  <div class="w-14 h-14 rounded-full bg-emerald-400 text-stone-950 flex items-center justify-center mx-auto shadow-lg shadow-emerald-400/30" aria-hidden="true">
+                    <svg class="w-7 h-7 stroke-[3.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                  </div>
+                  <h4 class="t-title font-extrabold text-white">Solicitud emitida</h4>
+                  <p class="t-body text-stone-300">Se envió a las 4 casas activas en Trelew y Puerto Madryn. Las cotizaciones llegan al instante.</p>
+                  <div class="p-3 rounded-xl bg-black/50 border border-white/10 t-micro text-stone-300">
+                    Destino: {{ destinoTexto() }} · Te avisamos por WhatsApp apenas llegue la primera cotización.
+                  </div>
+                  <button type="button" (click)="irASolicitudes(); closeSheet()" class="w-full min-h-[48px] rounded-xl bg-[#F5C342] text-[#12100E] font-black t-body shadow-lg shadow-[#F5C342]/25 active:scale-[0.98] transition cursor-pointer">
+                    Ver cotizaciones ›
+                  </button>
+                </div>
+              } @else {
               <div class="space-y-3">
                 <p class="t-body text-stone-300">
-                  Escribí o elegí el repuesto: las casas de Trelew y Puerto Madryn reciben la consulta al instante.
+                  Contanos qué necesitás: las casas cotizan al instante y te avisan por WhatsApp.
                 </p>
                 <div class="space-y-1.5">
-                  <label for="nueva-pieza" class="t-micro text-stone-400 block">Nombre o código del repuesto</label>
-                  <input id="nueva-pieza" type="text" placeholder="Ej: amortiguadores delanteros" class="w-full p-3 min-h-[44px] rounded-xl bg-black/70 border border-white/15 text-white t-body focus:border-amber-400 focus:outline-none placeholder-stone-600">
+                  <label for="nueva-pieza" class="t-micro font-bold text-stone-400 uppercase tracking-wider block">Repuesto que buscás</label>
+                  <input id="nueva-pieza" type="text" placeholder="Ej.: amortiguadores delanteros" class="w-full p-3 min-h-[44px] rounded-xl bg-black/70 border border-white/15 text-white t-body focus:border-amber-400 focus:outline-none placeholder-stone-600">
                 </div>
-                <div class="flex items-center gap-1.5 flex-wrap pt-1">
+
+                <!-- FOTOS (opcional, hasta 3) -->
+                <div class="space-y-1.5">
+                  <span class="t-micro font-bold text-stone-400 uppercase tracking-wider block">Fotos de la pieza <span class="text-stone-600 normal-case">(opcional · hasta 3)</span></span>
+                  <input id="foto-pieza" type="file" accept="image/*" multiple (change)="onFotos($event)" class="sr-only">
+                  <label for="foto-pieza" class="flex items-center gap-3 p-3 min-h-[56px] rounded-2xl border border-dashed border-white/20 bg-white/[0.03] hover:border-amber-400/50 cursor-pointer transition">
+                    <svg aria-hidden="true" class="w-6 h-6 text-amber-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.5l1.5-2h7l1.5 2h.5a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><circle cx="12" cy="13" r="4" stroke-linejoin="round"></circle></svg>
+                    <span class="min-w-0">
+                      <span class="t-body font-bold text-amber-200 block">{{ fotos().length ? 'Agregar otra foto · ' + fotos().length + '/3' : 'Adjuntar foto' }}</span>
+                      <span class="t-micro text-stone-500 block">Muestra contramuestra, código o el daño</span>
+                    </span>
+                  </label>
+                  @if (fotos().length) {
+                    <div class="grid grid-cols-3 gap-2">
+                      @for (f of fotos(); track f.nombre; let i = $index) {
+                        <div class="relative aspect-square rounded-xl overflow-hidden border border-white/15 bg-stone-900">
+                          <img [src]="f.preview" [alt]="f.nombre" class="w-full h-full object-cover">
+                          <button type="button" (click)="quitarFoto(i)" [attr.aria-label]="'Quitar foto ' + (i + 1)" class="absolute top-1 right-1 w-7 h-7 rounded-full bg-black/70 flex items-center justify-center text-white hover:bg-black/90 cursor-pointer">
+                            <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+
+                <div class="flex items-center gap-1.5 flex-wrap pt-0.5">
                   <span class="t-micro text-stone-400">Sugerencias:</span>
                   <button type="button" class="px-2.5 py-1.5 min-h-[36px] rounded-lg bg-white/5 border border-white/10 t-micro text-amber-300 cursor-pointer">Bomba de agua</button>
                   <button type="button" class="px-2.5 py-1.5 min-h-[36px] rounded-lg bg-white/5 border border-white/10 t-micro text-amber-300 cursor-pointer">Amortiguadores</button>
                   <button type="button" class="px-2.5 py-1.5 min-h-[36px] rounded-lg bg-white/5 border border-white/10 t-micro text-amber-300 cursor-pointer">Correa</button>
                 </div>
-                <div class="p-3 rounded-xl bg-white/[0.04] border border-white/10 text-stone-300 t-micro">
-                  Se envía a los 4 comercios activos en simultáneo.
+
+                <!-- DESTINO -->
+                <div class="space-y-1.5">
+                  <span class="t-micro font-bold text-stone-400 uppercase tracking-wider block">Destino de entrega</span>
+                  <div class="grid grid-cols-2 gap-2">
+                    <button type="button" (click)="elegirDestino('taller')" [attr.aria-pressed]="destino() === 'taller'"
+                            class="p-2.5 min-h-[56px] rounded-xl border flex flex-col items-start gap-0.5 text-left cursor-pointer transition"
+                            [ngClass]="destino() === 'taller' ? 'border-amber-400 bg-amber-400/10' : 'border-white/10 bg-white/[0.04]'">
+                      <span class="t-micro font-bold text-white flex items-center gap-1.5"><svg aria-hidden="true" class="w-3.5 h-3.5 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"></path></svg>Taller</span>
+                      <span class="t-micro text-stone-400 block truncate w-full">{{ tallerNombre() }}</span>
+                    </button>
+                    <button type="button" (click)="elegirDestino('ubicacion')" [attr.aria-pressed]="destino() === 'ubicacion'"
+                            class="p-2.5 min-h-[56px] rounded-xl border flex flex-col items-start gap-0.5 text-left cursor-pointer transition"
+                            [ngClass]="destino() === 'ubicacion' ? 'border-amber-400 bg-amber-400/10' : 'border-white/10 bg-white/[0.04]'">
+                      <span class="t-micro font-bold text-white flex items-center gap-1.5"><svg aria-hidden="true" class="w-3.5 h-3.5 text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>Mi ubicación</span>
+                      <span class="t-micro text-stone-400 block truncate w-full">{{ ubicacion() }}</span>
+                    </button>
+                  </div>
                 </div>
-                <button type="button" (click)="closeSheet()" class="w-full min-h-[48px] rounded-xl bg-amber-400 text-stone-950 font-black t-body shadow-lg shadow-amber-400/25 active:scale-[0.98] transition cursor-pointer">
-                  Emitir consulta
+
+                <div class="p-3 rounded-xl bg-white/[0.04] border border-white/10 text-stone-300 t-micro">
+                  Se envía a las 4 casas activas en simultáneo. Recibís las cotizaciones en minutos.
+                </div>
+                <button type="button" (click)="emitirSolicitud()" class="w-full min-h-[48px] rounded-xl bg-amber-400 text-stone-950 font-black t-body shadow-lg shadow-amber-400/25 active:scale-[0.98] transition cursor-pointer flex items-center justify-center gap-1.5">
+                  <span>Emitir solicitud</span>
+                  <svg aria-hidden="true" class="w-4 h-4 stroke-[2.5] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
                 </button>
               </div>
+              }
             }
 
             <!-- SHEET PERFIL / CUENTA -->
@@ -1969,7 +2240,7 @@ type Sheet =
                   </span>
                 </button>
 
-                <button type="button" (click)="irAPedidos(); closeSheet()"
+                <button type="button" (click)="irASolicitudes(); closeSheet()"
                         class="w-full text-left p-3 rounded-2xl bg-gradient-to-r from-amber-950/40 to-stone-900 border border-amber-500/30 flex items-start gap-2.5 active:scale-[0.99] transition cursor-pointer">
                   <span class="w-2 h-2 rounded-full bg-amber-400 mt-1.5 shrink-0" aria-hidden="true"></span>
                   <span class="min-w-0 flex-1">
@@ -2046,7 +2317,92 @@ export class CompradorMovilComponent {
   readonly vehicleImg = '/img/veh-passat.jpg';
 
   // ── Garaje ────────────────────────────────────────────────────────────────
-  readonly vista = signal<Vista>('pedidos');
+  readonly vista = signal<Vista>('inicio');
+
+  // ── INICIO: feed del comprador (demo) ─────────────────────────────────────
+  readonly notificaciones = [
+    { id: 'cedula', punto: 'bg-emerald-400', texto: 'Cédula del Passat verificada contra seccional Trelew', cuando: 'Ayer · 18:05 hs', leida: true, destino: 'solicitud' as const },
+    { id: 'cotiz', punto: 'bg-cyan-400', texto: 'Llegaron 3 cotizaciones nuevas · Pastillas de freno delanteras', cuando: 'Hoy · 02:12 hs', leida: false, destino: 'solicitud' as const },
+    { id: 'correa', punto: 'bg-rose-400', texto: 'La correa de distribución toca a los 120.000 km', cuando: 'Hoy · 07:30 hs', leida: false, destino: 'garaje' as const },
+  ];
+  readonly actividadReciente = [
+    { hora: '13:19', texto: 'Pago acreditado · $100.300 · cadete asignado' },
+    { hora: '02:41', texto: 'Pedido confirmado · 3/3 piezas reservadas' },
+    { hora: '02:12', texto: 'Llegaron 3 cotizaciones nuevas · 7 casas compitiendo' },
+    { hora: 'Ayer', texto: 'Cédula del Passat verificada · AB 412 TX' },
+  ];
+  notificacionGo(n: { destino: 'garaje' | 'solicitud' }): void {
+    if (n.destino === 'garaje') this.irAGaraje(); else this.irASolicitudes();
+  }
+
+  // ── SOLICITAR: fotos y estado de emisión (demo) ───────────────────────────
+  /** Fase inline del sheet "Nueva solicitud": armado o emitido. */
+  readonly solicitudEmitida = signal(false);
+  readonly fotos = signal<{ nombre: string; preview: string }[]>([]);
+
+  onFotos(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const archivos = Array.from(input.files ?? []).slice(0, 3 - this.fotos().length);
+    const nuevas = archivos
+      .filter((f) => f.type.startsWith('image/'))
+      .map((f) => ({ nombre: f.name, preview: URL.createObjectURL(f) }));
+    if (nuevas.length) this.fotos.set([...this.fotos(), ...nuevas].slice(0, 3));
+    input.value = '';
+  }
+
+  quitarFoto(i: number): void {
+    const f = this.fotos()[i];
+    if (f?.preview) URL.revokeObjectURL(f.preview);
+    this.fotos.set(this.fotos().filter((_, idx) => idx !== i));
+  }
+
+  emitirSolicitud(): void {
+    this.solicitudEmitida.set(true);
+  }
+
+  // ── PRÓXIMOS MANTENIMIENTOS (agenda por vehículo) ──────────────────────────
+  readonly proximosPorVehiculo: Record<string, { id: string; titulo: string; ultimo: string; chip: string; tono: 'rose' | 'amber' | 'emerald'; detalle: string; icon: 'aceite' | 'aire' | 'correa' | 'frenos' | 'refrigerante' }[]> = {
+    passat: [
+      { id: 'correa', titulo: 'Correa de distribución & bomba', ultimo: 'Cambiada a los 60.000 km · 2024', chip: 'Vencida', tono: 'rose', detalle: 'Cumple 5 años o 120.000 km: toca ya.', icon: 'correa' },
+      { id: 'aceite', titulo: 'Cambio de aceite 5W-40 + filtro', ultimo: 'Hecho a los 120.000 km', chip: 'En 5.000 km', tono: 'amber', detalle: 'Castrol GTX 5W-40 · intervalo 5.000 km.', icon: 'aceite' },
+      { id: 'aire', titulo: 'Filtro de aire y habitáculo', ultimo: 'Cambiado a los 115.000 km', chip: 'En 5.000 km', tono: 'amber', detalle: 'Reemplazo en el próximo service.', icon: 'aire' },
+      { id: 'frenos', titulo: 'Pastillas y discos delanteros', ultimo: 'Hechos a los 110.000 km', chip: 'En 10.000 km', tono: 'emerald', detalle: 'TRW 312mm · desgaste al 45%.', icon: 'frenos' },
+      { id: 'anticongelante', titulo: 'Refrigerante orgánico (G12 EVO)', ultimo: 'Cambiado en 2025', chip: 'Nov 2027', tono: 'emerald', detalle: 'Duración estimada: 3 años o 90.000 km.', icon: 'refrigerante' },
+    ],
+    hilux: [
+      { id: 'aceite', titulo: 'Cambio de aceite 5W-30 + filtro', ultimo: 'Hecho a los 75.000 km', chip: 'En 2.500 km', tono: 'amber', detalle: 'Toyota 5W-30 · intervalo 5.000 km.', icon: 'aceite' },
+      { id: 'filtro-diesel', titulo: 'Filtro de gasoil', ultimo: 'Cambiado a los 70.000 km', chip: 'En 10.000 km', tono: 'emerald', detalle: 'Filtro original · 20.000 km.', icon: 'aire' },
+      { id: 'distribucion', titulo: 'Inspección de distribución', ultimo: 'Inspeccionada a los 70.000 km', chip: 'En 15.000 km', tono: 'emerald', detalle: 'Cadena sin mantenimiento hasta 150.000 km.', icon: 'correa' },
+      { id: 'neumaticos', titulo: 'Rotación y balanceo', ultimo: 'Hecho a los 72.000 km', chip: 'En 8.000 km', tono: 'emerald', detalle: '3.500 km con carga · al 100%.', icon: 'frenos' },
+    ],
+  };
+
+  /** Copiado del VIN al portapapeles (pasaporte digital). */
+  readonly vinCopiado = signal(false);
+  async copiarVin(): Promise<void> {
+    const vin = this.garageVehicle()?.vin;
+    if (!vin) return;
+    try {
+      await navigator.clipboard?.writeText(vin);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = vin;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch { /* portapapeles sin soporte */ }
+      ta.remove();
+    }
+    this.vinCopiado.set(true);
+    window.setTimeout(() => this.vinCopiado.set(false), 1600);
+  }
+
+  private limpiarSolicitud(): void {
+    for (const f of this.fotos()) if (f.preview) URL.revokeObjectURL(f.preview);
+    this.fotos.set([]);
+    this.solicitudEmitida.set(false);
+  }
   readonly garageTab = signal<GarageTab>('estado');
   readonly garageActiveId = signal<string>('passat');
   readonly historyOpen = signal<string>('h1');
@@ -2057,6 +2413,8 @@ export class CompradorMovilComponent {
       id: 'passat',
       corto: 'VW Passat',
       titulo: 'VW Passat 2.0 TDI',
+      marca: 'Volkswagen',
+      modelo: 'Passat 2.0 TDI',
       patente: 'AB 412 TX',
       vin: 'WVWZZZ3CZ6P108422',
       motor: 'BKP (2.0 16V TDI)',
@@ -2066,18 +2424,12 @@ export class CompradorMovilComponent {
       etiquetaMotor: 'BKP 140CV',
       img: '/img/veh-passat.jpg',
       estado: 'Óptimo',
-      specs: { motor: '2.0 TDI', potencia: '140 CV', combustible: 'Diésel', traccion: 'Delantera', caja: 'Manual 6ta' },
+      specs: { motor: '2.0 TDI · BKP', potencia: '140 CV', combustible: 'Diésel', traccion: 'Delantera', caja: 'Manual 6ta · HDV' },
       checkups: [
         { key: 'bateria', titulo: 'Batería 75Ah', valor: '12.6 V', detalle: '14/08/24', estado: 'Carga 98% · 18m vida', pct: 98, tono: 'emerald' },
         { key: 'anticongelante', titulo: 'Refrigerante', valor: '10/05/25', detalle: 'Vence 05/27', estado: 'Quedan 6 meses', pct: 75, tono: 'cyan' },
         { key: 'distribucion', titulo: 'Distribución', valor: '18/03/22', detalle: 'Vence 03/27', estado: '¡Alerta! 120.000 km', pct: 88, tono: 'rose' },
         { key: 'neumaticos', titulo: 'Neumáticos', valor: '32 PSI', detalle: '215/55 R16', estado: 'Calibrado hace 7d', pct: 100, tono: 'sky' }
-      ],
-      servicios: [
-        { id: 'svc-aceite', nombre: 'Cambio de aceite & filtro', detalle: 'Castrol 5W-40 + Wega WOE-640', ultimo: '120.000 km', nota: 'Hace 5.000 km', alerta: false, icono: 'aceite' },
-        { id: 'svc-aire', nombre: 'Filtro de aire & habitáculo', detalle: 'Mann Filter C35154', ultimo: '115.000 km', nota: 'Vence a los 130.000', alerta: false, icono: 'aire' },
-        { id: 'svc-correa', nombre: 'Correa de distribución & bomba', detalle: 'Kit completo con tensor', ultimo: '60.000 km', nota: 'Toca a los 120.000', alerta: true, icono: 'correa' },
-        { id: 'svc-frenos', nombre: 'Pastillas & discos delanteros', detalle: 'TRW 312mm', ultimo: '110.000 km', nota: 'Revisado en noviembre', alerta: false, icono: 'frenos' }
       ],
       historial: [
         {
@@ -2132,6 +2484,8 @@ export class CompradorMovilComponent {
       id: 'hilux',
       corto: 'Toyota Hilux',
       titulo: 'Toyota Hilux 2.8 D-4D',
+      marca: 'Toyota',
+      modelo: 'Hilux 2.8 D-4D',
       patente: 'AD 890 JK',
       vin: '8AJBA3CD8K0193844',
       motor: '1GD-FTV (2.8 16V turbo)',
@@ -2146,11 +2500,6 @@ export class CompradorMovilComponent {
         { key: 'anticongelante', titulo: 'Refrigerante', valor: '18/09/25', detalle: 'Vence 09/27', estado: 'Quedan 10 meses', pct: 85, tono: 'cyan' },
         { key: 'distribucion', titulo: 'Distribución', valor: 'Cadena', detalle: 'Libre mant.', estado: 'Sin cambio programado', pct: 100, tono: 'emerald' },
         { key: 'neumaticos', titulo: 'Neumáticos', valor: '35 PSI', detalle: '265/65 R17', estado: 'Calibrado hace 3d', pct: 100, tono: 'sky' }
-      ],
-      servicios: [
-        { id: 'hilux-aceite', nombre: 'Cambio de aceite & filtro', detalle: 'Toyota 5W-30 + filtro original', ultimo: '75.000 km', nota: 'Hace 3.500 km', alerta: false, icono: 'aceite' },
-        { id: 'hilux-aire', nombre: 'Filtro de aire & habitáculo', detalle: 'Original Toyota', ultimo: '70.000 km', nota: 'Vence a los 80.000', alerta: false, icono: 'aire' },
-        { id: 'hilux-frenos', nombre: 'Pastillas & discos', detalle: 'Advics 319mm', ultimo: '65.000 km', nota: 'Revisado en septiembre', alerta: false, icono: 'frenos' }
       ],
       historial: [
         {
@@ -2182,6 +2531,10 @@ export class CompradorMovilComponent {
     const list = this.garageVehicles();
     return list.find((v) => v.id === this.garageActiveId()) ?? list[0];
   });
+
+  /** Agenda de próximos mantenimientos del vehículo seleccionado. */
+  readonly proximosVehiculo = computed(() => this.proximosPorVehiculo[this.garageActiveId()] ?? []);
+  readonly proximosVencidos = computed(() => this.proximosVehiculo().filter((m) => m.tono === 'rose').length);
 
   readonly checkupActivo = computed(() => {
     const key = this.checkupKey();
@@ -2688,6 +3041,8 @@ export class CompradorMovilComponent {
       id,
       corto: modelo.split(/\s+/).slice(0, 2).join(' '),
       titulo: modelo,
+      marca: modelo.split(/\s+/)[0] || '—',
+      modelo: modelo.split(/\s+/).slice(1).join(' ') || modelo,
       patente,
       vin: 'Pendiente de validación',
       motor: 'A confirmar',
@@ -2703,7 +3058,6 @@ export class CompradorMovilComponent {
         { key: 'distribucion', titulo: 'Distribución', valor: '—', detalle: 'Sin registro', estado: 'Agregá la primera medición', pct: 0, tono: 'rose' },
         { key: 'neumaticos', titulo: 'Neumáticos', valor: '—', detalle: 'Sin registro', estado: 'Agregá la primera medición', pct: 0, tono: 'sky' }
       ],
-      servicios: [],
       historial: []
     };
 
@@ -2718,15 +3072,11 @@ export class CompradorMovilComponent {
   guardarServicio(tipo: string, kmRaw: string, fecha: string, notas: string, costo: string, taller: string): void {
     const km = Number(kmRaw) || this.garageVehicle().km;
     const nombre = this.nombreServicio(tipo);
-    const icono = this.iconoServicio(tipo);
     const id = 's' + Date.now();
 
     this.actualizarVehiculo((v) => ({
       ...v,
       km: Math.max(v.km, km),
-      servicios: v.servicios.map((s) =>
-        s.icono === icono ? { ...s, ultimo: this.kmFmt(km) + ' km', nota: 'Registrado hoy', alerta: false } : s
-      ),
       historial: [
         {
           id,
@@ -2757,10 +3107,6 @@ export class CompradorMovilComponent {
     return nombres[tipo] ?? 'Mantenimiento general';
   }
 
-  private iconoServicio(tipo: string): GarageService['icono'] {
-    return tipo === 'distribucion' ? 'correa' : (tipo as GarageService['icono']);
-  }
-
   private fechaCorta(iso: string): string {
     const [y, m, d] = (iso || this.hoy).split('-');
     const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -2778,7 +3124,7 @@ export class CompradorMovilComponent {
   openVehicleSheet(): void { this.open('vehicle'); }
   openTasks(): void { this.open('tasks'); }
   openComboSheet(): void { this.open('combo'); }
-  openAddPartSheet(): void { this.open('addPart'); }
+  openAddPartSheet(): void { this.limpiarSolicitud(); this.open('addPart'); }
   openPerfilSheet(): void { this.open('perfil'); }
   openGarageAdd(): void { this.open('garageAdd'); }
   openGarageKm(): void { this.open('garageKm'); }
@@ -2804,6 +3150,7 @@ export class CompradorMovilComponent {
 
   closeSheet(): void {
     if (!this.activeSheet()) return;
+    if (this.activeSheet() === 'addPart') this.limpiarSolicitud();
     this.activeSheet.set(null);
     this.checkupKey.set(null);
     const target = this.lastFocused;
@@ -2981,22 +3328,24 @@ export class CompradorMovilComponent {
   }
 
   // ── Navegación ────────────────────────────────────────────────────────────
+  irAInicio(): void {
+    this.vista.set('inicio');
+    window.scrollTo({ top: 0 });
+  }
+
   irAGaraje(): void {
     this.vista.set('garaje');
+    window.scrollTo({ top: 0 });
+  }
+
+  irASolicitudes(): void {
+    this.vista.set('solicitudes');
     window.scrollTo({ top: 0 });
   }
 
   irAPedidos(): void {
     this.vista.set('pedidos');
     window.scrollTo({ top: 0 });
-  }
-
-  irAConsultas(): void {
-    this.router.navigate(['/']);
-  }
-
-  irAFacturacion(): void {
-    this.router.navigate(['/']);
   }
 
   /** Cierra sesión: limpia el rol, la sesión real de Supabase y vuelve al inicio. */
