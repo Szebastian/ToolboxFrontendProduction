@@ -82,11 +82,13 @@ html{scrollbar-width:thin;scrollbar-color:rgba(23,20,18,.35) transparent}
 .direct-car-tab .tab-img{width:1.25rem;height:1.25rem;border-radius:9999px;overflow:hidden;flex-shrink:0;border:1px solid rgba(255,255,255,.2);background:#1C1917}
 .direct-car-tab.auto-tab-activo .tab-img{border-color:#1C1917;background:#0C0A09}
 .activo-badge{padding:.05rem .375rem;border-radius:9999px;background:#0C0A09;color:#FCD34D;font-size:9px;font-family:'JetBrains Mono',monospace;font-weight:800;line-height:1.4}
-/* STAGING ONLY — oculta la insignia "Powered by Netlify" del entorno de prueba.
+/* STAGING ONLY — oculta el "Powered by Netlify" (iframe #nl-badge-frame, con el
+   botón #nl-badge dentro) del entorno de prueba.
    Quitar este bloque antes de exponer el sitio como producto real:
-   Netlify la inyecta elásticamente (selector puede cambiar) y borrar/ignorar
-   las condiciones del tier gratuito en producción puede violar sus términos.
+   Netlify la inyecta elásticamente (id/clip-path pueden cambiar) y ocultar el
+   branding de su tier gratuito en producción puede violar sus términos.
    En prod: plan Pro de Netlify o migrar a Cloudflare Pages / Vercel / GitHub Pages. */
+#nl-badge-frame,
 #nl-badge { display: none !important; }
 
 .font-moto{font-family:'JetBrains Mono',monospace}
