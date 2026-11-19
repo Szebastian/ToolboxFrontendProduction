@@ -69,6 +69,40 @@ function datosVehiculo(nombreLargo: string): { marca: string; modelo: string } {
     .vacio{margin-top:26px;padding:22px;border:1px dashed rgba(255,255,255,.2);border-radius:18px;text-align:center;color:#D6D3D1;font-size:13px;line-height:1.5}
     .cta{display:inline-block;margin-top:12px;padding:10px 18px;border-radius:14px;background:#67E8F9;color:#082F49;font-weight:800;font-size:12px;cursor:pointer;border:0}
     .cargando{margin-top:26px;color:#A8A29E;font-family:'JetBrains Mono',monospace;font-size:12px}
+    .idle{margin-top:30px;text-align:center;padding:8px 12px 18px}
+    .idle-kicker{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#78716C}
+    .idle-title{margin-top:10px;font-size:clamp(20px,5.2vw,26px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+    .idle-sub{margin:12px auto 0;max-width:46ch;font-size:13px;color:#A8A29E;line-height:1.55}
+    .idle-chips{margin-top:18px;display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+    .idle-chip{min-height:44px;padding:12px 16px;border-radius:999px;background:rgba(251,191,36,.09);border:1px solid rgba(251,191,36,.3);color:#FDE68A;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;cursor:pointer;transition:all .18s}
+    .idle-chip:hover{background:rgba(251,191,36,.16);border-color:rgba(251,191,36,.5)}
+    .idle-chip:active{transform:scale(.96)}
+
+    /* ── MENÚ INFERIOR MÓVIL: idéntico al panel del comprador (mismo ícono activo: Solicitudes) ── */
+    .mobile-bar{position:fixed;left:0;right:0;bottom:0;z-index:60;display:flex;align-items:stretch;justify-content:space-between;gap:4px;padding:.5rem .5rem calc(.5rem + env(safe-area-inset-bottom));background:linear-gradient(to top,#14110E 0%,rgba(20,17,14,.96) 80%,rgba(20,17,14,0) 100%);border-top:1px solid rgba(255,255,255,.08)}
+    .mb-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15rem;min-width:0;min-height:52px;color:#A8A29E;text-decoration:none;border-radius:.8rem;transition:all .15s}
+    .mb-item svg{width:22px;height:22px}
+    .mb-label{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.02em}
+    .mb-item:hover,.mb-item:focus-visible{color:#fff}
+    .mb-activo{color:#FBBF24;background:rgba(251,191,36,.08)}
+    .mb-activo svg{color:#FBBF24}
+    .mb-solicitud{gap:.1rem}
+    .mb-plus{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:.85rem;background:linear-gradient(to bottom,#FDE68A,#F59E0B);color:#1C1917;box-shadow:0 2px 10px rgba(245,158,11,.45)}
+    .mb-plus svg{width:20px;height:20px}
+    .mb-solicitud-label{color:#FBBF24}
+    .mb-item:active{transform:scale(.94)}
+
+    @media (max-width:767px){
+      .console{padding:76px .75rem calc(96px + env(safe-area-inset-bottom))}
+      .fila{flex-direction:column;gap:10px;padding:14px}
+      .fila img{width:100%;height:160px;border-radius:14px;align-self:auto}
+      .search-row{flex-direction:column;gap:10px;padding:10px 12px;border-radius:16px}
+      .search-row input{font-size:15px;width:100%}
+      .btn-buscar{width:100%;text-align:center;padding:12px}
+    }
+    @media (min-width:768px){
+      .mobile-bar{display:none}
+    }
     /* ── Pantallas grandes: más ancho útil, tipografía y cards escaladas ── */
     @media (min-width:1024px){
       .console{padding:88px 72px 96px}
@@ -114,8 +148,22 @@ function datosVehiculo(nombreLargo: string): { marca: string; modelo: string } {
         </span>
       </div>
 
+      <!-- Idle: aún no se buscó nada (ej. al entrar desde "Solicitar") -->
+      @if (!buscado()) {
+        <div class="idle">
+          <p class="idle-kicker">Catálogo Toolbox · 14 rubros</p>
+          <p class="idle-title">¿Qué repuesto llevará tu<br /><span style="color:#FCD34D">{{ autoActual().nombreLargo }} {{ autoActual().resumen }}</span>?</p>
+          <p class="idle-sub">Escribí arriba por pieza, código OEM o medida (ej: <em>pastillas TRW</em>, <em>discos 312</em>) — o tocá una búsqueda frecuente:</p>
+          <div class="idle-chips">
+            @for (s of sugerencias; track s) {
+              <button class="idle-chip" type="button" (click)="buscarSugerencia(s)">{{ s }}</button>
+            }
+          </div>
+        </div>
+      }
+
       <!-- Encabezado de resultados -->
-      @if (!cargando()) {
+      @if (buscado() && !cargando()) {
         <div class="encabezado">
           <h1 class="titulo">Resultados para “<span style="color:#FCD34D">{{ texto }}</span>”</h1>
           @if (resultados().length) {
@@ -125,6 +173,7 @@ function datosVehiculo(nombreLargo: string): { marca: string; modelo: string } {
       }
 
       <!-- Lista de resultados: filas cómodas, sin precios -->
+      @if (buscado()) {
       @if (cargando()) {
         <p class="cargando">Buscando en el catálogo…</p>
       } @else if (resultados().length) {
@@ -166,11 +215,38 @@ function datosVehiculo(nombreLargo: string): { marca: string; modelo: string } {
         <div class="vacio">
           Sin repuestos compatibles con tu {{ autoActual().nombreLargo }} para “{{ texto }}”.
           <br />Podés pedir cotización igual: los repuesteros cotizan por descripción y foto, y el catálogo crece con cada cotización.
-          <br /><a routerLink="/" class="cta">Pedir cotización desde el inicio →</a>
+          <br /><a routerLink="/cliente" class="cta">Ir al panel del comprador →</a>
         </div>
+      }
       }
 
     </div>
+
+    <!-- MENÚ INFERIOR MÓVIL (coincide con el panel del comprador; icono activo = Solicitudes) -->
+    <nav class="mobile-bar" aria-label="Navegación del comprador">
+      <a routerLink="/cliente" class="mb-item" aria-label="Inicio">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9M5 10v10h4v-6h6v6h4V10"></path></svg>
+        <span class="mb-label">Inicio</span>
+      </a>
+      <a routerLink="/cliente" [queryParams]="{ vista: 'garaje' }" class="mb-item" aria-label="Garaje">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9L2 12v4c0 .6.4 1 1 1h2m14 0a2 2 0 100 4 2 2 0 000-4zm-14 0a2 2 0 100 4 2 2 0 000-4z"></path></svg>
+        <span class="mb-label">Garaje</span>
+      </a>
+      <a routerLink="/cliente" class="mb-item mb-solicitud" aria-label="Solicitar repuestos">
+        <span class="mb-plus">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16m8-8H4"></path></svg>
+        </span>
+        <span class="mb-label mb-solicitud-label">Solicitar</span>
+      </a>
+      <a routerLink="/cliente" [queryParams]="{ vista: 'solicitudes' }" class="mb-item mb-activo" aria-label="Solicitudes" aria-current="page">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+        <span class="mb-label">Solicitudes</span>
+      </a>
+      <a routerLink="/cliente" [queryParams]="{ vista: 'pedidos' }" class="mb-item" aria-label="Pedidos">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+        <span class="mb-label">Pedidos</span>
+      </a>
+    </nav>
   </div>
   `
 })
@@ -186,6 +262,9 @@ export class BuscarComponent implements OnInit {
   texto = '';
   resultados = this.catalogo.resultados;
   cargando = this.catalogo.cargando;
+  /** true una vez que el usuario disparó una búsqueda (evita mostrar "Resultados para ''" al aterrizar) */
+  buscado = signal(false);
+  readonly sugerencias = ['pastillas de freno', 'discos 312', 'filtro de aceite', 'filtro de aire', 'bomba de agua', 'kit de distribución'];
 
   ngOnInit(): void {
     // La query viene del home: /buscar?q=discos+312
@@ -204,8 +283,14 @@ export class BuscarComponent implements OnInit {
 
   buscarAhora(): void {
     if (!this.texto.trim()) return;
+    this.buscado.set(true);
     this.router.navigate([], { queryParams: { q: this.texto.trim() }, replaceUrl: true });
     this.catalogo.buscar(this.texto.trim(), datosVehiculo(this.autoActual().nombreLargo));
+  }
+
+  buscarSugerencia(s: string): void {
+    this.texto = s;
+    this.buscarAhora();
   }
 
   cambiarAuto(i: string | number): void {

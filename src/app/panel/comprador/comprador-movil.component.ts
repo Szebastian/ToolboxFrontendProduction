@@ -1,6 +1,6 @@
 ﻿import { Component, DestroyRef, ElementRef, HostListener, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { SupabaseService } from '../../../application/services/supabase.service';
 import { DemoApiService } from '../../../application/services/demo-api.service';
 import { usuarioSesion } from '../../../application/services/demo-api.service';
@@ -1176,7 +1176,7 @@ type Sheet =
               <span class="t-micro tracking-tight" [ngClass]="vista() === 'garaje' ? 'font-bold' : 'font-semibold'">Garaje</span>
             </button>
 
-            <button type="button" (click)="openAddPartSheet()" class="flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[46px] cursor-pointer transition-all active:scale-90" aria-label="Solicitar repuestos" title="Solicitar repuestos">
+            <button type="button" (click)="irABuscar()" class="flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[46px] cursor-pointer transition-all active:scale-90" aria-label="Solicitar repuestos — ir al inicio" title="Solicitar repuestos — ir al inicio">
               <span class="w-9 h-9 rounded-xl bg-gradient-to-b from-amber-300 via-amber-400 to-amber-500 text-stone-950 flex items-center justify-center shadow-md active:scale-95 transition-transform">
                 <svg aria-hidden="true" class="w-5 h-5 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
@@ -2288,6 +2288,7 @@ type Sheet =
 })
 export class CompradorMovilComponent {
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly supa = inject(SupabaseService);
   private readonly demoApi = inject(DemoApiService);
 
@@ -2314,6 +2315,12 @@ export class CompradorMovilComponent {
       document.body.style.overflow = 'hidden';
       onCleanup(() => { document.body.style.overflow = previous; });
     });
+
+    // /cliente?vista=garaje|solicitudes|pedidos|inicio → posiciona la solapa activa.
+    const vistaParam = this.route.snapshot.queryParamMap.get('vista');
+    if (vistaParam === 'garaje' || vistaParam === 'solicitudes' || vistaParam === 'pedidos' || vistaParam === 'inicio') {
+      this.vista.set(vistaParam as Vista);
+    }
   }
 
   /** Iniciales del avatar: nombre real si hay sesión, "MG" por defecto. */
@@ -3390,6 +3397,11 @@ export class CompradorMovilComponent {
   irAGaraje(): void {
     this.vista.set('garaje');
     window.scrollTo({ top: 0 });
+  }
+
+  /** Abre la home del cliente (\`/\`): desde ahí el comprador elige "Buscar yo" (catálogo) o "Enviar a mi mecánico" (armar cotización). */
+  irABuscar(): void {
+    this.router.navigate(['/']);
   }
 
   irASolicitudes(): void {
