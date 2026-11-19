@@ -73,6 +73,63 @@ export interface PedidoBackend {
   created_at: string | null;
 }
 
+// ── Taxonomía / catálogo inteligente / búsqueda híbrida ─────────────────────
+
+export interface SubCategoriaTaxonomia {
+  id: string;
+  slug: string;
+  name: string;
+  icon: string | null;
+  applies_to_engines: string[];
+  position_required: boolean;
+  position_options: string[];
+  sort_order: number;
+}
+
+export interface CategoriaTaxonomia {
+  slug: string;
+  name: string;
+  icon: string | null;
+  sort_order: number;
+  subcategories: SubCategoriaTaxonomia[];
+}
+
+export interface VehiculoDecodificado {
+  vin: string;
+  brand: string;
+  model: string | null;
+  year: number | null;
+  engine: {
+    prefix: string | null;
+    family: string;
+    timing: string;
+    aspiration: string;
+    label: string;
+    displacement_cc: number | null;
+  };
+  fuel: string;
+  source: 'decoded' | 'cache';
+}
+
+export interface ResultadoBusqueda {
+  title: string;
+  source: 'vendor_catalog' | 'mercado_libre';
+  image_url: string | null;
+  oem: string | null;
+  price: number | null;
+  currency: string | null;
+  compatible: 'yes' | 'no' | 'unknown';
+  catalog_part_id: string | null;
+  permalink: string | null;
+}
+
+export interface BusquedaHibridaRespuesta {
+  query: string;
+  total: number;
+  vehicle: VehiculoDecodificado | null;
+  results: ResultadoBusqueda[];
+}
+
 export interface ParteCatalogoBackend {
   id: string;
   part_name: string;
@@ -210,6 +267,30 @@ export class DemoApiService {
   // ── Catálogo (alimentado por las fotos de los vendedores) ──
   catalogo(q: string): Observable<ParteCatalogoBackend[]> {
     return this.http.get<RespuestaBackend<ParteCatalogoBackend[]>>(`${this.base}/catalog/`, { params: { q } })
+      .pipe(map(r => r.data));
+  }
+
+  // ── Catálogo inteligente ──
+  taxonomy(engineFamily?: string): Observable<CategoriaTaxonomia[]> {
+    const params = engineFamily ? { engine_family: engineFamily } : undefined;
+    return this.http.get<RespuestaBackend<CategoriaTaxonomia[]>>(`${this.base}/catalog/taxonomy`, { params })
+      .pipe(map(r => r.data));
+  }
+
+  decodeVehiculo(vin: string, engineNumber?: string): Observable<VehiculoDecodificado> {
+    const params: Record<string, string> = { vin };
+    if (engineNumber) params['engine_number'] = engineNumber;
+    return this.http.get<RespuestaBackend<VehiculoDecodificado>>(`${this.base}/catalog/decode`, { params })
+      .pipe(map(r => r.data));
+  }
+
+  buscarHibrido(q: string, opts: { vin?: string; engineNumber?: string; position?: string; limit?: number } = {}): Observable<BusquedaHibridaRespuesta> {
+    const params: Record<string, string> = { q };
+    if (opts.vin) params['vin'] = opts.vin;
+    if (opts.engineNumber) params['engine_number'] = opts.engineNumber;
+    if (opts.position) params['position'] = opts.position;
+    if (opts.limit) params['limit'] = String(opts.limit);
+    return this.http.get<RespuestaBackend<BusquedaHibridaRespuesta>>(`${this.base}/catalog/search`, { params })
       .pipe(map(r => r.data));
   }
 

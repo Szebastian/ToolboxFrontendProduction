@@ -2,6 +2,7 @@
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { SupabaseService } from '../../../application/services/supabase.service';
+import { DemoApiService } from '../../../application/services/demo-api.service';
 import { usuarioSesion } from '../../../application/services/demo-api.service';
 import { setRolSesion } from '../../sesion';
 
@@ -64,6 +65,7 @@ export interface GarageVehicle {
   modelo: string;
   patente: string;
   vin: string;
+  engine_number: string;
   motor: string;
   transmision: string;
   frenos: string;
@@ -1977,6 +1979,12 @@ type Sheet =
                   </div>
                   <h4 class="t-title font-extrabold text-white">Solicitud emitida</h4>
                   <p class="t-body text-stone-300">Se envió a las 4 casas activas en Trelew y Puerto Madryn. Las cotizaciones llegan al instante.</p>
+                  @if (ultimaBusqueda()) {
+                    <div class="p-2.5 rounded-xl bg-cyan-400/[0.07] border border-cyan-400/25 t-micro text-cyan-300 flex items-center justify-center gap-1.5 text-center leading-snug">
+                      <svg aria-hidden="true" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                      {{ ultimaBusqueda() }}
+                    </div>
+                  }
                   <div class="p-3 rounded-xl bg-black/50 border border-white/10 t-micro text-stone-300">
                     Destino: {{ destinoTexto() }} · Te avisamos por WhatsApp apenas llegue la primera cotización.
                   </div>
@@ -1991,7 +1999,7 @@ type Sheet =
                 </p>
                 <div class="space-y-1.5">
                   <label for="nueva-pieza" class="t-micro font-bold text-stone-400 uppercase tracking-wider block">Repuesto que buscás</label>
-                  <input id="nueva-pieza" type="text" placeholder="Ej.: amortiguadores delanteros" class="w-full p-3 min-h-[44px] rounded-xl bg-black/70 border border-white/15 text-white t-body focus:border-amber-400 focus:outline-none placeholder-stone-600">
+                  <input id="nueva-pieza" type="text" placeholder="Ej.: amortiguadores delanteros" [value]="piezaText()" (input)="onPiezaInput($event)" class="w-full p-3 min-h-[44px] rounded-xl bg-black/70 border border-white/15 text-white t-body focus:border-amber-400 focus:outline-none placeholder-stone-600">
                 </div>
 
                 <!-- FOTOS (opcional, hasta 3) -->
@@ -2021,9 +2029,9 @@ type Sheet =
 
                 <div class="flex items-center gap-1.5 flex-wrap pt-0.5">
                   <span class="t-micro text-stone-400">Sugerencias:</span>
-                  <button type="button" class="px-2.5 py-1.5 min-h-[36px] rounded-lg bg-white/5 border border-white/10 t-micro text-amber-300 cursor-pointer">Bomba de agua</button>
-                  <button type="button" class="px-2.5 py-1.5 min-h-[36px] rounded-lg bg-white/5 border border-white/10 t-micro text-amber-300 cursor-pointer">Amortiguadores</button>
-                  <button type="button" class="px-2.5 py-1.5 min-h-[36px] rounded-lg bg-white/5 border border-white/10 t-micro text-amber-300 cursor-pointer">Correa</button>
+                  @for (s of (sugerenciasBackend().length ? sugerenciasBackend() : ['Bomba de agua', 'Amortiguadores', 'Correa de distribución']); track s) {
+                    <button type="button" class="px-2.5 py-1.5 min-h-[36px] rounded-lg bg-white/5 border border-white/10 t-micro text-amber-300 cursor-pointer max-w-[12rem] truncate">{{ s }}</button>
+                  }
                 </div>
 
                 <!-- DESTINO -->
@@ -2281,6 +2289,7 @@ type Sheet =
 export class CompradorMovilComponent {
   private readonly router = inject(Router);
   private readonly supa = inject(SupabaseService);
+  private readonly demoApi = inject(DemoApiService);
 
   /** Sesión real del usuario (null en sesiones demo por rol). */
   readonly usuario = usuarioSesion();
@@ -2339,6 +2348,34 @@ export class CompradorMovilComponent {
   /** Fase inline del sheet "Nueva solicitud": armado o emitido. */
   readonly solicitudEmitida = signal(false);
   readonly fotos = signal<{ nombre: string; preview: string }[]>([]);
+  readonly piezaText = signal('');
+  readonly ultimaBusqueda = signal<string | null>(null);
+  readonly sugerenciasBackend = signal<string[]>([]);
+  readonly sugerenciasCargadas = signal(false);
+
+  motorFamilyHint(): 'diesel' | 'nafta' {
+    return (this.garageVehicle()?.specs.combustible ?? '').toLowerCase().includes('diesel') ||
+           (this.garageVehicle()?.specs.combustible ?? '').toLowerCase().includes('diésel')
+      ? 'diesel'
+      : 'nafta';
+  }
+
+  onPiezaInput(event: Event): void {
+    this.piezaText.set((event.target as HTMLInputElement).value);
+  }
+
+  /** Carga (una sola vez) los nombres de subcategorías desde el backend según motorización. */
+  cargarSugerencias(): void {
+    if (this.sugerenciasCargadas()) return;
+    this.sugerenciasCargadas.set(true);
+    this.demoApi.taxonomy(this.motorFamilyHint()).subscribe({
+      next: (cats) => {
+        const subNames = cats.flatMap((c) => c.subcategories.map((s) => s.name));
+        this.sugerenciasBackend.set(subNames.slice(0, 8));
+      },
+      error: () => { /* sin backend devolvemos las de siempre */ },
+    });
+  }
 
   onFotos(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -2357,6 +2394,18 @@ export class CompradorMovilComponent {
   }
 
   emitirSolicitud(): void {
+    const q = this.piezaText().trim();
+    const veh = this.garageVehicle();
+    if (q && veh?.vin) {
+      const opts: { vin?: string; engineNumber?: string } = { vin: veh.vin };
+      if (veh.engine_number?.trim()) opts.engineNumber = veh.engine_number;
+      this.demoApi.buscarHibrido(q, opts).subscribe({
+        next: (res) => this.ultimaBusqueda.set(`${res.total} resultado${res.total === 1 ? '' : 's'} para “${res.query}” en el catálogo`),
+        error: () => this.ultimaBusqueda.set(null),
+      });
+    } else {
+      this.ultimaBusqueda.set(null);
+    }
     this.solicitudEmitida.set(true);
   }
 
@@ -2401,6 +2450,8 @@ export class CompradorMovilComponent {
   private limpiarSolicitud(): void {
     for (const f of this.fotos()) if (f.preview) URL.revokeObjectURL(f.preview);
     this.fotos.set([]);
+    this.piezaText.set('');
+    this.ultimaBusqueda.set(null);
     this.solicitudEmitida.set(false);
   }
   readonly garageTab = signal<GarageTab>('estado');
@@ -2417,6 +2468,7 @@ export class CompradorMovilComponent {
       modelo: 'Passat 2.0 TDI',
       patente: 'AB 412 TX',
       vin: 'WVWZZZ3CZ6P108422',
+      engine_number: 'BKP 0315012',
       motor: 'BKP (2.0 16V TDI)',
       transmision: 'HDV (manual 6 marchas)',
       frenos: 'Lucas / TRW (312mm delanteros)',
@@ -2488,6 +2540,7 @@ export class CompradorMovilComponent {
       modelo: 'Hilux 2.8 D-4D',
       patente: 'AD 890 JK',
       vin: '8AJBA3CD8K0193844',
+      engine_number: '1GD 2024210',
       motor: '1GD-FTV (2.8 16V turbo)',
       transmision: 'Automática 6 velocidades',
       frenos: 'Advics ventilados (319mm)',
@@ -3049,6 +3102,7 @@ export class CompradorMovilComponent {
       transmision: 'A confirmar',
       frenos: 'A confirmar',
       km: Number(kmRaw) || 0,
+      engine_number: '',
       etiquetaMotor: '—',
       estado: 'A verificar',
       specs: { motor: '—', potencia: '—', combustible: '—', traccion: '—', caja: '—' },
@@ -3124,7 +3178,7 @@ export class CompradorMovilComponent {
   openVehicleSheet(): void { this.open('vehicle'); }
   openTasks(): void { this.open('tasks'); }
   openComboSheet(): void { this.open('combo'); }
-  openAddPartSheet(): void { this.limpiarSolicitud(); this.open('addPart'); }
+  openAddPartSheet(): void { this.limpiarSolicitud(); this.cargarSugerencias(); this.open('addPart'); }
   openPerfilSheet(): void { this.open('perfil'); }
   openGarageAdd(): void { this.open('garageAdd'); }
   openGarageKm(): void { this.open('garageKm'); }
