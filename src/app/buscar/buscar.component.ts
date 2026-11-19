@@ -57,6 +57,12 @@ function datosVehiculo(nombreLargo: string): { marca: string; modelo: string } {
     .chip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;color:#D6D3D1;letter-spacing:.04em}
     .chip-marca{background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.35);color:#FCD34D}
     .fila .tecnico{font-size:12px;color:#9C968E;line-height:1.45}
+    .head{display:flex;align-items:flex-start;gap:10px;justify-content:space-between}
+    .source{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;padding:3px 9px;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;border:1px solid transparent}
+    .source svg{width:11px;height:11px}
+    .source-toolbox{background:rgba(251,191,36,.14);color:#FCD34D;border-color:rgba(251,191,36,.35)}
+    .source-oem{background:rgba(255,255,255,.05);color:#A8A29E;border-color:rgba(255,255,255,.14)}
+    .precio{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#FCD34D;margin-top:2px}
     .compat{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
     .compat .etiqueta{font-family:'JetBrains Mono',monospace;font-size:10px;color:#78716C;letter-spacing:.1em;text-transform:uppercase}
     .pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;background:rgba(103,232,249,.09);border:1px solid rgba(103,232,249,.3);color:#7DD3FC;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.04em}
@@ -127,12 +133,25 @@ function datosVehiculo(nombreLargo: string): { marca: string; modelo: string } {
             <div class="fila">
               <img [src]="p.imagen" [alt]="p.nombre" onerror="this.style.display='none'" />
               <div class="fila-info">
-                <p class="nombre">{{ p.nombre }}</p>
+                <div class="head">
+                  <p class="nombre">{{ p.nombre }}</p>
+                  @if (p.fuente === 'toolbox-backend') {
+                    <span class="source source-toolbox" title="Pieza real publicada en la red Toolbox">
+                      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12l4 4 6-6"></path></svg>
+                      Toolbox
+                    </span>
+                  } @else if (p.fuente === 'mercadolibre') {
+                    <span class="source source-oem" title="Catálogo de referencia OEM">OEM ref.</span>
+                  }
+                </div>
                 <div class="chips">
                   <span class="chip chip-marca">{{ p.marca }}</span>
                   @if (p.numeroOem) { <span class="chip">Cód. {{ p.numeroOem }}</span> }
                 </div>
                 <p class="tecnico">{{ p.descripcionTecnica }}</p>
+                @if (p.precioRango) {
+                  <p class="precio">{{ p.precioRango }}</p>
+                }
                 @if (p.compatibilidad.length) {
                   <div class="compat">
                     <span class="etiqueta">Compatible con</span>

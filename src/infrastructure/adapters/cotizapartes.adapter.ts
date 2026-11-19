@@ -41,7 +41,13 @@ const CATALOGO: RepuestoCandidato[] = [
   { id: 'amort-del-55', nombre: 'Amortiguador delantero 55 mm (PR L0)', descripcionTecnica: 'Amortiguador delantero reforzado, anclaje 55 mm · para versiones con PR L0 (suspensión reforzada)', marca: 'SACHS', numeroOem: '316962', compatibilidad: ['VOLKSWAGEN PASSAT B6 2006', 'VOLKSWAGEN VENTO 2006'], stockLocal: false, precioRango: '$167.900 bajo pedido', fuente: 'mercadolibre', imagen: FOTO('e38c50d7653a40809e20942550b6dad0.jpg') },
   { id: 'amort-tras-monroe-b6', nombre: 'Amortiguador trasero MONROE (Passat B6)', descripcionTecnica: 'Amortiguador trasero gas 3C0513025', marca: 'MONROE', numeroOem: '3C0513025', compatibilidad: ['VOLKSWAGEN PASSAT B6 2006'], stockLocal: true, precioRango: '$131.200 lista / $118.080 transferencia', fuente: 'mercadolibre', imagen: FOTO('e38c50d7653a40809e20942550b6dad0.jpg') },
 
-  // ── RESTO DEL CATÁLOGO OEM ──
+  // ── RESTO DEL CATÁLOGO OEM · datos reales tomados de cotizapartes.com (Passat B6 06-11, noviembre 2026) ──
+  { id: 'condensador-c', nombre: 'Condensador TYC (3C0820411C) para Passat B6', descripcionTecnica: 'Condensador de aire acondicionado · Passat B6 06-11 · código OEM 3C0820411C · envío a todo el país', marca: 'TYC', numeroOem: '3C0820411C', compatibilidad: ['VOLKSWAGEN PASSAT B6 2006'], stockLocal: true, precioRango: '$103.381 lista / $93.043 transferencia', fuente: 'mercadolibre' },
+  { id: 'condensador-b', nombre: 'Condensador TYC (3C0820411B) para Passat B6', descripcionTecnica: 'Condensador de aire acondicionado · Passat B6 06-11 · código OEM 3C0820411B · envío a todo el país', marca: 'TYC', numeroOem: '3C0820411B', compatibilidad: ['VOLKSWAGEN PASSAT B6 2006'], stockLocal: true, precioRango: '$125.587 lista / $113.029 transferencia', fuente: 'mercadolibre' },
+  { id: 'cuerpo-mariposa', nombre: 'Cuerpo mariposa Passat B6 (06F133482B)', descripcionTecnica: 'Cuerpo mariposa electrónico · Passat B6 06-11 · código OEM 06F133482B · transfer / lista', marca: 'HITNA', numeroOem: '06F133482B', compatibilidad: ['VOLKSWAGEN PASSAT B6 2006'], stockLocal: true, precioRango: '$216.889 lista / $195.200 transferencia', fuente: 'mercadolibre' },
+  { id: 'filtro-aire-tdi', nombre: 'Filtro de aire Passat B6 2.0 TDI', descripcionTecnica: 'Filtro de aire panel · Passat B6 2.0 TDI · código OEM 3C0129620E · precio de referencia', marca: 'MEYLE', numeroOem: '3C0129620E', compatibilidad: ['VOLKSWAGEN PASSAT B6 2006'], stockLocal: true, precioRango: 'A cotizar', fuente: 'mercadolibre', imagen: FOTO('1345444b3b614aa1959419656ef8e14c.jpg') },
+  { id: 'filtro-habitaculo', nombre: 'Filtro de habitáculo carbón activo Passat B6', descripcionTecnica: 'Filtro de habitáculo de carbón activo · Passat B6 06-11 · código OEM 3C0819653B · referencia', marca: 'MANN', numeroOem: '3C0819653B', compatibilidad: ['VOLKSWAGEN PASSAT B6 2006'], stockLocal: true, precioRango: 'A cotizar', fuente: 'mercadolibre', imagen: FOTO('1345444b3b614aa1959419656ef8e14c.jpg') },
+  { id: 'filtro-gasoil', nombre: 'Filtro de gasoil Passat B6 2.0 TDI', descripcionTecnica: 'Filtro de gasoil 2.0 TDI · Passat B6 · código OEM 03G127434S · precio de referencia', marca: 'MANN', numeroOem: '03G127434S', compatibilidad: ['VOLKSWAGEN PASSAT B6 2006'], stockLocal: true, precioRango: 'A cotizar', fuente: 'mercadolibre', imagen: FOTO('1345444b3b614aa1959419656ef8e14c.jpg') },
   { id: '63947-20', nombre: 'Pastilla de freno LITTON BRAKE (compatible Passat)', descripcionTecnica: 'Pastilla de freno 8E0698451E', marca: 'LITTON BRAKE', numeroOem: '8E0698451E', compatibilidad: ['VOLKSWAGEN PASSAT B6 2006'], stockLocal: true, precioRango: '$23.104 lista / $20.793 transferencia', fuente: 'mercadolibre', imagen: FOTO('823d9b9d09eb437a847ab23634b63e7a.jpg') },
   { id: '5508', nombre: 'Kit de distribucion GATES', descripcionTecnica: 'Kit distribucion K025607XS', marca: 'GATES', numeroOem: 'K025607XS', compatibilidad: ['VOLKSWAGEN PASSAT B6 2006'], stockLocal: true, precioRango: '$536.575 lista / $482.917 transferencia', fuente: 'mercadolibre', imagen: FOTO('7ecef3c3669e42c3bd2db33c5597d759.jpg') },
   { id: '64312', nombre: 'Filtro de aceite TECFIL', descripcionTecnica: 'Filtro aceite 06D115562', marca: 'TECFIL', numeroOem: '06D115562', compatibilidad: ['VOLKSWAGEN PASSAT B6 2006'], stockLocal: true, precioRango: '$6.093 lista / $5.484 transferencia', fuente: 'mercadolibre', imagen: FOTO('1345444b3b614aa1959419656ef8e14c.jpg') },
@@ -75,19 +81,33 @@ function parecen(token: string, palabra: string): boolean {
 
 export class CotizaPartesAdapter implements CatalogoRepuestosPort {
   async buscar(consulta: string, _opts?: { marca?: string; modelo?: string; anio?: number; motorCodigo?: string }): Promise<RepuestoCandidato[]> {
-    // La consulta se limpia igual que el índice ("2.5" → "2 5") y se conservan
-    // los números de 2+ dígitos: son medidas de búsqueda ("55", "312", "280").
     const q = normalizarTexto(consulta).replace(/[^a-z0-9\s]/g, ' ');
     const tokens = q.split(/\s+/).filter(t => t.length > 2 || (/^\d{2,}$/.test(t)));
     if (!tokens.length) return [];
-    // SIN fallback: si nada coincide devolvemos vacío (antes devolvía el catálogo
-    // completo y por eso buscar "amortiguadores" mostraba piezas de todo tipo).
-    // Semántica AND: cada token debe matchear (así "discos 312" descarta el
-    // resto de las variantes y "pastillas trw" descarta ATE/Bosch).
-    const out = CATALOGO.filter(p => {
+
+    const coincide = (p: RepuestoCandidato) => {
       const texto = textoIndexado(p);
       return tokens.every(t => texto.some(w => parecen(t, w)));
-    });
+    };
+    const matches = CATALOGO.filter(coincide);
+    // Si AND da al menos 3 resultados, esa lista es la respuesta (fin del asunto).
+    if (matches.length >= 3) {
+      return matches.map(p => ({ ...p, compatibilidad: [...p.compatibilidad] }));
+    }
+    // Fallback: OR con score (cada token que matchea suma; con imagen matchea para priorizar)
+    const rankeados = CATALOGO
+      .map(p => {
+        const texto = textoIndexado(p);
+        const score = tokens.reduce((acc, t) => acc + (texto.some(w => parecen(t, w)) ? (t.length >= 5 ? 3 : 2) : 0), 0)
+          + (p.imagen ? 1 : 0);
+        return { p, score };
+      })
+      .filter(x => x.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .map(x => x.p);
+    // Merge: AND primero, luego completa con los mejores OR (sin duplicados)
+    const ids = new Set(matches.map(p => p.id));
+    const out = [...matches, ...rankeados.filter(p => !ids.has(p.id))].slice(0, 12);
     return out.map(p => ({ ...p, compatibilidad: [...p.compatibilidad] }));
   }
 }

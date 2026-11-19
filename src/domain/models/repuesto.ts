@@ -7,7 +7,7 @@ export interface RepuestoCandidato {
   compatibilidad: string[];
   stockLocal: boolean;
   precioRango: string;
-  fuente: 'mock-demo' | 'mercadolibre' | 'whatsapp-local' | 'toolbox-backend';
+  fuente: 'mock-demo' | 'mercadolibre' | 'whatsapp-local' | 'toolbox-backend' | 'mercado_libre';
   imagen?: string;
 }
 
