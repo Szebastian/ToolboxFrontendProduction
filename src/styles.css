@@ -92,3 +92,9 @@ html{scrollbar-width:thin;scrollbar-color:rgba(23,20,18,.35) transparent}
 #nl-badge { display: none !important; }
 
 .font-moto{font-family:'JetBrains Mono',monospace}
+
+/* ── Búsqueda por VIN (/buscar): estilos globales para no exceder el
+      presupuesto de CSS por componente (8 kB) de Angular. ── */
+.source-tn{background:rgba(103,232,249,.12);color:#7DD3FC;border-color:rgba(103,232,249,.35)}
+.ver-fuente{display:inline-flex;align-items:center;min-height:44px;margin-top:4px;color:#7DD3FC;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.04em;text-decoration:none}
+.ver-fuente:hover{color:#A5F3FC}

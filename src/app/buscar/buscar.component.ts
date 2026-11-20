@@ -2,8 +2,10 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { CatalogoRepuestosService } from '../../application/services/catalogo-repuestos.angular.service';
-import { VehiculoActivoService } from '../../application/services/vehiculo-activo.service';
+import { DemoApiService, usuarioSesion, VehiculoDecodificado } from '../../application/services/demo-api.service';
+import { modeloBase, VehiculoActivoService } from '../../application/services/vehiculo-activo.service';
 
 // Autos del garage demo (mismos que el home): para re-filtrar los resultados
 const AUTOS = [
@@ -31,22 +33,24 @@ function datosVehiculo(nombreLargo: string): { marca: string; modelo: string } {
   styles: [`
     :host{display:block;min-height:100vh;min-height:100svh;background:radial-gradient(120% 90% at 50% -10%, #2A231D 0%, #17130F 50%, #0B0908 100%);font-family:'Plus Jakarta Sans',sans-serif;color:#fff}
     .shell{max-width:none;margin:0 auto;padding:0}
-    .btn-volver{position:fixed;top:14px;left:14px;z-index:50;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:999px;background:rgba(14,15,18,.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:#F3F4F6;border:1px solid rgba(255,255,255,.14);font-weight:600;font-size:12px;font-family:'JetBrains Mono',monospace;cursor:pointer;transition:all .2s ease;text-decoration:none}
+    .btn-volver{position:fixed;top:14px;left:14px;z-index:50;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:8px 16px;border-radius:999px;background:rgba(14,15,18,.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:#F3F4F6;border:1px solid rgba(255,255,255,.14);font-weight:600;font-size:12px;font-family:'JetBrains Mono',monospace;cursor:pointer;transition:all .2s ease;text-decoration:none}
     .btn-volver:hover{background:rgba(14,15,18,.95)}
     .console{margin:0;background:transparent;border:0;border-radius:0;box-shadow:none;color:#fff;padding:76px clamp(16px,4vw,72px) 80px}
     .search-row{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);border-radius:18px;padding:12px 16px}
-    .search-row input{flex:1;background:transparent;border:0;outline:0;color:#fff;font-size:15px;font-weight:500;min-width:0}
+    .search-row input{flex:1;background:transparent;border:0;outline:0;color:#fff;font-size:15px;font-weight:500;min-width:0;min-height:44px}
     .search-row input::placeholder{color:#78716C}
-    .btn-buscar{padding:9px 18px;border-radius:14px;background:#FBBF24;color:#1C1917;font-weight:800;font-size:12px;cursor:pointer;border:0;transition:all .2s ease}
+    .btn-buscar{min-height:44px;padding:9px 18px;border-radius:14px;background:#FBBF24;color:#1C1917;font-weight:800;font-size:12px;cursor:pointer;border:0;transition:all .2s ease}
     .btn-buscar:hover{background:#FCD34D}
     .filtros{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:14px}
-    .chip-auto{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.4);color:#FBBF24;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.06em}
-    .chip-auto select{background:transparent;border:0;color:#FBBF24;font:inherit;cursor:pointer;outline:0}
+    .chip-auto{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border-radius:999px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.4);color:#FBBF24;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.06em}
+    .chip-auto select{background:transparent;border:0;color:#FBBF24;font:inherit;cursor:pointer;outline:0;min-height:44px}
     .chip-auto option{background:#1C1917;color:#FDE68A}
     .encabezado{margin-top:20px}
     .titulo{font-size:22px;font-weight:800;letter-spacing:-.01em}
     .titulo q{color:#FCD34D}
     .sub{margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#A8A29E;letter-spacing:.05em}
+    .ml-link{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;margin-top:12px;padding:10px 16px;border-radius:14px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.4);color:#FCD34D;font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:700;text-decoration:none;letter-spacing:.04em;transition:all .2s ease}
+    .ml-link:hover{background:rgba(251,191,36,.2);border-color:rgba(251,191,36,.65)}
     .grid{margin-top:20px;display:flex;flex-direction:column;gap:12px}
     .fila{display:flex;align-items:stretch;gap:18px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:16px 20px;transition:all .22s cubic-bezier(.16,1,.3,1)}
     .fila:hover{border-color:rgba(251,191,36,.5);background:rgba(255,255,255,.07);transform:translateX(3px)}
@@ -56,6 +60,7 @@ function datosVehiculo(nombreLargo: string): { marca: string; modelo: string } {
     .chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
     .chip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;color:#D6D3D1;letter-spacing:.04em}
     .chip-marca{background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.35);color:#FCD34D}
+    .chip-stock{background:rgba(103,232,249,.09);border-color:rgba(103,232,249,.3);color:#7DD3FC}
     .fila .tecnico{font-size:12px;color:#9C968E;line-height:1.45}
     .head{display:flex;align-items:flex-start;gap:10px;justify-content:space-between}
     .source{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;padding:3px 9px;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;border:1px solid transparent}
@@ -76,8 +81,6 @@ function datosVehiculo(nombreLargo: string): { marca: string; modelo: string } {
     .idle-chips{margin-top:18px;display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
     .idle-chip{min-height:44px;padding:12px 16px;border-radius:999px;background:rgba(251,191,36,.09);border:1px solid rgba(251,191,36,.3);color:#FDE68A;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;cursor:pointer;transition:all .18s}
     .idle-chip:hover{background:rgba(251,191,36,.16);border-color:rgba(251,191,36,.5)}
-    .idle-chip:active{transform:scale(.96)}
-
     /* ── MENÚ INFERIOR MÓVIL: idéntico al panel del comprador (mismo ícono activo: Solicitudes) ── */
     .mobile-bar{position:fixed;left:0;right:0;bottom:0;z-index:60;display:flex;align-items:stretch;justify-content:space-between;gap:4px;padding:.5rem .5rem calc(.5rem + env(safe-area-inset-bottom));background:linear-gradient(to top,#14110E 0%,rgba(20,17,14,.96) 80%,rgba(20,17,14,0) 100%);border-top:1px solid rgba(255,255,255,.08)}
     .mb-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15rem;min-width:0;min-height:52px;color:#A8A29E;text-decoration:none;border-radius:.8rem;transition:all .15s}
@@ -90,7 +93,6 @@ function datosVehiculo(nombreLargo: string): { marca: string; modelo: string } {
     .mb-plus{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:.85rem;background:linear-gradient(to bottom,#FDE68A,#F59E0B);color:#1C1917;box-shadow:0 2px 10px rgba(245,158,11,.45)}
     .mb-plus svg{width:20px;height:20px}
     .mb-solicitud-label{color:#FBBF24}
-    .mb-item:active{transform:scale(.94)}
 
     @media (max-width:767px){
       .console{padding:76px .75rem calc(96px + env(safe-area-inset-bottom))}
@@ -128,25 +130,29 @@ function datosVehiculo(nombreLargo: string): { marca: string; modelo: string } {
 
     <div class="console">
 
-      <!-- Buscador de la página limpia -->
+      <!-- Un solo buscador. El VIN del garaje se aplica por detrás, sin pedirlo
+           ni mostrarlo: la app decide el contexto del vehículo automáticamente. -->
       <div class="search-row">
         <svg style="width:18px;height:18px;color:#FBBF24;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
         <input #input type="text" [(ngModel)]="texto" (keyup.enter)="buscarAhora()" placeholder="Repuesto + código o medida (pastillas TRW, discos 312, kit BKC, bimasa LuK)..." autocomplete="off" />
         <button class="btn-buscar" (click)="buscarAhora()">Buscar</button>
       </div>
 
-      <!-- Auto activo para el filtro de compatibilidad -->
-      <div class="filtros">
-        <span class="chip-auto">
-          <span style="width:7px;height:7px;border-radius:999px;background:#FBBF24"></span>
-          Compatibilidad:
-          <select [ngModel]="autoIdx()" (ngModelChange)="cambiarAuto($event)">
-            @for (a of autos; track a.corto; let i = $index) {
-              <option [value]="i">{{ a.nombreLargo }} {{ a.resumen }}</option>
-            }
-          </select>
-        </span>
-      </div>
+      <!-- Sin VIN aplicado, el auto activo define la compatibilidad. Con VIN del
+           garaje no se muestra nada: el chasis ya determina el vehículo. -->
+      @if (!vin) {
+        <div class="filtros">
+          <span class="chip-auto">
+            <span style="width:7px;height:7px;border-radius:999px;background:#FBBF24"></span>
+            Compatibilidad:
+            <select [ngModel]="autoIdx()" (ngModelChange)="cambiarAuto($event)">
+              @for (a of autos; track a.corto; let i = $index) {
+                <option [value]="i">{{ a.nombreLargo }} {{ a.resumen }}</option>
+              }
+            </select>
+          </span>
+        </div>
+      }
 
       <!-- Idle: aún no se buscó nada (ej. al entrar desde "Solicitar") -->
       @if (!buscado()) {
@@ -167,7 +173,13 @@ function datosVehiculo(nombreLargo: string): { marca: string; modelo: string } {
         <div class="encabezado">
           <h1 class="titulo">Resultados para “<span style="color:#FCD34D">{{ texto }}</span>”</h1>
           @if (resultados().length) {
-            <p class="sub">✓ {{ resultados().length }} resultado{{ resultados().length === 1 ? '' : 's' }} compatibles con tu {{ autoActual().nombreLargo }} {{ autoActual().resumen }} — refiná por texto: código PR (1ZA/1ZE), motor (BKC/BXE/BWA), medida (312) o cáliper (TRW/ATE/Bosch)</p>
+            <p class="sub">✓ {{ resultados().length }} resultado{{ resultados().length === 1 ? '' : 's' }} del catálogo real para {{ etiquetaVehiculo() }} — foto, precio y stock de fuentes verificables</p>
+          }
+          @if (mercadoLibreUrl()) {
+            <a class="ml-link" [href]="mercadoLibreUrl()" target="_blank" rel="noopener noreferrer"
+               title="Abre el listado público de Mercado Libre para esta búsqueda y este auto">
+              Ver listado completo en Mercado Libre ↗
+            </a>
           }
         </div>
       }
@@ -189,6 +201,10 @@ function datosVehiculo(nombreLargo: string): { marca: string; modelo: string } {
                       <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12l4 4 6-6"></path></svg>
                       Toolbox
                     </span>
+                  } @else if (p.fuente === 'mercado_libre') {
+                    <span class="source source-oem" title="Tu publicación en Mercado Libre">ML propio</span>
+                  } @else if (p.fuente === 'tiendanube') {
+                    <span class="source source-tn" title="Catálogo público real de tu tienda Tiendanube">Tienda</span>
                   } @else if (p.fuente === 'mercadolibre') {
                     <span class="source source-oem" title="Catálogo de referencia OEM">OEM ref.</span>
                   }
@@ -196,10 +212,14 @@ function datosVehiculo(nombreLargo: string): { marca: string; modelo: string } {
                 <div class="chips">
                   <span class="chip chip-marca">{{ p.marca }}</span>
                   @if (p.numeroOem) { <span class="chip">Cód. {{ p.numeroOem }}</span> }
+                  @if (p.stockDisponible != null) { <span class="chip chip-stock">Stock {{ p.stockDisponible }}</span> }
                 </div>
                 <p class="tecnico">{{ p.descripcionTecnica }}</p>
                 @if (p.precioRango) {
                   <p class="precio">{{ p.precioRango }}</p>
+                }
+                @if (p.permalink) {
+                  <a class="ver-fuente" [href]="p.permalink" target="_blank" rel="noopener noreferrer">Ver en la fuente ↗</a>
                 }
                 @if (p.compatibilidad.length) {
                   <div class="compat">
@@ -213,7 +233,7 @@ function datosVehiculo(nombreLargo: string): { marca: string; modelo: string } {
         </div>
       } @else {
         <div class="vacio">
-          Sin repuestos compatibles con tu {{ autoActual().nombreLargo }} para “{{ texto }}”.
+          Sin repuestos compatibles con {{ etiquetaVehiculo() }} para “{{ texto }}”.
           <br />Podés pedir cotización igual: los repuesteros cotizan por descripción y foto, y el catálogo crece con cada cotización.
           <br /><a routerLink="/cliente" class="cta">Ir al panel del comprador →</a>
         </div>
@@ -256,6 +276,7 @@ export class BuscarComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly catalogo = inject(CatalogoRepuestosService);
   private readonly activoSvc = inject(VehiculoActivoService);
+  private readonly api = inject(DemoApiService);
 
   readonly autos = AUTOS;
   autoIdx = signal(0);
@@ -266,26 +287,104 @@ export class BuscarComponent implements OnInit {
   buscado = signal(false);
   readonly sugerencias = ['pastillas de freno', 'discos 312', 'filtro de aceite', 'filtro de aire', 'bomba de agua', 'kit de distribución'];
 
+  /** VIN aplicado automáticamente (garaje del usuario o link con ?vin=). */
+  vin = '';
+  motorVin = '';
+  modeloVin = '';
+  vehiculoVin = signal<VehiculoDecodificado | null>(null);
+
   ngOnInit(): void {
-    // La query viene del home: /buscar?q=discos+312
+    // La query viene del home: /buscar?q=discos+312 (o de un link con ?vin=…)
     const q = this.route.snapshot.queryParamMap.get('q') ?? '';
-    if (q) {
-      this.texto = q;
-      this.buscarAhora();
-    }
+    const vin = this.route.snapshot.queryParamMap.get('vin') ?? '';
     // El auto activo global manda si es uno del garage
     const activo = this.activoSvc.activo();
     const idx = this.autos.findIndex(a => a.nombreLargo === activo.nombreLargo);
     if (idx >= 0) this.autoIdx.set(idx);
+
+    if (q) this.texto = q;
+
+    if (vin) {
+      this.vin = this.limpiarVin(vin);
+      if (q) void this.buscarAhora();
+      return;
+    }
+
+    // Usuario registrado: su VIN ya está en el garaje. Lo traemos y buscamos
+    // con él, sin pedirle que lo escriba.
+    if (usuarioSesion()) {
+      void this.cargarVehiculoRegistrado(q);
+      return;
+    }
+    if (q) this.buscarAhora();
+  }
+
+  /** Toma el primer vehículo con VIN válido del garaje del usuario y dispara
+   *  la búsqueda por chasis. Si no hay VIN usable, cae al modo texto. */
+  private async cargarVehiculoRegistrado(q: string): Promise<void> {
+    try {
+      const vehiculos = await firstValueFrom(this.api.garaje(this.api.idComprador));
+      const v = vehiculos.find(item => this.limpiarVin(item.vin ?? '').length === 17);
+      if (!v) {
+        if (q && !this.buscado()) this.buscarAhora();
+        return;
+      }
+      this.vin = this.limpiarVin(v.vin ?? '');
+      this.motorVin = v.engine_details ?? '';
+      this.modeloVin = modeloBase(v.model) || this.activoSvc.activo().nombreLargo;
+      if (q) await this.buscarAhora();
+    } catch {
+      // Si el garaje no responde, se mantiene el modo texto de siempre.
+      if (q && !this.buscado()) this.buscarAhora();
+    }
   }
 
   autoActual() { return this.autos[this.autoIdx()]; }
 
+  limpiarVin(valor: string): string {
+    return (valor || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 17);
+  }
+
+  etiquetaVehiculo(): string {
+    const v = this.vehiculoVin();
+    if (v) {
+      return `${v.brand ?? ''} ${this.modeloVin || v.model || ''}`.trim() || 'tu vehículo';
+    }
+    return `${this.autoActual().nombreLargo} ${this.autoActual().resumen}`.trim();
+  }
+
+  /** Link al listado público real de ML para la pieza + auto activo (se abre en otra pestaña). */
+  mercadoLibreUrl(): string {
+    const q = (this.texto || '').trim();
+    if (!q) return '';
+    const normalizar = (s: string) => s.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const pieza = normalizar(q)
+      .replace(/[^a-z0-9\s]/g, '')
+      .trim().replace(/\s+/g, '-')
+      // ML usa "parilla" (una sola r) en el slug de esta búsqueda.
+      .replace(/\bparrilla\b/g, 'parilla');
+    const modelo = this.vehiculoVin()
+      ? normalizar(this.modeloVin || this.vehiculoVin()?.model || '').split(/\s+/).pop() || ''
+      : normalizar(this.autoActual().nombreLargo).split(/\s+/).pop() || '';
+    if (!pieza || !modelo) return '';
+    const sufijo = `${pieza}-${modelo}`;
+    return `https://listado.mercadolibre.com.ar/${sufijo}#D[A:${encodeURIComponent(`${pieza} ${modelo}`)}]`;
+  }
+
+  /** Un único buscador: si hay VIN del garaje se aplica por detrás; si no,
+   *  se usa el auto activo. El usuario nunca ve ni tipea el VIN. */
   buscarAhora(): void {
-    if (!this.texto.trim()) return;
+    const q = this.texto.trim();
+    if (!q) return;
     this.buscado.set(true);
-    this.router.navigate([], { queryParams: { q: this.texto.trim() }, replaceUrl: true });
-    this.catalogo.buscar(this.texto.trim(), datosVehiculo(this.autoActual().nombreLargo));
+    if (this.vin.length === 17) {
+      void this.buscarConVin(q);
+      return;
+    }
+    this.vehiculoVin.set(null);
+    this.router.navigate([], { queryParams: { q }, replaceUrl: true });
+    this.catalogo.buscar(q, datosVehiculo(this.autoActual().nombreLargo));
   }
 
   buscarSugerencia(s: string): void {
@@ -293,11 +392,39 @@ export class BuscarComponent implements OnInit {
     this.buscarAhora();
   }
 
+  /** Decodificación interna del VIN ya registrado: filtra por ese vehículo. */
+  private async buscarConVin(pieza: string): Promise<void> {
+    const motor = this.motorVin.trim() || undefined;
+    this.cargando.set(true);
+    try {
+      const dec = await firstValueFrom(this.api.decodeVin(this.vin, motor));
+      this.vehiculoVin.set(dec);
+      if (!this.modeloVin.trim() && dec.model) this.modeloVin = dec.model;
+      await this.catalogo.buscar(pieza, {
+        marca: dec.brand,
+        modelo: this.modeloVin.trim() || dec.model || undefined,
+        anio: dec.year ?? undefined,
+        motorCodigo: dec.engine?.prefix ?? undefined,
+      }, { vin: this.vin, engineNumber: motor });
+      this.router.navigate([], { queryParams: { q: pieza, vin: this.vin }, replaceUrl: true });
+    } catch {
+      // Si falla la decodificación, la búsqueda libre sigue funcionando.
+      this.vehiculoVin.set(null);
+      this.catalogo.buscar(pieza, datosVehiculo(this.autoActual().nombreLargo));
+      this.router.navigate([], { queryParams: { q: pieza }, replaceUrl: true });
+    } finally {
+      this.cargando.set(false);
+    }
+  }
+
   cambiarAuto(i: string | number): void {
     const idx = Number(i);
     this.autoIdx.set(idx);
     const a = this.autos[idx];
     this.activoSvc.set({ nombre: a.corto, nombreLargo: a.nombreLargo, resumen: a.resumen, vin: 'DEMO', img: '' });
+    // Cambiar el auto descarta el VIN: es una decisión manual del usuario.
+    this.vin = '';
+    this.vehiculoVin.set(null);
     if (this.texto.trim()) this.buscarAhora();
   }
 }

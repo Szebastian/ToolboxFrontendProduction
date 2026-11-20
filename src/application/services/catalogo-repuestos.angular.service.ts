@@ -2,8 +2,6 @@ import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import type { RepuestoCandidato } from '../../domain/models/repuesto.js';
 import { normalizarTexto } from '../../domain/models/repuesto.js';
-import { CotizaPartesAdapter } from '../../infrastructure/adapters/cotizapartes.adapter.js';
-import { BuscarRepuestosUseCase } from '../use-cases/buscar-repuestos.use-case.js';
 import { DemoApiService, ParteCatalogoBackend } from './demo-api.service.js';
 
 // Modelos conocidos para saber si una pieza menciona OTRO auto
@@ -15,19 +13,26 @@ const MODELOS = ['passat', 'vento', 'gol', 'saveiro', 'polo', 'golf', 'bora', 'a
 
 @Injectable({ providedIn: 'root' })
 export class CatalogoRepuestosService {
-  private readonly uc = new BuscarRepuestosUseCase(new CotizaPartesAdapter());
   private readonly api = inject(DemoApiService);
   resultados = signal<RepuestoCandidato[]>([]);
   cargando = signal(false);
 
-  async buscar(consulta: string, vehiculo?: { marca?: string; modelo?: string; anio?: number; motorCodigo?: string }): Promise<void> {
+  async buscar(
+    consulta: string,
+    vehiculo?: { marca?: string; modelo?: string; anio?: number; motorCodigo?: string },
+    ctx: { vin?: string; engineNumber?: string } = {},
+  ): Promise<void> {
     this.cargando.set(true);
     try {
-      // Dos fuentes en paralelo: el catálogo acumulado REAL (backend → Supabase,
-      // con fotos y precios de las cotizaciones) + el catálogo de referencia OEM.
-      const [mock, delBackend] = await Promise.all([
-        this.uc.execute(consulta, vehiculo),
+      // Solo fuentes reales: catálogo acumulado (backend → Supabase) y
+      // publicaciones PROPIAS del vendedor en ML (con stock). Sin referencias OEM.
+      const [delBackend, hibrido] = await Promise.all([
         firstValueFrom(this.api.catalogo(consulta)).catch(() => [] as ParteCatalogoBackend[]),
+        firstValueFrom(this.api.buscarHibrido(consulta, {
+          limit: 20,
+          vin: ctx.vin,
+          engineNumber: ctx.engineNumber,
+        })).catch(() => null),
       ]);
 
       const mapeados: RepuestoCandidato[] = delBackend.map(p => ({
@@ -45,9 +50,52 @@ export class CatalogoRepuestosService {
         imagen: p.default_photo_url ?? undefined,
       }));
 
+      // Publicaciones propias en ML: el backend ya filtra por el dueño de la cuenta.
+      const propiosMl: RepuestoCandidato[] = (hibrido?.results ?? [])
+        .filter(p => p.source === 'mercado_libre')
+        .map((p, i) => ({
+          id: 'ml-' + (p.permalink ?? i),
+          nombre: titular(p.title || consulta),
+          descripcionTecnica: p.stock != null
+            ? `${p.stock} unidad(es) disponibles en tu publicación de Mercado Libre`
+            : 'Tu publicación de Mercado Libre',
+          marca: 'Mercado Libre',
+          numeroOem: p.oem ?? undefined,
+          compatibilidad: [],
+          stockLocal: true,
+          stockDisponible: p.stock ?? undefined,
+          precioRango: p.price != null ? `$ ${p.price.toLocaleString('es-AR')}` : 'A cotizar',
+          fuente: 'mercado_libre',
+          imagen: p.image_url ?? undefined,
+          permalink: p.permalink ?? undefined,
+        }));
+
+      // Catálogo libre: Storefront API pública de Tiendanube/Nuvemshop.
+      // Datos reales de la tienda configurada (foto, precio y stock), sin scraping.
+      const tiendanube: RepuestoCandidato[] = (hibrido?.results ?? [])
+        .filter(p => p.source === 'tiendanube')
+        .map((p, i) => ({
+          id: 'tn-' + (p.permalink ?? i),
+          nombre: titular(p.title || consulta),
+          descripcionTecnica: p.stock != null
+            ? `${p.stock} unidad(es) disponibles en la tienda`
+            : 'Disponibilidad informada por la tienda',
+          marca: 'Tiendanube',
+          numeroOem: p.oem ?? undefined,
+          compatibilidad: [],
+          stockLocal: true,
+          stockDisponible: p.stock ?? undefined,
+          precioRango: p.price != null
+            ? `$ ${p.price.toLocaleString('es-AR')} ${p.currency ?? ''}`.trim()
+            : 'A cotizar',
+          fuente: 'tiendanube',
+          imagen: p.image_url ?? undefined,
+          permalink: p.permalink ?? undefined,
+        }));
+
       // Compatibilidad con el auto registrado: una pieza que menciona otro
       // auto ("...vw gol", "...toyota") queda fuera del auto activo.
-      const todos = [...mapeados, ...mock].filter(p => this.esCompatible(p, vehiculo));
+      const todos = [...mapeados, ...propiosMl, ...tiendanube].filter(p => this.esCompatible(p, vehiculo));
       this.resultados.set(todos);
     } finally {
       this.cargando.set(false);

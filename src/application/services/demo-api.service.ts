@@ -108,12 +108,13 @@ export interface VehiculoDecodificado {
     displacement_cc: number | null;
   };
   fuel: string;
-  source: 'decoded' | 'cache';
+  source: 'decoded' | 'cache' | 'local' | 'nhtsa' | 'mixed';
+  warnings?: string[];
 }
 
 export interface ResultadoBusqueda {
   title: string;
-  source: 'vendor_catalog' | 'mercado_libre';
+  source: 'vendor_catalog' | 'mercado_libre' | 'tiendanube';
   image_url: string | null;
   oem: string | null;
   price: number | null;
@@ -121,6 +122,7 @@ export interface ResultadoBusqueda {
   compatible: 'yes' | 'no' | 'unknown';
   catalog_part_id: string | null;
   permalink: string | null;
+  stock?: number | null;
 }
 
 export interface BusquedaHibridaRespuesta {
@@ -281,6 +283,14 @@ export class DemoApiService {
     const params: Record<string, string> = { vin };
     if (engineNumber) params['engine_number'] = engineNumber;
     return this.http.get<RespuestaBackend<VehiculoDecodificado>>(`${this.base}/catalog/decode`, { params })
+      .pipe(map(r => r.data));
+  }
+
+  /** VIN -> vehículo: WMI Mercosur local + VPIC/NHTSA (oficial, gratuito, sin key). */
+  decodeVin(vin: string, engineNumber?: string): Observable<VehiculoDecodificado> {
+    const params: Record<string, string> = { vin };
+    if (engineNumber) params['engine_number'] = engineNumber;
+    return this.http.get<RespuestaBackend<VehiculoDecodificado>>(`${this.base}/catalog/vin`, { params })
       .pipe(map(r => r.data));
   }
 
